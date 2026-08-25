@@ -105,8 +105,7 @@ const Register = () => {
       }
     } catch (err) {
       console.error("Register Error:", err);
-      setError(err.response?.data?.message || "Registration failed. Redirecting to login...");
-      setTimeout(() => navigate("/login"), 1000);
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

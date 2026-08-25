@@ -65,21 +65,13 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         navigate("/");
       } else {
-        setError(response.data.message || "Invalid credentials");
+        setError(response.data.message || "Invalid email or password.");
       }
     } catch (err) {
       console.error("Login Error:", err);
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Logging in as Demo User...");
-        const guestUser = {
-          name: formData.email ? formData.email.split("@")[0] : "Demo User",
-          email: formData.email || "guest@medideliver.com",
-        };
-        localStorage.setItem("user", JSON.stringify(guestUser));
-        setTimeout(() => navigate("/"), 1000);
-      }
+      setError(
+        err.response?.data?.message || "Login failed. Please check your credentials or server connection."
+      );
     } finally {
       setLoading(false);
     }
