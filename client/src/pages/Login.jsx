@@ -25,6 +25,11 @@ const Login = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  // const [loading, setLoading] = useState(false);
+
+  // =========================
+  // HANDLE INPUT CHANGE
+  // =========================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,11 +43,15 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setError("");
+
+    // Required fields
     if (!formData.email || !formData.password) {
       setError("Please enter your email and password.");
       return;
     }
 
+    // Email validation
     if (!formData.email.includes("@")) {
       setError("Please enter a valid email address.");
       return;

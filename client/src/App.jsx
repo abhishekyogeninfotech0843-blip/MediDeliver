@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -24,6 +24,42 @@ import Returns from "./pages/Returns";
 // =========================
 
 import RazorpayTest from "./pages/RazorpayTest";
+
+// =========================
+// AUTH CHECK
+// =========================
+
+const isLoggedIn = () => {
+  return !!localStorage.getItem("user");
+};
+
+// =========================
+// PROTECTED ROUTE
+// =========================
+
+const ProtectedRoute = ({ children }) => {
+  if (!isLoggedIn()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// =========================
+// PUBLIC ROUTE
+// =========================
+
+const PublicRoute = ({ children }) => {
+  if (isLoggedIn()) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// =========================
+// APP
+// =========================
 
 function App() {
   return (

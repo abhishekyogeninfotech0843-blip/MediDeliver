@@ -32,6 +32,11 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // const [loading, setLoading] = useState(false);
+
+  // =========================
+  // HANDLE INPUT CHANGE
+  // =========================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,6 +50,9 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setError("");
+
+    // Required fields
     if (
       !formData.name ||
       !formData.email ||
@@ -56,17 +64,26 @@ const Register = () => {
       return;
     }
 
+    // Email validation
+    if (!formData.email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    // Password match
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
+    // Password length
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
     }
 
-    if (formData.phone.length !== 10) {
+    // Phone validation
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
       setError("Please enter a valid 10-digit mobile number.");
       return;
     }
@@ -291,6 +308,8 @@ const Register = () => {
               <span>Already have an account?</span>
               <Link to="/login"> Login</Link>
             </div>
+
+            {/* SECURITY */}
 
             <div className="register-security">
               <ShieldCheck className="sec-icon-sm" />

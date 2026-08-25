@@ -1,6 +1,10 @@
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
-// Register User
+// =========================
+// REGISTER USER
+// =========================
+
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, phone, address } = req.body;
@@ -89,6 +93,64 @@ const loginUser = async (req, res) => {
     });
   }
 };
+
+// =========================
+// LOGIN USER
+// =========================
+
+// const loginUser = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     // Required fields
+//     if (!email || !password) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email and password are required",
+//       });
+//     }
+
+//     // Find user
+//     const user = await User.findOne({ email });
+
+//     if (!user) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Invalid email or password",
+//       });
+//     }
+
+//     // Compare password
+//     const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+//     if (!isPasswordCorrect) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Invalid email or password",
+//       });
+//     }
+
+//     // Login successful
+//     res.status(200).json({
+//       success: true,
+//       message: "Login successful",
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phone: user.phone,
+//         address: user.address,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Login Error:", error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
 
 module.exports = {
   registerUser,
