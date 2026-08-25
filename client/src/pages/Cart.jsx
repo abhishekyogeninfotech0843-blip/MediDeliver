@@ -1,9 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import UserProfileDropdown from "../components/UserProfileDropdown";
+import {
+  Pill,
+  ShoppingCart,
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Minus,
+  ShieldCheck,
+  Truck,
+  ArrowRight,
+  ShoppingBag
+} from "lucide-react";
 import "./Cart.css";
 
 const Cart = () => {
+  const [user, setUser] = useState(null);
   const {
     cart,
     removeFromCart,
@@ -12,197 +26,184 @@ const Cart = () => {
     cartTotal,
   } = useCart();
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {}
+    }
+  }, []);
+
   // =========================
   // DELIVERY CHARGE
   // =========================
-
   const deliveryCharge = cartTotal >= 500 ? 0 : 40;
 
   // =========================
   // FINAL TOTAL
   // =========================
-
   const finalTotal = cartTotal + deliveryCharge;
 
   return (
     <div className="cart-page">
-      {/* =========================
-          NAVBAR
-      ========================= */}
-
+      {/* ================= NAVBAR ================= */}
       <header className="cart-navbar">
         <div className="cart-nav-container">
           <Link to="/" className="cart-logo">
+            <div className="cart-logo-icon">
+              <Pill className="nav-pill-icon" />
+            </div>
             Medi<span>Deliver</span>
           </Link>
 
-          <Link to="/medicines" className="continue-shopping">
-            ← Continue Shopping
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <Link to="/medicines" className="continue-shopping">
+              <ArrowLeft className="nav-back-icon" />
+              <span>Continue Shopping</span>
+            </Link>
+
+            <UserProfileDropdown user={user} />
+          </div>
         </div>
       </header>
 
-      {/* =========================
-          MAIN
-      ========================= */}
-
+      {/* ================= MAIN ================= */}
       <main className="cart-content">
         <div className="cart-heading">
-          <small>MEDIDELIVER</small>
-
+          <span className="cart-sub-label">MEDIDELIVER</span>
           <h1>Your Cart</h1>
-
-          <p>Review your medicines before checkout.</p>
+          <p>Review your medicines and healthcare products before checkout.</p>
         </div>
 
-        {/* =========================
-            EMPTY CART
-        ========================= */}
-
+        {/* ================= EMPTY CART ================= */}
         {cart.length === 0 ? (
           <div className="empty-cart">
-            <div className="empty-cart-icon">🛒</div>
+            <div className="empty-cart-icon-box">
+              <ShoppingBag className="empty-bag-svg" />
+            </div>
 
             <h2>Your cart is empty</h2>
-
-            <p>Add medicines to your cart to continue.</p>
+            <p>Looks like you haven't added any medicines to your cart yet.</p>
 
             <Link to="/medicines" className="shop-medicines-button">
-              Browse Medicines
+              <Pill className="btn-icon" />
+              <span>Browse Medicines</span>
             </Link>
           </div>
         ) : (
           <div className="cart-layout">
-            {/* =========================
-                CART ITEMS
-            ========================= */}
-
+            {/* ================= CART ITEMS ================= */}
             <div className="cart-items">
               <div className="cart-items-header">
                 <strong>Your Medicines</strong>
-
-                <span>
-                  {cart.length} item
-                  {cart.length > 1 ? "s" : ""}
+                <span className="items-count-badge">
+                  {cart.length} item{cart.length > 1 ? "s" : ""}
                 </span>
               </div>
 
-              {cart.map((medicine) => {
-                const itemTotal =
-                  Number(medicine.sellingPrice || 0) * medicine.quantity;
+              <div className="cart-item-list">
+                {cart.map((medicine) => {
+                  const itemTotal =
+                    Number(medicine.sellingPrice || 0) * medicine.quantity;
 
-                return (
-                  <div className="cart-item" key={medicine._id}>
-                    {/* Medicine Icon */}
-
-                    <div className="cart-item-image">💊</div>
-
-                    {/* Details */}
-
-                    <div className="cart-item-details">
-                      <div className="cart-item-category">
-                        {medicine.category || "Healthcare"}
+                  return (
+                    <div className="cart-item" key={medicine._id}>
+                      <div className="cart-item-image">
+                        <Pill className="cart-pill-icon" />
                       </div>
 
-                      <h3>{medicine.name}</h3>
+                      <div className="cart-item-details">
+                        <span className="cart-item-category">
+                          {medicine.category || "Healthcare"}
+                        </span>
+                        <h3>{medicine.name}</h3>
+                        <p>{medicine.company || "Trusted Manufacturer"}</p>
+                        <strong className="cart-item-price">
+                          ₹{Number(medicine.sellingPrice || 0).toFixed(2)}
+                        </strong>
+                      </div>
 
-                      <p>{medicine.company || "Trusted Manufacturer"}</p>
+                      <div className="quantity-control">
+                        <button
+                          type="button"
+                          className="qty-btn"
+                          onClick={() => decreaseQuantity(medicine._id)}
+                        >
+                          <Minus className="qty-svg" />
+                        </button>
 
-                      <strong className="cart-item-price">
-                        ₹{Number(medicine.sellingPrice || 0).toFixed(2)}
-                      </strong>
-                    </div>
+                        <span className="qty-val">{medicine.quantity}</span>
 
-                    {/* Quantity */}
+                        <button
+                          type="button"
+                          className="qty-btn"
+                          onClick={() => increaseQuantity(medicine._id)}
+                        >
+                          <Plus className="qty-svg" />
+                        </button>
+                      </div>
 
-                    <div className="quantity-control">
+                      <div className="cart-item-total">
+                        ₹{itemTotal.toFixed(2)}
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() => decreaseQuantity(medicine._id)}
+                        className="remove-cart-item"
+                        title="Remove item"
+                        onClick={() => removeFromCart(medicine._id)}
                       >
-                        −
-                      </button>
-
-                      <span>{medicine.quantity}</span>
-
-                      <button
-                        type="button"
-                        onClick={() => increaseQuantity(medicine._id)}
-                      >
-                        +
+                        <Trash2 className="trash-svg" />
                       </button>
                     </div>
-
-                    {/* Item Total */}
-
-                    <div className="cart-item-total">
-                      ₹{itemTotal.toFixed(2)}
-                    </div>
-
-                    {/* Remove */}
-
-                    <button
-                      type="button"
-                      className="remove-cart-item"
-                      onClick={() => removeFromCart(medicine._id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
-            {/* =========================
-                ORDER SUMMARY
-            ========================= */}
-
+            {/* ================= ORDER SUMMARY ================= */}
             <div className="cart-summary">
               <h2>Order Summary</h2>
 
-              {/* Subtotal */}
-
               <div className="summary-row">
                 <span>Subtotal</span>
-
                 <strong>₹{cartTotal.toFixed(2)}</strong>
               </div>
 
-              {/* Delivery */}
-
               <div className="summary-row">
-                <span>Delivery</span>
-
-                <strong>
+                <span>Delivery Charge</span>
+                <strong className={deliveryCharge === 0 ? "free-text" : ""}>
                   {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}
                 </strong>
               </div>
 
-              {/* Free Delivery Message */}
-
-              {deliveryCharge > 0 && (
+              {deliveryCharge > 0 ? (
                 <div className="free-delivery-note">
-                  Add ₹{(500 - cartTotal).toFixed(2)} more for FREE delivery
+                  <Truck className="truck-sm" /> Add ₹{(500 - cartTotal).toFixed(2)} more for <strong>FREE delivery</strong>
+                </div>
+              ) : (
+                <div className="free-delivery-eligible">
+                  <ShieldCheck className="shield-sm" /> Eligible for FREE Express Delivery
                 </div>
               )}
 
               <div className="summary-divider" />
 
-              {/* Final Total */}
-
               <div className="summary-total">
-                <span>Total</span>
-
+                <span>Total Amount</span>
                 <strong>₹{finalTotal.toFixed(2)}</strong>
               </div>
 
-              {/* Checkout */}
-
               <Link to="/checkout" className="checkout-button">
-                Proceed to Checkout
+                <span>Proceed to Checkout</span>
+                <ArrowRight className="btn-icon" />
               </Link>
 
-              <div className="secure-checkout">🔒 Secure & Safe Checkout</div>
+              <div className="secure-checkout">
+                <ShieldCheck className="secure-icon" />
+                <span>100% Encrypted & Safe Checkout</span>
+              </div>
             </div>
           </div>
         )}
