@@ -1,35 +1,96 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api";
 import { useCart } from "../context/CartContext";
+import {
+  Pill,
+  Search,
+  ShoppingCart,
+  Upload,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  RotateCcw,
+  Filter,
+  Check,
+  ShieldCheck,
+  PackageCheck,
+  AlertTriangle,
+  LayoutDashboard,
+  LogOut,
+  User,
+  MapPin,
+  Building2,
+  X
+} from "lucide-react";
+import LocationModal from "../components/LocationModal";
+import UserProfileDropdown from "../components/UserProfileDropdown";
 import "./Medicines.css";
 
 const Medicines = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [company, setCompany] = useState("All");
   const [sort, setSort] = useState("default");
+  const [user, setUser] = useState(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [deliveryLocation, setDeliveryLocation] = useState(null);
 
   // =========================
   // CART
   // =========================
-
   const { addToCart, cartCount } = useCart();
 
   // =========================
   // PRESCRIPTION
   // =========================
-
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [prescriptionMessage, setPrescriptionMessage] = useState("");
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        setUser(null);
+      }
+    }
+
+    const savedLoc = localStorage.getItem("deliveryLocation");
+    if (savedLoc) {
+      try {
+        setDeliveryLocation(JSON.parse(savedLoc));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const catParam = searchParams.get("category");
+    if (catParam) {
+      setCategory(catParam);
+    }
+    const compParam = searchParams.get("company");
+    if (compParam) {
+      setCompany(compParam);
+    }
+  }, [searchParams]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  };
 
   // =========================
   // FETCH MEDICINES
   // =========================
-
   const fetchMedicines = async () => {
     try {
       setLoading(true);
@@ -44,9 +105,8 @@ const Medicines = () => {
       }
     } catch (err) {
       console.error("Medicine API Error:", err);
-
       setError(
-        "Server se medicines load nahi ho pa rahi hain. Please check your server.",
+        "Unable to fetch medicines from server.",
       );
     } finally {
       setLoading(false);
@@ -58,40 +118,76 @@ const Medicines = () => {
   }, []);
 
   // =========================
-  // CATEGORIES
+  // CATEGORIES & COMPANIES LIST
   // =========================
-
   const categories = [
     "All",
     ...new Set(medicines.map((medicine) => medicine.category).filter(Boolean)),
   ];
 
+  const defaultPopularCompanies = [
+    "Cipla",
+    "Zydus Cadila",
+    "Sun Pharma",
+    "Dr. Reddy's",
+    "Lupin",
+    "Abbott",
+    "Micro Labs",
+    "Himalaya Wellness",
+    "Dabur India",
+    "HealthKart"
+  ];
+
+  const dynamicCompanies = Array.from(
+    new Set(medicines.map((m) => m.company).filter(Boolean))
+  );
+
+  const companies = [
+    "All",
+    ...Array.from(new Set([...defaultPopularCompanies, ...dynamicCompanies]))
+  ];
+
+  const getCompanyMedicineCount = (compName) => {
+    if (compName === "All" || compName === "All Companies") return medicines.length;
+    const target = compName.toLowerCase().replace(" ltd", "").replace(" india", "");
+    return medicines.filter((m) => {
+      const c = (m.company || "").toLowerCase();
+      return c.includes(target) || target.includes(c);
+    }).length;
+  };
+
   // =========================
   // FILTER
   // =========================
-
   let filteredMedicines = medicines.filter((medicine) => {
     const searchValue = search.toLowerCase().trim();
 
     const medicineName = medicine.name?.toLowerCase() || "";
-    const company = medicine.company?.toLowerCase() || "";
+    const medCompany = medicine.company?.toLowerCase() || "";
     const medicineCategory = medicine.category?.toLowerCase() || "";
 
     const matchesSearch =
       medicineName.includes(searchValue) ||
-      company.includes(searchValue) ||
+      medCompany.includes(searchValue) ||
       medicineCategory.includes(searchValue);
 
     const matchesCategory =
       category === "All" || medicine.category === category;
 
-    return matchesSearch && matchesCategory;
+    const matchesCompany =
+      company === "All" ||
+      company === "All Companies" ||
+      medCompany.includes(company.toLowerCase()) ||
+      (company === "Cipla" && medCompany.includes("cipla")) ||
+      (company === "Zydus Cadila" && medCompany.includes("zydus")) ||
+      (company === "Micro Labs" && medCompany.includes("micro"));
+
+    return matchesSearch && matchesCategory && matchesCompany;
   });
 
   // =========================
   // SORT
   // =========================
-
   if (sort === "price-low") {
     filteredMedicines.sort(
       (a, b) => Number(a.sellingPrice || 0) - Number(b.sellingPrice || 0),
@@ -113,22 +209,19 @@ const Medicines = () => {
   // =========================
   // ADD TO CART
   // =========================
-
   const handleAddToCart = (medicine) => {
     addToCart(medicine);
 
-    // Small success message
-    setPrescriptionMessage(`${medicine.name} added to your cart`);
+    setPrescriptionMessage(`${medicine.name} added to your cart!`);
 
     setTimeout(() => {
       setPrescriptionMessage("");
-    }, 2000);
+    }, 2500);
   };
 
   // =========================
   // PRESCRIPTION SELECT
   // =========================
-
   const handlePrescriptionChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -143,61 +236,62 @@ const Medicines = () => {
 
     if (!allowedTypes.includes(file.type)) {
       setPrescriptionMessage("Please upload JPG, PNG or PDF file.");
-
       event.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       setPrescriptionMessage("File size should be less than 5 MB.");
-
       event.target.value = "";
       return;
     }
 
     setPrescriptionFile(file);
-
     setPrescriptionMessage(`Prescription selected: ${file.name}`);
   };
 
   // =========================
   // UPLOAD PRESCRIPTION
   // =========================
-
   const handlePrescriptionUpload = () => {
     if (!prescriptionFile) {
       document.getElementById("prescription-upload")?.click();
-
       return;
     }
 
     setPrescriptionMessage(`✓ ${prescriptionFile.name} ready for upload`);
-
-    /*
-      Backend prescription upload API
-      hum next step mein connect karenge.
-    */
   };
 
   return (
     <div className="medicines-page">
-      {/* ==================================================
-          NAVBAR
-      ================================================== */}
-
+      {/* ================= NAVBAR ================= */}
       <header className="medicines-navbar">
         <div className="medicines-nav-container">
-          {/* Logo */}
-
           <Link to="/" className="medicines-logo">
+            <div className="med-logo-icon">
+              <Pill className="nav-pill-icon" />
+            </div>
             Medi<span>Deliver</span>
           </Link>
 
-          {/* Search */}
+          <div
+            className="location-pill"
+            onClick={() => setIsLocationModalOpen(true)}
+            title="Click to change delivery location"
+          >
+            <MapPin className="location-icon" />
+            <div className="location-text">
+              <small>Deliver to</small>
+              <strong>
+                {deliveryLocation
+                  ? `${deliveryLocation.area || deliveryLocation.city} ▾`
+                  : "Your Location ▾"}
+              </strong>
+            </div>
+          </div>
 
           <div className="medicines-search">
-            <span>🔍</span>
-
+            <Search className="search-icon-svg" />
             <input
               type="text"
               placeholder="Search medicines, brands or categories..."
@@ -206,62 +300,56 @@ const Medicines = () => {
             />
           </div>
 
-          {/* Login */}
+          <div className="med-nav-right">
+            <Link to="/dashboard" className="medicines-login dashboard-nav-btn">
+              <LayoutDashboard className="nav-btn-icon" />
+              <span>Dashboard</span>
+            </Link>
 
-          <Link to="/login" className="medicines-login">
-            Login
-          </Link>
+            <UserProfileDropdown
+              user={user}
+              onLogout={handleLogout}
+              onOpenLocation={() => setIsLocationModalOpen(true)}
+            />
 
-          {/* Cart */}
-
-          <Link to="/cart" className="medicines-cart">
-            <span className="cart-icon">🛒</span>
-
-            <span className="medicines-cart-count">{cartCount}</span>
-          </Link>
+            <Link to="/cart" className="medicines-cart">
+              <ShoppingCart className="cart-icon-svg" />
+              <span className="medicines-cart-count">{cartCount}</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* ==================================================
-          MAIN
-      ================================================== */}
-
+      {/* ================= MAIN ================= */}
       <main className="medicines-content">
-        {/* Heading */}
-
         <div className="medicines-heading">
-          <small>MEDIDELIVER PHARMACY</small>
-
+          <span className="pharmacy-badge">MEDIDELIVER PHARMACY</span>
           <h1>Medicines & Healthcare</h1>
-
           <p>
-            Genuine medicines and healthcare products delivered to your
-            doorstep.
+            Genuine medicines and healthcare essentials delivered directly to your doorstep.
           </p>
         </div>
 
-        {/* ==================================================
-            PRESCRIPTION BANNER
-        ================================================== */}
-
+        {/* ================= PRESCRIPTION BANNER ================= */}
         <div className="prescription-banner">
           <div className="prescription-content">
-            <div className="prescription-icon">📄</div>
+            <div className="prescription-icon-box">
+              <FileText className="rx-icon-svg" />
+            </div>
 
-            <div>
+            <div className="rx-text">
               <h3>Have a prescription?</h3>
-
               <p>
-                Upload your prescription and we'll help you find the medicines.
+                Upload your doctor's prescription and our certified pharmacists will prepare your order.
               </p>
 
               {prescriptionFile && (
-                <small>Selected: {prescriptionFile.name}</small>
+                <div className="selected-file-tag">
+                  <Check className="check-sm" /> Selected: {prescriptionFile.name}
+                </div>
               )}
             </div>
           </div>
-
-          {/* Hidden File Input */}
 
           <input
             id="prescription-upload"
@@ -276,119 +364,224 @@ const Medicines = () => {
             className="prescription-button"
             onClick={handlePrescriptionUpload}
           >
-            {prescriptionFile ? "Upload Prescription" : "Choose Prescription"}
+            <Upload className="upload-icon-svg" />
+            <span>{prescriptionFile ? "Upload Prescription" : "Choose Prescription"}</span>
           </button>
         </div>
 
-        {/* Prescription message */}
-
+        {/* Toast / Message */}
         {prescriptionMessage && (
-          <div className="prescription-message">{prescriptionMessage}</div>
+          <div className="prescription-message">
+            <CheckCircle2 className="toast-icon" />
+            <span>{prescriptionMessage}</span>
+          </div>
         )}
 
-        {/* ==================================================
-            TOOLBAR
-        ================================================== */}
-
+        {/* ================= BRAND / COMPANY SELECTOR LIST ================= */}
         {!loading && !error && medicines.length > 0 && (
-          <div className="medicine-toolbar">
-            {/* Search */}
+          <div className="brand-selector-section">
+            <div className="brand-selector-header">
+              <div className="brand-header-left">
+                <Building2 className="brand-header-icon" />
+                <div>
+                  <h2>Select Medicine Brand / Company (कंपनी चुनें)</h2>
+                  <p>Choose any brand below to view all its medicines instantly:</p>
+                </div>
+              </div>
 
-            <div className="toolbar-search">
-              <span>🔍</span>
-
-              <input
-                type="text"
-                placeholder="Search medicine..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              {company !== "All" && (
+                <button
+                  type="button"
+                  className="reset-brand-selection-btn"
+                  onClick={() => {
+                    setCompany("All");
+                    setSearchParams({});
+                  }}
+                >
+                  <RotateCcw className="reset-brand-icon" /> All Brands
+                </button>
+              )}
             </div>
 
-            {/* Category */}
+            {/* COMPANY LIST GRID / LIST */}
+            <div className="company-buttons-list">
+              {companies.map((compName) => {
+                const isSelected =
+                  (compName === "All" && (company === "All" || company === "All Companies")) ||
+                  (compName !== "All" &&
+                    (company.toLowerCase() === compName.toLowerCase() ||
+                      company.toLowerCase().includes(compName.toLowerCase().replace(" ltd", "").replace(" india", ""))));
 
-            <select
-              className="category-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {categories.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+                const count = getCompanyMedicineCount(compName);
 
-            {/* Sort */}
-
-            <select
-              className="sort-select"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="default">Sort By</option>
-
-              <option value="price-low">Price: Low to High</option>
-
-              <option value="price-high">Price: High to Low</option>
-
-              <option value="name">Name: A-Z</option>
-            </select>
+                return (
+                  <button
+                    key={compName}
+                    type="button"
+                    className={`company-list-btn ${isSelected ? "active" : ""}`}
+                    onClick={() => {
+                      if (compName === "All") {
+                        setCompany("All");
+                        setSearchParams({});
+                      } else {
+                        setCompany(compName);
+                        setSearchParams({ company: compName });
+                      }
+                    }}
+                  >
+                    <div className="btn-brand-info">
+                      <span className="btn-brand-name">
+                        {compName === "All" ? "All Pharma Brands" : compName}
+                      </span>
+                      <span className="btn-brand-count">{count} {count === 1 ? "medicine" : "medicines"}</span>
+                    </div>
+                    {isSelected && <Check className="btn-check-icon" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* ==================================================
-            LOADING
-        ================================================== */}
+        {/* ================= TOOLBAR ================= */}
+        {!loading && !error && medicines.length > 0 && (
+          <>
+            <div className="medicine-toolbar">
+              <div className="toolbar-search">
+                <Search className="tb-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search medicine name, company or category..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
 
+              <div className="toolbar-selects">
+                <div className="select-wrapper">
+                  <Filter className="select-icon" />
+                  <select
+                    className="category-select"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    {categories.map((item) => (
+                      <option key={item} value={item}>
+                        {item === "All" ? "All Categories" : item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="select-wrapper">
+                  <Building2 className="select-icon" />
+                  <select
+                    className="category-select company-select"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                  >
+                    {companies.map((item) => (
+                      <option key={item} value={item}>
+                        {item === "All" ? "Select Company (All)" : item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <select
+                  className="sort-select"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
+                  <option value="default">Sort By: Featured</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="name">Name: A-Z</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active Filters Bar */}
+            {(category !== "All" || company !== "All" || search) && (
+              <div className="active-filters-bar">
+                <span className="active-filters-title">Selected Filters:</span>
+                {company !== "All" && (
+                  <span className="filter-tag">
+                    Company: <strong>{company}</strong>
+                    <button type="button" onClick={() => { setCompany("All"); setSearchParams({}); }}>
+                      <X className="tag-x" />
+                    </button>
+                  </span>
+                )}
+                {category !== "All" && (
+                  <span className="filter-tag">
+                    Category: <strong>{category}</strong>
+                    <button type="button" onClick={() => setCategory("All")}>
+                      <X className="tag-x" />
+                    </button>
+                  </span>
+                )}
+                {search && (
+                  <span className="filter-tag">
+                    Search: <strong>"{search}"</strong>
+                    <button type="button" onClick={() => setSearch("")}>
+                      <X className="tag-x" />
+                    </button>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="clear-all-tags-btn"
+                  onClick={() => {
+                    setCategory("All");
+                    setCompany("All");
+                    setSearch("");
+                    setSort("default");
+                    setSearchParams({});
+                  }}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ================= LOADING ================= */}
         {loading && (
           <div className="medicines-loading">
-            <div className="loading-icon">💊</div>
-
+            <div className="loading-spinner">
+              <Pill className="spinner-pill" />
+            </div>
             <h3>Loading medicines...</h3>
-
-            <p>Please wait while we fetch available medicines.</p>
+            <p>Fetching available items from pharmacy catalog.</p>
           </div>
         )}
 
-        {/* ==================================================
-            ERROR
-        ================================================== */}
-
+        {/* ================= ERROR ================= */}
         {!loading && error && (
           <div className="medicines-error">
+            <AlertCircle className="error-icon" />
             <h3>Something went wrong</h3>
-
             <p>{error}</p>
-
             <button className="retry-button" onClick={fetchMedicines}>
-              Try Again
+              <RotateCcw className="btn-icon" /> Try Again
             </button>
           </div>
         )}
 
-        {/* ==================================================
-            EMPTY DATABASE
-        ================================================== */}
-
+        {/* ================= EMPTY DATABASE ================= */}
         {!loading && !error && medicines.length === 0 && (
           <div className="medicines-empty">
-            <div className="medicines-empty-icon">💊</div>
-
+            <Pill className="empty-pill-icon" />
             <h2>No medicines available</h2>
-
-            <p>Medicines will appear here once they are added.</p>
+            <p>Medicines will appear here once added to the catalog.</p>
           </div>
         )}
 
-        {/* ==================================================
-            RESULTS
-        ================================================== */}
-
+        {/* ================= RESULTS ================= */}
         {!loading && !error && medicines.length > 0 && (
           <>
-            {/* Result count */}
-
             <div className="result-header">
               <div className="result-count">
                 Showing <strong>{filteredMedicines.length}</strong> medicines
@@ -396,21 +589,20 @@ const Medicines = () => {
             </div>
 
             {/* No Search Result */}
-
             {filteredMedicines.length === 0 && (
               <div className="medicines-empty">
-                <div className="medicines-empty-icon">🔍</div>
-
+                <Search className="empty-search-icon" />
                 <h2>No medicines found</h2>
-
-                <p>Try another medicine name, company or category.</p>
+                <p>Try searching for a different medicine name, brand or category.</p>
 
                 <button
                   className="retry-button"
                   onClick={() => {
                     setSearch("");
                     setCategory("All");
+                    setCompany("All");
                     setSort("default");
+                    setSearchParams({});
                   }}
                 >
                   Clear Filters
@@ -418,53 +610,39 @@ const Medicines = () => {
               </div>
             )}
 
-            {/* ==================================================
-                  MEDICINE CARDS
-              ================================================== */}
-
+            {/* ================= MEDICINE CARDS ================= */}
             {filteredMedicines.length > 0 && (
               <div className="medicines-grid">
                 {filteredMedicines.map((medicine) => {
                   const stock = Number(medicine.stock || 0);
-
                   const minimumStock = Number(medicine.minimumStock || 10);
-
                   const outOfStock = stock <= 0;
-
                   const lowStock = stock > 0 && stock <= minimumStock;
 
                   return (
                     <div className="medicine-card" key={medicine._id}>
-                      {/* Medicine Image */}
-
                       <div className="medicine-image">
-                        <div className="medicine-icon">💊</div>
+                        <div className="medicine-icon-box">
+                          <Pill className="card-pill-svg" />
+                        </div>
 
                         {!outOfStock && (
-                          <span className="medicine-badge">Genuine</span>
+                          <span className="medicine-badge">
+                            <ShieldCheck className="badge-shield" /> Genuine
+                          </span>
                         )}
                       </div>
 
-                      {/* Medicine Body */}
-
                       <div className="medicine-body">
-                        {/* Category */}
-
                         <div className="medicine-category">
                           {medicine.category || "Healthcare"}
                         </div>
 
-                        {/* Name */}
-
                         <h3 className="medicine-name">{medicine.name}</h3>
-
-                        {/* Company */}
 
                         <div className="medicine-company">
                           {medicine.company || "Trusted Manufacturer"}
                         </div>
-
-                        {/* Price + Stock */}
 
                         <div className="medicine-info">
                           <div className="medicine-price">
@@ -473,24 +651,22 @@ const Medicines = () => {
 
                           {outOfStock && (
                             <div className="medicine-stock stock-out">
-                              Out of stock
+                              <AlertCircle className="stock-icon" /> Out of stock
                             </div>
                           )}
 
                           {!outOfStock && lowStock && (
                             <div className="medicine-stock stock-low">
-                              Only {stock} left
+                              <AlertTriangle className="stock-icon" /> Only {stock} left
                             </div>
                           )}
 
                           {!outOfStock && !lowStock && (
                             <div className="medicine-stock stock-good">
-                              In stock
+                              <PackageCheck className="stock-icon" /> In stock
                             </div>
                           )}
                         </div>
-
-                        {/* Add Cart */}
 
                         <button
                           type="button"
@@ -498,7 +674,8 @@ const Medicines = () => {
                           disabled={outOfStock}
                           onClick={() => handleAddToCart(medicine)}
                         >
-                          {outOfStock ? "Out of Stock" : "Add to Cart"}
+                          <ShoppingCart className="btn-cart-svg" />
+                          <span>{outOfStock ? "Out of Stock" : "Add to Cart"}</span>
                         </button>
                       </div>
                     </div>
@@ -509,6 +686,14 @@ const Medicines = () => {
           </>
         )}
       </main>
+
+      {/* LOCATION MODAL */}
+      <LocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        onSaveLocation={(loc) => setDeliveryLocation(loc)}
+        currentLocation={deliveryLocation}
+      />
     </div>
   );
 };

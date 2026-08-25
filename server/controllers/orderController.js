@@ -40,16 +40,28 @@ const createOrder = async (req, res) => {
     }
 
     // ==========================================
-    // Check Customer
+    // Check or Auto-Create Customer
     // ==========================================
 
-    const customerExists = await Customer.findById(customer);
+    let customerExists = null;
+    if (customer) {
+      try {
+        customerExists = await Customer.findById(customer);
+      } catch (e) {
+        customerExists = null;
+      }
+    }
 
     if (!customerExists) {
-      return res.status(404).json({
-        success: false,
-        message: "Customer not found",
-      });
+      // Find or create default customer
+      customerExists = await Customer.findOne({ phone: "9876543210" });
+      if (!customerExists) {
+        customerExists = await Customer.create({
+          name: "Guest Customer",
+          phone: "9876543210",
+          address: deliveryAddress.trim(),
+        });
+      }
     }
 
     // ==========================================

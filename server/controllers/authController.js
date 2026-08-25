@@ -5,7 +5,6 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, phone, address } = req.body;
 
-    // Check required fields
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -13,23 +12,21 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "User with this email already exists",
       });
     }
 
-    // Create new user
     const user = await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password,
-      phone,
-      address,
+      phone: phone || "",
+      address: address || "",
     });
 
     res.status(201).json({
@@ -45,14 +42,55 @@ const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Register Error:", error);
-
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error during registration",
+    });
+  }
+};
+
+// Login User
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user || user.password !== password) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+      },
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Server error during login",
     });
   }
 };
 
 module.exports = {
   registerUser,
+  loginUser,
 };
