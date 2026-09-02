@@ -46,12 +46,29 @@ const Home = () => {
       }
     }
 
-    const savedLoc = localStorage.getItem("deliveryLocation");
-    if (savedLoc) {
-      try {
-        setDeliveryLocation(JSON.parse(savedLoc));
-      } catch (e) {}
-    }
+    const loadSavedLocation = () => {
+      const savedLoc = localStorage.getItem("deliveryLocation");
+      if (savedLoc) {
+        try {
+          setDeliveryLocation(JSON.parse(savedLoc));
+        } catch (e) {}
+      }
+    };
+
+    loadSavedLocation();
+
+    const handleLocationEvent = (e) => {
+      if (e.detail) {
+        setDeliveryLocation(e.detail);
+      } else {
+        loadSavedLocation();
+      }
+    };
+
+    window.addEventListener("deliveryLocationUpdated", handleLocationEvent);
+    return () => {
+      window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -181,10 +198,12 @@ const Home = () => {
           </div>
 
           <div className="nav-actions">
-            <Link to="/dashboard" className="login-btn dashboard-nav-btn">
-              <LayoutDashboard className="nav-btn-icon" />
-              <span>Dashboard</span>
-            </Link>
+            {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+              <Link to="/dashboard" className="login-btn dashboard-nav-btn">
+                <LayoutDashboard className="nav-btn-icon" />
+                <span>Dashboard</span>
+              </Link>
+            )}
 
             <UserProfileDropdown
               user={user}
@@ -538,7 +557,9 @@ const Home = () => {
             <Link to="/medicines">Medicines</Link>
             <Link to="/cart">Cart</Link>
             <Link to="/returns">Return Medicine</Link>
-            <Link to="/dashboard">Dashboard</Link>
+            {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+              <Link to="/dashboard">Dashboard</Link>
+            )}
             <Link to="/login">Login</Link>
             <Link to="/register">Register</Link>
           </div>

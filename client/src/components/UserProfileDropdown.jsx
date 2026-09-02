@@ -10,7 +10,9 @@ import {
   ShieldCheck,
   Mail,
   RotateCcw,
-  Sparkles
+  Package,
+  UserCheck,
+  ShoppingCart
 } from "lucide-react";
 import "./UserProfileDropdown.css";
 
@@ -61,6 +63,8 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
     return name.slice(0, 2).toUpperCase();
   };
 
+  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
+
   return (
     <div className="user-profile-dropdown-container" ref={dropdownRef}>
       {/* TRIGGER BUTTON */}
@@ -92,7 +96,7 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
                 {user.email || "user@medideliver.com"}
               </p>
               <span className="verified-badge">
-                <ShieldCheck className="mini-shield" /> Verified Account
+                <ShieldCheck className="mini-shield" /> {isAdmin ? "Admin Account" : "Verified Account"}
               </span>
             </div>
           </div>
@@ -101,13 +105,33 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
 
           {/* MENU ITEMS */}
           <div className="dropdown-menu-list">
+            {isAdmin && (
+              <Link
+                to="/dashboard"
+                className="dropdown-item"
+                onClick={() => setIsOpen(false)}
+              >
+                <LayoutDashboard className="item-icon text-teal" />
+                <span>Admin Dashboard</span>
+              </Link>
+            )}
+
             <Link
-              to="/dashboard"
+              to="/my-orders"
               className="dropdown-item"
               onClick={() => setIsOpen(false)}
             >
-              <LayoutDashboard className="item-icon text-teal" />
-              <span>Admin Dashboard</span>
+              <Package className="item-icon text-blue" />
+              <span>My Orders</span>
+            </Link>
+
+            <Link
+              to="/profile"
+              className="dropdown-item"
+              onClick={() => setIsOpen(false)}
+            >
+              <UserCheck className="item-icon text-purple" />
+              <span>My Profile</span>
             </Link>
 
             <Link
@@ -115,8 +139,8 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
               className="dropdown-item"
               onClick={() => setIsOpen(false)}
             >
-              <ShoppingBag className="item-icon text-blue" />
-              <span>My Cart & Orders</span>
+              <ShoppingCart className="item-icon text-blue" />
+              <span>My Cart</span>
             </Link>
 
             <Link
@@ -148,10 +172,10 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
           {/* LOGOUT BUTTON */}
           <button
             type="button"
-            className="dropdown-logout-btn"
+            className="dropdown-item logout-item"
             onClick={handleLogoutClick}
           >
-            <LogOut className="logout-icon" />
+            <LogOut className="item-icon text-red" />
             <span>Logout of Account</span>
           </button>
         </div>

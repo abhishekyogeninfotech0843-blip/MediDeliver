@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api";
 import {
   Pill,
-  ArrowLeft,
   Mail,
   Lock,
   Eye,
@@ -11,25 +10,68 @@ import {
   ArrowRight,
   ShieldCheck,
   Truck,
-  AlertCircle
+  AlertCircle,
+  User,
+  UserCheck,
+  Clock
 } from "lucide-react";
 import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Role state: 'user' | 'admin'
+  const initialRole = searchParams.get("role") === "admin" ? "admin" : "user";
+  const [loginRole, setLoginRole] = useState(initialRole);
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
-  // const [loading, setLoading] = useState(false);
 
-  // =========================
-  // HANDLE INPUT CHANGE
-  // =========================
+  // Live Digital Watch (Date, Day & Time)
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatDay = (date) => {
+    return date.toLocaleDateString("en-US", { weekday: "long" });
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  };
+
+  useEffect(() => {
+    const roleParam = searchParams.get("role");
+    if (roleParam === "admin") {
+      setLoginRole("admin");
+    } else if (roleParam === "user") {
+      setLoginRole("user");
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,18 +82,24 @@ const Login = () => {
     setError("");
   };
 
+  const handleRoleChange = (selectedRole) => {
+    setLoginRole(selectedRole);
+    setError("");
+    setFormData({
+      email: "",
+      password: "",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
-    // Required fields
     if (!formData.email || !formData.password) {
-      setError("Please enter your email and password.");
+      setError("Please enter your email address and password.");
       return;
     }
 
-    // Email validation
     if (!formData.email.includes("@")) {
       setError("Please enter a valid email address.");
       return;
@@ -59,19 +107,49 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const response = await api.post("/auth/login", formData);
+      const response = await api.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+        role: loginRole,
+      });
 
       if (response.data.success) {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        navigate("/");
+        const user = response.data.user;
+        const isUserAdmin =
+          user?.role === "admin" ||
+          user?.email?.toLowerCase().includes("admin");
+
+        // Strict role validation
+        if (loginRole === "user" && isUserAdmin) {
+          setError("Admin accounts cannot log in through Customer Login. Please switch to the Admin Portal tab.");
+          return;
+        }
+
+        if (loginRole === "admin" && !isUserAdmin) {
+          setError("Access Denied: Only administrators can log in through the Admin Portal. Please switch to Customer Login.");
+          return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(user));
+
+        if (isUserAdmin) {
+          alert("✅ Welcome Admin! Opening Admin Dashboard...");
+          navigate("/dashboard");
+        } else {
+          navigate("/");
+        }
       } else {
         setError(response.data.message || "Invalid email or password.");
       }
     } catch (err) {
       console.error("Login Error:", err);
-      setError(
-        err.response?.data?.message || "Login failed. Please check your credentials or server connection."
-      );
+      if (!err.response) {
+        setError("Unable to connect to backend server. Please make sure the backend server (port 5001) is running.");
+      } else {
+        setError(
+          err.response?.data?.message || "Login failed. Please check your credentials."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -81,14 +159,27 @@ const Login = () => {
     <div className="login-page">
       {/* NAVBAR */}
       <header className="login-navbar">
-        <div className="login-logo">
-          <div className="login-logo-icon">
-            <Pill className="nav-pill-icon" />
+        <div className="login-brand-col">
+          <div className="login-logo">
+            <div className="login-logo-icon">
+              <Pill className="nav-pill-icon" />
+            </div>
+            Medi<span>Deliver</span>
           </div>
-          Medi<span>Deliver</span>
+
+          {/* LIVE DIGITAL WATCH UNDER MEDIDELIVER */}
+          <div className="login-live-clock">
+            <span className="live-pulse-dot" />
+            <Clock className="clock-icon-svg" />
+            <span className="clock-date">{formatDate(currentDateTime)}</span>
+            <span className="clock-sep">,</span>
+            <span className="clock-day">{formatDay(currentDateTime)}</span>
+            <span className="clock-sep">,</span>
+            <span className="clock-time">{formatTime(currentDateTime)}</span>
+          </div>
         </div>
 
-        <Link to="/register" className="back-home">
+        <Link to={`/register?role=${loginRole}`} className="back-home">
           <ArrowRight className="back-icon" />
           <span>Create Account</span>
         </Link>
@@ -106,13 +197,12 @@ const Login = () => {
             <span className="login-label">MEDIDELIVER AUTH</span>
 
             <h1>
-              Your healthcare,
-              <br />
+              Your healthcare, <br />
               <span className="gradient-text">just a login away.</span>
             </h1>
 
             <p>
-              Log in to your MediDeliver account to track orders, upload prescriptions, and manage your health essentials seamlessly.
+              Log in to your MediDeliver account to track orders, upload prescriptions, and manage health essentials seamlessly.
             </p>
 
             <div className="login-benefits">
@@ -141,8 +231,8 @@ const Login = () => {
                   <ShieldCheck className="b-icon-svg" />
                 </div>
                 <div>
-                  <strong>Secure & Private</strong>
-                  <small>Your prescription data is protected with 256-bit SSL encryption.</small>
+                  <strong>Secure & Private Portal</strong>
+                  <small>Protected with 256-bit SSL encryption & role-based access control.</small>
                 </div>
               </div>
             </div>
@@ -150,9 +240,33 @@ const Login = () => {
 
           {/* LOGIN CARD */}
           <div className="login-card">
+            {/* ROLE TAB SWITCHER */}
+            <div className="login-role-tabs">
+              <button
+                type="button"
+                className={`role-tab-btn ${loginRole === "user" ? "active" : ""}`}
+                onClick={() => handleRoleChange("user")}
+              >
+                <User className="tab-ic" /> Customer Login
+              </button>
+              <button
+                type="button"
+                className={`role-tab-btn ${loginRole === "admin" ? "active" : ""}`}
+                onClick={() => handleRoleChange("admin")}
+              >
+                <ShieldCheck className="tab-ic" /> Admin Portal
+              </button>
+            </div>
+
             <div className="login-card-header">
-              <h2>Welcome Back 👋</h2>
-              <p>Sign in to your MediDeliver account</p>
+              <h2>
+                {loginRole === "admin" ? "Admin Portal Access 🛡️" : "Customer Sign In 🛒"}
+              </h2>
+              <p>
+                {loginRole === "admin"
+                  ? "Sign in with Admin credentials to manage pharmacy"
+                  : "Sign in to your MediDeliver customer account"}
+              </p>
             </div>
 
             {error && (
@@ -163,21 +277,29 @@ const Login = () => {
             )}
 
             <form onSubmit={handleSubmit}>
+              {/* EMAIL */}
               <div className="login-form-group">
-                <label htmlFor="email">Email Address</label>
+                <label htmlFor="email">
+                  {loginRole === "admin" ? "Admin Email Address" : "Customer Email Address"}
+                </label>
                 <div className="input-wrapper">
-                  <Mail className="input-icon-svg" />
                   <input
                     id="email"
                     type="email"
                     name="email"
-                    placeholder="name@example.com"
+                    required
+                    placeholder={
+                      loginRole === "admin"
+                        ? "admin@medideliver.com"
+                        : "customer@gmail.com"
+                    }
                     value={formData.email}
                     onChange={handleChange}
                   />
                 </div>
               </div>
 
+              {/* PASSWORD */}
               <div className="login-form-group">
                 <div className="password-label-row">
                   <label htmlFor="password">Password</label>
@@ -187,11 +309,11 @@ const Login = () => {
                 </div>
 
                 <div className="input-wrapper">
-                  <Lock className="input-icon-svg" />
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     name="password"
+                    required
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
@@ -202,24 +324,30 @@ const Login = () => {
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOff className="eye-svg" />
-                    ) : (
-                      <Eye className="eye-svg" />
-                    )}
+                    {showPassword ? <EyeOff className="eye-svg" /> : <Eye className="eye-svg" />}
                   </button>
                 </div>
               </div>
 
               <div className="remember-row">
                 <label className="checkbox-label">
-                  <input type="checkbox" />
+                  <input type="checkbox" defaultChecked />
                   <span>Remember me on this device</span>
                 </label>
               </div>
 
-              <button type="submit" className="login-submit" disabled={loading}>
-                <span>{loading ? "Signing in..." : "Login to Account"}</span>
+              <button
+                type="submit"
+                className={`login-submit ${loginRole === "admin" ? "admin-submit" : ""}`}
+                disabled={loading}
+              >
+                <span>
+                  {loading
+                    ? "Authenticating..."
+                    : loginRole === "admin"
+                    ? "Verify & Open Admin Dashboard ➔"
+                    : "Login to Account ➔"}
+                </span>
                 <ArrowRight className="btn-icon" />
               </button>
             </form>
@@ -229,13 +357,19 @@ const Login = () => {
             </div>
 
             <div className="create-account">
-              <p>Don't have an account?</p>
-              <Link to="/register">Create New Account</Link>
+              <p>
+                {loginRole === "admin"
+                  ? "Need a new Admin Account?"
+                  : "Don't have a Customer Account?"}
+              </p>
+              <Link to={`/register?role=${loginRole}`}>
+                {loginRole === "admin" ? "Register as Pharmacy Admin" : "Create New Customer Account"}
+              </Link>
             </div>
 
             <div className="login-security">
               <ShieldCheck className="sec-icon-sm" />
-              <span>Encrypted connection for your protection</span>
+              <span>Encrypted 256-bit SSL connection for your protection</span>
             </div>
           </div>
         </div>

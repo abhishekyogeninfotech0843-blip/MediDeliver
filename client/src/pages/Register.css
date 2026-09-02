@@ -30,6 +30,13 @@
   justify-content: space-between;
 }
 
+.register-brand-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .register-logo {
   display: flex;
   align-items: center;
@@ -37,6 +44,79 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--text-main);
+  text-decoration: none;
+}
+
+.register-live-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(13, 148, 136, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.register-live-clock:hover {
+  border-color: #0d9488;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: livePulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.clock-icon-svg {
+  width: 15px;
+  height: 15px;
+  color: #0d9488;
+  flex-shrink: 0;
+}
+
+.clock-date {
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-day {
+  color: #0d9488;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.clock-time {
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-sep {
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .register-logo-icon {
@@ -52,6 +132,16 @@
 
 .register-logo span {
   color: var(--primary);
+}
+
+/* Prevent browser autofill blue/yellow background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .register-secure-badge {
@@ -214,7 +304,7 @@
 
 .register-input input {
   width: 100%;
-  padding: 12px 14px 12px 44px;
+  padding: 12px 42px 12px 16px;
   font-size: 14px;
   color: var(--text-main);
   background-color: var(--surface);
@@ -297,4 +387,88 @@
   .register-benefits {
     align-items: center;
   }
+}
+
+/* ==================================================
+   ROLE SELECTION CARDS IN REGISTER
+   ================================================== */
+.role-selection-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.role-group-label {
+  display: block;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.role-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.role-option-card {
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.role-option-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.role-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-ic {
+  width: 24px;
+  height: 24px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.role-card-inner strong {
+  display: block;
+  font-size: 0.825rem;
+  color: #0f172a;
+}
+
+.role-card-inner small {
+  display: block;
+  font-size: 0.725rem;
+  color: #64748b;
+}
+
+.role-option-card:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.role-option-card.active {
+  border-color: #0d9488;
+  background-color: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+}
+
+.role-option-card.active .role-ic {
+  color: #0d9488;
+}
+
+.register-submit.admin-submit {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
 }

@@ -19,6 +19,7 @@ const notificationSchema = new mongoose.Schema(
       enum: [
         "ORDER_PLACED",
         "ORDER_CONFIRMED",
+        "ORDER_PACKED",
         "OUT_FOR_DELIVERY",
         "ORDER_DELIVERED",
         "ORDER_CANCELLED",

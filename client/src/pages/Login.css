@@ -20,6 +20,13 @@
   justify-content: space-between;
 }
 
+.login-brand-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .login-logo {
   display: flex;
   align-items: center;
@@ -27,6 +34,78 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--text-main);
+}
+
+.login-live-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(13, 148, 136, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.login-live-clock:hover {
+  border-color: #0d9488;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: livePulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.clock-icon-svg {
+  width: 15px;
+  height: 15px;
+  color: #0d9488;
+  flex-shrink: 0;
+}
+
+.clock-date {
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-day {
+  color: #0d9488;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.clock-time {
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-sep {
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .login-logo-icon {
@@ -238,22 +317,41 @@
   color: var(--primary);
 }
 
-.input-icon-svg {
-  position: absolute;
-  left: 14px;
-  width: 18px;
-  height: 18px;
-  color: var(--text-light);
-  pointer-events: none;
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 12px 42px 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-main);
+  background-color: var(--surface);
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.input-wrapper input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
 }
 
 .password-toggle {
   position: absolute;
   right: 14px;
+  background: none;
+  border: none;
   color: var(--text-light);
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  padding: 4px;
 }
 
 .eye-svg {
@@ -372,4 +470,253 @@
   .login-benefits {
     align-items: center;
   }
+}
+
+/* ==================================================
+   TAB SWITCHER & ADMIN 2FA STYLES
+   ================================================== */
+
+.master-credentials-badge {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.825rem;
+  color: #166534;
+  text-align: left;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.master-credentials-badge code {
+  background: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #0f766e;
+  border: 1px solid #86efac;
+}
+
+.login-tab-switcher {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: #0f172a;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.tab-btn.admin-tab.active {
+  color: #0d9488;
+}
+
+.tab-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.highlight-phone input {
+  border-color: #0d9488 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.field-hint {
+  display: block;
+  font-size: 0.78rem;
+  color: #0d9488;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.admin-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35) !important;
+}
+
+.admin-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.5) !important;
+}
+
+/* OTP BANNER & INPUT */
+.otp-verification-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.otp-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.otp-banner-icon {
+  width: 24px;
+  height: 24px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.otp-banner h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #14532d;
+  margin: 0 0 2px 0;
+}
+
+.otp-banner p {
+  font-size: 0.825rem;
+  color: #166534;
+  margin: 0;
+}
+
+.demo-otp-box {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #854d0e;
+}
+
+.demo-icon {
+  width: 16px;
+  height: 16px;
+  color: #ca8a04;
+}
+
+.otp-input-wrap input {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 4px !important;
+  color: #0f766e !important;
+  text-align: center;
+}
+
+.otp-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resend-otp-btn {
+  background: none;
+  border: none;
+  color: #0d9488;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.resend-otp-btn:hover {
+  text-decoration: underline;
+}
+
+.resend-ic {
+  width: 14px;
+  height: 14px;
+}
+
+.back-step-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back-step-btn:hover {
+  color: #0f172a;
+}
+
+/* ==================================================
+   ROLE SWITCH TABS (Customer vs Admin)
+   ================================================== */
+.login-role-tabs {
+  display: flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 4px;
+}
+
+.role-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-tab-btn:hover {
+  color: #0f172a;
+}
+
+.role-tab-btn.active {
+  background-color: #ffffff;
+  color: #0d9488;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tab-ic {
+  width: 16px;
+  height: 16px;
+}
+
+.login-submit.admin-submit {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+}
+
+.login-submit.admin-submit:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%) !important;
 }

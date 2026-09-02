@@ -311,12 +311,33 @@
   height: 14px;
 }
 
-.qty-val {
-  width: 32px;
+.qty-val,
+.qty-input {
+  width: 44px;
+  height: 32px;
   text-align: center;
   font-size: 14px;
   font-weight: 700;
   color: var(--text-main);
+  border: none;
+  background: transparent;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  padding: 0;
+  cursor: text;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input:focus {
+  background-color: rgba(5, 150, 105, 0.08);
+  color: var(--primary);
+  border-radius: 4px;
 }
 
 .cart-item-total {

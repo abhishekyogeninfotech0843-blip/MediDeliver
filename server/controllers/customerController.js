@@ -1,4 +1,5 @@
 const Customer = require("../models/Customer");
+const User = require("../models/User");
 
 // Add Customer
 const addCustomer = async (req, res) => {
@@ -66,13 +67,53 @@ const getCustomerById = async (req, res) => {
 const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
+    const { name, email, phone, address } = req.body;
 
-    const customer = await Customer.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    let customer = await Customer.findById(id);
+    let user = null;
 
-    if (!customer) {
+    if (customer) {
+      if (name) customer.name = name;
+      if (email) customer.email = email.toLowerCase().trim();
+      if (phone) customer.phone = phone;
+      if (address) customer.address = address;
+      await customer.save();
+
+      // Sync User record if customer has email
+      if (customer.email) {
+        await User.updateOne(
+          { email: customer.email },
+          { $set: { name: customer.name, phone: customer.phone, address: customer.address } }
+        );
+      }
+    } else {
+      user = await User.findById(id);
+      if (user) {
+        if (name) user.name = name;
+        if (email) user.email = email.toLowerCase().trim();
+        if (phone) user.phone = phone;
+        if (address) user.address = address;
+        await user.save();
+
+        customer = {
+          _id: user._id,
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          address: user.address,
+          createdAt: user.createdAt,
+        };
+
+        // Sync Customer doc if exists
+        await Customer.updateOne(
+          { email: user.email },
+          { $set: { name: user.name, phone: user.phone, address: user.address } }
+        );
+      }
+    }
+
+    if (!customer && !user) {
       return res.status(404).json({
         success: false,
         message: "Customer not found",
@@ -82,7 +123,7 @@ const updateCustomer = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Customer updated successfully",
-      customer,
+      customer: customer || user,
     });
   } catch (error) {
     res.status(500).json({
@@ -97,9 +138,17 @@ const deleteCustomer = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const customer = await Customer.findByIdAndDelete(id);
+    let deletedCust = await Customer.findByIdAndDelete(id);
+    let deletedUser = await User.findByIdAndDelete(id);
 
-    if (!customer) {
+    if (deletedCust?.email) {
+      await User.deleteOne({ email: deletedCust.email.toLowerCase().trim() });
+    }
+    if (deletedUser?.email) {
+      await Customer.deleteOne({ email: deletedUser.email.toLowerCase().trim() });
+    }
+
+    if (!deletedCust && !deletedUser) {
       return res.status(404).json({
         success: false,
         message: "Customer not found",
@@ -109,7 +158,6 @@ const deleteCustomer = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Customer deleted successfully",
-      customer,
     });
   } catch (error) {
     res.status(500).json({

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../api/api";
 
 const RazorpayPayment = ({ orderId }) => {
   const [loading, setLoading] = useState(false);
@@ -12,8 +12,8 @@ const RazorpayPayment = ({ orderId }) => {
       // Step 1: Create Razorpay Order
       // ==========================================
 
-      const response = await axios.post(
-        "http://localhost:5000/api/payments/razorpay/order",
+      const response = await api.post(
+        "/payments/razorpay/order",
         {
           order: orderId,
         },
@@ -44,8 +44,8 @@ const RazorpayPayment = ({ orderId }) => {
             // Step 3: Verify Payment
             // ==========================================
 
-            const verifyResponse = await axios.post(
-              "http://localhost:5000/api/payments/razorpay/verify",
+            const verifyResponse = await api.post(
+              "/payments/razorpay/verify",
               {
                 order: orderId,
                 razorpay_order_id: paymentResponse.razorpay_order_id,

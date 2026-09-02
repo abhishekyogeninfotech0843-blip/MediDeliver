@@ -100,6 +100,27 @@ export const CartProvider = ({ children }) => {
   };
 
   // ==============================
+  // UPDATE QUANTITY DIRECTLY
+  // ==============================
+
+  const updateQuantity = (medicineId, newQuantity) => {
+    const parsedQty = parseInt(newQuantity, 10);
+    if (isNaN(parsedQty) || parsedQty <= 0) {
+      return;
+    }
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        item._id === medicineId
+          ? {
+              ...item,
+              quantity: Math.min(Math.max(1, parsedQty), 999),
+            }
+          : item,
+      ),
+    );
+  };
+
+  // ==============================
   // CLEAR CART
   // ==============================
 
@@ -130,6 +151,7 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         increaseQuantity,
         decreaseQuantity,
+        updateQuantity,
         clearCart,
         cartCount,
         cartTotal,

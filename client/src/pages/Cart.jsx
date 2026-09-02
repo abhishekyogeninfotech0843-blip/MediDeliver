@@ -23,6 +23,7 @@ const Cart = () => {
     removeFromCart,
     increaseQuantity,
     decreaseQuantity,
+    updateQuantity,
     cartTotal,
   } = useCart();
 
@@ -129,16 +130,37 @@ const Cart = () => {
                           type="button"
                           className="qty-btn"
                           onClick={() => decreaseQuantity(medicine._id)}
+                          title="Decrease quantity"
                         >
                           <Minus className="qty-svg" />
                         </button>
 
-                        <span className="qty-val">{medicine.quantity}</span>
+                        <input
+                          type="number"
+                          className="qty-input"
+                          min="1"
+                          max="999"
+                          value={medicine.quantity}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val) && val > 0) {
+                              updateQuantity(medicine._id, val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (isNaN(val) || val <= 0) {
+                              updateQuantity(medicine._id, 1);
+                            }
+                          }}
+                          aria-label="Medicine quantity"
+                        />
 
                         <button
                           type="button"
                           className="qty-btn"
                           onClick={() => increaseQuantity(medicine._id)}
+                          title="Increase quantity"
                         >
                           <Plus className="qty-svg" />
                         </button>

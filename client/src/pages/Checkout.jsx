@@ -16,9 +16,62 @@ import {
   CheckCircle2,
   Building,
   Map,
-  ShoppingBag
+  ShoppingBag,
+  Loader2
 } from "lucide-react";
 import "./Checkout.css";
+
+const INDIAN_STATES_CITIES = {
+  "Uttar Pradesh": [
+    "Aligarh",
+    "Noida",
+    "Greater Noida",
+    "Ghaziabad",
+    "Lucknow",
+    "Kanpur",
+    "Agra",
+    "Varanasi",
+    "Prayagraj (Allahabad)",
+    "Meerut",
+    "Bareilly",
+    "Gorakhpur",
+    "Mathura",
+    "Moradabad",
+  ],
+  "Delhi NCR": ["New Delhi", "Central Delhi", "East Delhi", "North Delhi", "South Delhi", "West Delhi"],
+  Haryana: ["Gurgaon (Gurugram)", "Faridabad", "Panipat", "Ambala", "Karnal", "Hisar", "Rohtak"],
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Navi Mumbai"],
+  Karnataka: ["Bangalore (Bengaluru)", "Mysore", "Hubli", "Mangalore", "Belgaum"],
+  Punjab: ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Mohali"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
+  Kerala: ["Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur"],
+  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
+  Bihar: ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur"],
+  "Other / Custom": ["Other City"],
+};
+
+const COMMON_PINCODES = {
+  202001: { city: "Aligarh", state: "Uttar Pradesh" },
+  202002: { city: "Aligarh", state: "Uttar Pradesh" },
+  201301: { city: "Noida", state: "Uttar Pradesh" },
+  201309: { city: "Greater Noida", state: "Uttar Pradesh" },
+  201001: { city: "Ghaziabad", state: "Uttar Pradesh" },
+  110001: { city: "New Delhi", state: "Delhi NCR" },
+  122001: { city: "Gurgaon (Gurugram)", state: "Haryana" },
+  121001: { city: "Faridabad", state: "Haryana" },
+  400001: { city: "Mumbai", state: "Maharashtra" },
+  411001: { city: "Pune", state: "Maharashtra" },
+  560001: { city: "Bangalore (Bengaluru)", state: "Karnataka" },
+  600001: { city: "Chennai", state: "Tamil Nadu" },
+  500001: { city: "Hyderabad", state: "Telangana" },
+  700001: { city: "Kolkata", state: "West Bengal" },
+  380001: { city: "Ahmedabad", state: "Gujarat" },
+  302001: { city: "Jaipur", state: "Rajasthan" },
+};
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
@@ -26,16 +79,17 @@ const Checkout = () => {
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
 
   const [address, setAddress] = useState({
     name: "",
     phone: "",
-    pincode: "",
+    pincode: "202001",
     address: "",
-    city: "",
-    state: "",
+    city: "Aligarh",
+    state: "Uttar Pradesh",
   });
 
   useEffect(() => {
@@ -48,23 +102,48 @@ const Checkout = () => {
       } catch (e) {}
     }
 
-    const savedLoc = localStorage.getItem("deliveryLocation");
-    let initialLoc = {};
-    if (savedLoc) {
-      try {
-        initialLoc = JSON.parse(savedLoc);
-      } catch (e) {}
-    }
+    const syncLocationToAddress = (locDetail) => {
+      let initialLoc = locDetail;
+      if (!initialLoc) {
+        const savedLoc = localStorage.getItem("deliveryLocation");
+        if (savedLoc) {
+          try {
+            initialLoc = JSON.parse(savedLoc);
+          } catch (e) {}
+        }
+      }
 
-    setAddress((prev) => ({
-      ...prev,
-      name: prev.name || initialUser.name || "",
-      phone: prev.phone || initialUser.phone || "",
-      address: prev.address || initialLoc.fullAddress || initialLoc.area || "",
-      city: prev.city || initialLoc.city || "",
-      state: prev.state || initialLoc.state || "",
-      pincode: prev.pincode || initialLoc.pincode || "",
-    }));
+      if (initialLoc && initialLoc.city) {
+        setAddress((prev) => ({
+          ...prev,
+          name: prev.name || initialUser.name || "",
+          phone: prev.phone || initialUser.phone || "",
+          address: initialLoc.fullAddress || initialLoc.area || prev.address,
+          city: initialLoc.city || prev.city || "Aligarh",
+          state: initialLoc.state || prev.state || "Uttar Pradesh",
+          pincode: initialLoc.pincode || prev.pincode || "202001",
+        }));
+      } else {
+        setAddress((prev) => ({
+          ...prev,
+          name: prev.name || initialUser.name || "",
+          phone: prev.phone || initialUser.phone || "",
+        }));
+      }
+    };
+
+    syncLocationToAddress();
+
+    const handleLocationEvent = (e) => {
+      if (e.detail) {
+        syncLocationToAddress(e.detail);
+      }
+    };
+
+    window.addEventListener("deliveryLocationUpdated", handleLocationEvent);
+    return () => {
+      window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
+    };
   }, []);
 
   const deliveryCharge = cartTotal >= 500 ? 0 : 40;
@@ -75,6 +154,49 @@ const Checkout = () => {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handlePincodeInput = async (val) => {
+    handleAddressChange("pincode", val);
+
+    if (val.length === 6 && /^[0-9]{6}$/.test(val)) {
+      const pinNum = Number(val);
+      // 1. Instant local dictionary lookup
+      if (COMMON_PINCODES[pinNum]) {
+        const { city, state } = COMMON_PINCODES[pinNum];
+        setAddress((prev) => ({ ...prev, city, state }));
+        return;
+      }
+
+      // 2. Postal Pincode API lookup
+      try {
+        setPincodeLoading(true);
+        const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
+        const data = await res.json();
+
+        if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
+          const postOffice = data[0].PostOffice[0];
+          const rawState = postOffice.State || "";
+          const rawDistrict = postOffice.District || postOffice.Block || postOffice.Name || "";
+
+          // Match state key
+          const matchedState =
+            Object.keys(INDIAN_STATES_CITIES).find(
+              (s) => s.toLowerCase() === rawState.toLowerCase()
+            ) || rawState || "Uttar Pradesh";
+
+          setAddress((prev) => ({
+            ...prev,
+            state: matchedState,
+            city: rawDistrict || prev.city,
+          }));
+        }
+      } catch (err) {
+        console.warn("Pincode lookup error:", err);
+      } finally {
+        setPincodeLoading(false);
+      }
+    }
   };
 
   const validateAddress = () => {
@@ -103,11 +225,11 @@ const Checkout = () => {
       return false;
     }
     if (!address.city.trim()) {
-      setError("Please enter city");
+      setError("Please select city");
       return false;
     }
     if (!address.state.trim()) {
-      setError("Please enter state");
+      setError("Please select state");
       return false;
     }
     return true;
@@ -123,7 +245,10 @@ const Checkout = () => {
       const deliveryAddress = `${address.name}, ${address.address}, ${address.city}, ${address.state} - ${address.pincode}`;
 
       const response = await api.post("/orders", {
-        customer: "6a856810a35113391007d0cb",
+        customerName: address.name || user?.name || "Customer",
+        customerPhone: address.phone || user?.phone || "",
+        customerEmail: user?.email || "",
+        customer: user?.id || "6a856810a35113391007d0cb",
         items: orderItems,
         deliveryAddress,
         paymentMethod,
@@ -188,7 +313,7 @@ const Checkout = () => {
           } catch (err) {
             console.error("Payment Verification Error:", err);
             setError(
-              err.response?.data?.message || "Payment verification failed",
+              err.response?.data?.message || "Payment verification failed"
             );
           }
         },
@@ -257,6 +382,8 @@ const Checkout = () => {
     );
   }
 
+  const availableCities = INDIAN_STATES_CITIES[address.state] || [address.city || "Aligarh"];
+
   return (
     <div className="checkout-page">
       {/* NAVBAR */}
@@ -308,9 +435,8 @@ const Checkout = () => {
 
               <div className="address-form">
                 <div className="form-group">
-                  <label>Full Name</label>
+                  <label>Full Name *</label>
                   <div className="input-wrapper">
-                    <User className="field-icon" />
                     <input
                       type="text"
                       placeholder="Enter your full name"
@@ -324,9 +450,8 @@ const Checkout = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Mobile Number</label>
+                    <label>Mobile Number *</label>
                     <div className="input-wrapper">
-                      <Phone className="field-icon" />
                       <input
                         type="tel"
                         placeholder="10 digit mobile number"
@@ -339,25 +464,29 @@ const Checkout = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>PIN Code</label>
+                    <div className="pincode-label-row">
+                      <label>PIN Code *</label>
+                      {pincodeLoading && (
+                        <span className="detecting-spin">
+                          <Loader2 className="spin-ic" /> Auto-detecting...
+                        </span>
+                      )}
+                    </div>
                     <div className="input-wrapper">
-                      <MapPin className="field-icon" />
                       <input
                         type="text"
-                        placeholder="6 digit PIN code"
+                        maxLength="6"
+                        placeholder="e.g. 202001"
                         value={address.pincode}
-                        onChange={(e) =>
-                          handleAddressChange("pincode", e.target.value)
-                        }
+                        onChange={(e) => handlePincodeInput(e.target.value)}
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Complete Address</label>
+                  <label>Complete Address *</label>
                   <div className="input-wrapper textarea-wrapper">
-                    <Building className="field-icon textarea-icon" />
                     <textarea
                       rows="3"
                       placeholder="House No., Street, Landmark, Area"
@@ -370,33 +499,54 @@ const Checkout = () => {
                 </div>
 
                 <div className="form-row">
+                  {/* STATE DROPDOWN */}
                   <div className="form-group">
-                    <label>City</label>
+                    <label>State *</label>
                     <div className="input-wrapper">
-                      <Map className="field-icon" />
-                      <input
-                        type="text"
-                        placeholder="City"
-                        value={address.city}
-                        onChange={(e) =>
-                          handleAddressChange("city", e.target.value)
-                        }
-                      />
+                      <select
+                        value={address.state || "Uttar Pradesh"}
+                        onChange={(e) => {
+                          const selectedSt = e.target.value;
+                          const cities = INDIAN_STATES_CITIES[selectedSt] || [];
+                          setAddress((prev) => ({
+                            ...prev,
+                            state: selectedSt,
+                            city: cities[0] || prev.city,
+                          }));
+                        }}
+                      >
+                        {Object.keys(INDIAN_STATES_CITIES).map((st) => (
+                          <option key={st} value={st}>
+                            {st}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
+                  {/* CITY DROPDOWN */}
                   <div className="form-group">
-                    <label>State</label>
+                    <label>City *</label>
                     <div className="input-wrapper">
-                      <Map className="field-icon" />
-                      <input
-                        type="text"
-                        placeholder="State"
-                        value={address.state}
-                        onChange={(e) =>
-                          handleAddressChange("state", e.target.value)
-                        }
-                      />
+                      {INDIAN_STATES_CITIES[address.state] ? (
+                        <select
+                          value={address.city}
+                          onChange={(e) => handleAddressChange("city", e.target.value)}
+                        >
+                          {availableCities.map((ct) => (
+                            <option key={ct} value={ct}>
+                              {ct}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="Enter city"
+                          value={address.city}
+                          onChange={(e) => handleAddressChange("city", e.target.value)}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -414,123 +564,126 @@ const Checkout = () => {
               </div>
 
               <div className="payment-options">
-                {/* COD CARD */}
+                {/* ONLINE */}
                 <label
-                  className={`payment-option-card ${
-                    paymentMethod === "COD" ? "active" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="COD"
-                    checked={paymentMethod === "COD"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-
-                  <div className="option-icon-wrap cod">
-                    <Truck className="opt-svg" />
-                  </div>
-
-                  <div className="option-info">
-                    <strong>Cash on Delivery (COD)</strong>
-                    <p>Pay in cash when your medicines reach your doorstep.</p>
-                  </div>
-                </label>
-
-                {/* ONLINE CARD */}
-                <label
-                  className={`payment-option-card ${
-                    paymentMethod === "ONLINE" ? "active" : ""
-                  }`}
+                  className={`payment-option-card ${paymentMethod === "ONLINE" ? "active" : ""}`}
                 >
                   <input
                     type="radio"
                     name="payment"
                     value="ONLINE"
                     checked={paymentMethod === "ONLINE"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    onChange={() => setPaymentMethod("ONLINE")}
                   />
-
-                  <div className="option-icon-wrap online">
-                    <CreditCard className="opt-svg" />
+                  <div className="pay-card-icon">
+                    <CreditCard className="pay-svg" />
                   </div>
+                  <div className="pay-card-info">
+                    <div className="pay-card-title">
+                      <strong>Razorpay Online Payment</strong>
+                      <span className="pay-badge green">Instant & Fast</span>
+                    </div>
+                    <p>UPI (GPay, PhonePe, Paytm), Credit/Debit Card, Net Banking</p>
+                  </div>
+                </label>
 
-                  <div className="option-info">
-                    <strong>Online Payment (Razorpay)</strong>
-                    <p>Pay securely via UPI, Google Pay, Credit/Debit Card or Netbanking.</p>
+                {/* COD */}
+                <label
+                  className={`payment-option-card ${paymentMethod === "COD" ? "active" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="COD"
+                    checked={paymentMethod === "COD"}
+                    onChange={() => setPaymentMethod("COD")}
+                  />
+                  <div className="pay-card-icon cod">
+                    <Truck className="pay-svg" />
+                  </div>
+                  <div className="pay-card-info">
+                    <div className="pay-card-title">
+                      <strong>Cash on Delivery (COD)</strong>
+                      <span className="pay-badge blue">Pay at Doorstep</span>
+                    </div>
+                    <p>Pay with cash or UPI QR code when medicine arrives at your doorstep.</p>
                   </div>
                 </label>
               </div>
             </div>
           </div>
 
-          {/* ORDER SUMMARY */}
-          <div className="checkout-summary">
-            <h2>Order Details</h2>
+          {/* RIGHT SIDE: SUMMARY */}
+          <div className="checkout-right">
+            <div className="order-summary-card">
+              <h2>Order Details</h2>
 
-            <div className="checkout-items">
-              {cart.map((medicine) => (
-                <div className="checkout-item" key={medicine._id}>
-                  <div className="chk-item-icon">
-                    <Pill className="chk-pill-svg" />
+              <div className="summary-items">
+                {cart.map((item) => (
+                  <div className="summary-item" key={item._id}>
+                    <div className="sum-item-icon">
+                      <Pill className="sum-pill-svg" />
+                    </div>
+                    <div className="sum-item-details">
+                      <strong>{item.name}</strong>
+                      <small>Qty: {item.quantity}</small>
+                    </div>
+                    <div className="sum-item-price">
+                      ₹{(item.sellingPrice * item.quantity).toFixed(2)}
+                    </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="chk-item-details">
-                    <strong>{medicine.name}</strong>
-                    <span>Qty: {medicine.quantity}</span>
-                  </div>
+              <div className="summary-divider"></div>
 
-                  <strong className="chk-item-price">
-                    ₹
-                    {(
-                      Number(medicine.sellingPrice || 0) * medicine.quantity
-                    ).toFixed(2)}
-                  </strong>
-                </div>
-              ))}
-            </div>
+              <div className="summary-row">
+                <span>Subtotal</span>
+                <strong>₹{cartTotal.toFixed(2)}</strong>
+              </div>
 
-            <div className="summary-divider" />
+              <div className="summary-row">
+                <span>Delivery Charge</span>
+                {deliveryCharge === 0 ? (
+                  <span className="free-badge">FREE</span>
+                ) : (
+                  <strong>₹{deliveryCharge.toFixed(2)}</strong>
+                )}
+              </div>
 
-            <div className="summary-row">
-              <span>Subtotal</span>
-              <strong>₹{cartTotal.toFixed(2)}</strong>
-            </div>
+              <div className="summary-divider"></div>
 
-            <div className="summary-row">
-              <span>Delivery Charge</span>
-              <strong className={deliveryCharge === 0 ? "free-text" : ""}>
-                {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}
-              </strong>
-            </div>
+              <div className="summary-row total-row">
+                <span>Total Payable</span>
+                <span className="total-price">₹{finalTotal.toFixed(2)}</span>
+              </div>
 
-            <div className="summary-divider" />
+              <button
+                type="button"
+                className="place-order-btn"
+                onClick={handlePlaceOrder}
+                disabled={loading}
+              >
+                {loading ? (
+                  <span>Processing Order...</span>
+                ) : (
+                  <span>Confirm & Place Order</span>
+                )}
+              </button>
 
-            <div className="summary-total">
-              <span>Total Payable</span>
-              <strong>₹{finalTotal.toFixed(2)}</strong>
-            </div>
-
-            <button
-              className="place-order-button"
-              onClick={handlePlaceOrder}
-              disabled={loading}
-            >
-              {loading
-                ? "Processing Order..."
-                : paymentMethod === "ONLINE"
-                  ? `Pay ₹${finalTotal.toFixed(2)} Online`
-                  : "Confirm & Place Order"}
-            </button>
-
-            <div className="checkout-security">
-              <ShieldCheck className="sec-icon" />
-              <span>Money-back guarantee & genuine products</span>
+              <div className="trust-footer">
+                <ShieldCheck className="trust-ic" />
+                <span>Money-back guarantee & genuine products</span>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* FOOTER */}
+      <footer className="checkout-footer">
+        © 2026 MediDeliver. All rights reserved. Express Healthcare Delivery.
+      </footer>
     </div>
   );
 };

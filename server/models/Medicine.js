@@ -55,6 +55,11 @@ const medicineSchema = new mongoose.Schema(
       default: 10,
       min: 0,
     },
+
+    image: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

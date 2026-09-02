@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+import AdminRoute from "./components/AdminRoute";
 
 // =========================
 // Pages
@@ -18,6 +19,8 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Returns from "./pages/Returns";
+import MyOrders from "./pages/MyOrders";
+import Profile from "./pages/Profile";
 
 // =========================
 // Razorpay Test
@@ -94,11 +97,27 @@ function App() {
             }
           />
           <Route
-            path="/dashboard"
+            path="/my-orders"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <MyOrders />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <AdminRoute>
+                <Dashboard />
+              </AdminRoute>
             }
           />
           <Route

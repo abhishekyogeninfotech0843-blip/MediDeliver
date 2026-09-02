@@ -9,20 +9,24 @@ import {
   Home as HomeIcon,
   Compass,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ExternalLink
 } from "lucide-react";
 import "./LocationModal.css";
 
 const POPULAR_CITIES = [
+  { name: "Aligarh", state: "Uttar Pradesh", lat: 27.8974, lng: 78.0880, pincode: "202001" },
   { name: "New Delhi", state: "Delhi", lat: 28.6139, lng: 77.2090, pincode: "110001" },
   { name: "Noida", state: "Uttar Pradesh", lat: 28.5355, lng: 77.3910, pincode: "201301" },
   { name: "Gurugram", state: "Haryana", lat: 28.4595, lng: 77.0266, pincode: "122001" },
   { name: "Mumbai", state: "Maharashtra", lat: 19.0760, lng: 72.8777, pincode: "400001" },
   { name: "Bengaluru", state: "Karnataka", lat: 12.9716, lng: 77.5946, pincode: "560001" },
-  { name: "Dubai", state: "Dubai Emirate", lat: 25.2048, lng: 55.2708, pincode: "00000" },
+  { name: "Lucknow", state: "Uttar Pradesh", lat: 26.8467, lng: 80.9462, pincode: "226001" },
   { name: "Jaipur", state: "Rajasthan", lat: 26.9124, lng: 75.7873, pincode: "302001" },
   { name: "Hyderabad", state: "Telangana", lat: 17.3850, lng: 78.4867, pincode: "500001" },
   { name: "Chandigarh", state: "Punjab", lat: 30.7333, lng: 76.7794, pincode: "160017" },
+  { name: "Pune", state: "Maharashtra", lat: 18.5204, lng: 73.8567, pincode: "411001" },
+  { name: "Dubai", state: "Dubai Emirate", lat: 25.2048, lng: 55.2708, pincode: "00000" },
 ];
 
 const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => {
@@ -31,7 +35,7 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [error, setError] = useState("");
-  
+
   const [selectedLocation, setSelectedLocation] = useState({
     area: "Connaught Place",
     city: "New Delhi",
@@ -49,19 +53,24 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
   useEffect(() => {
     if (currentLocation && currentLocation.city) {
       setSelectedLocation(currentLocation);
+      if (currentLocation.houseNo) setHouseNo(currentLocation.houseNo);
+      if (currentLocation.landmark) setLandmark(currentLocation.landmark);
     } else {
       const saved = localStorage.getItem("deliveryLocation");
       if (saved) {
         try {
-          setSelectedLocation(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          setSelectedLocation(parsed);
+          if (parsed.houseNo) setHouseNo(parsed.houseNo);
+          if (parsed.landmark) setLandmark(parsed.landmark);
         } catch (e) {}
       }
     }
   }, [currentLocation, isOpen]);
 
-  // Debounced search via OpenStreetMap Nominatim API
+  // Debounced search via OpenStreetMap Nominatim API with address details
   useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.length < 3) {
+    if (!searchQuery.trim() || searchQuery.length < 2) {
       setSuggestions([]);
       return;
     }
@@ -71,7 +80,7 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
       setError("");
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(
             searchQuery
           )}&limit=5`
         );
@@ -82,10 +91,43 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
       } finally {
         setLoadingSearch(false);
       }
-    }, 400);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Submit search query directly (on Enter press or Submit button)
+  const handleSearchSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    if (suggestions.length > 0) {
+      handleSelectSuggestion(suggestions[0]);
+      return;
+    }
+
+    setLoadingSearch(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(
+          query
+        )}&limit=1`
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        handleSelectSuggestion(data[0]);
+      } else {
+        setError(`No location found matching "${query}". Please check spelling or select from popular cities.`);
+      }
+    } catch (err) {
+      console.error("Search submit error:", err);
+      setError("Failed to search location. Please check internet connection.");
+    } finally {
+      setLoadingSearch(false);
+    }
+  };
 
   // Use Browser GPS Geolocation
   const handleDetectLocation = () => {
@@ -102,15 +144,15 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
         const { latitude, longitude } = position.coords;
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${latitude}&lon=${longitude}`
           );
           const data = await res.json();
           const addr = data.address || {};
 
           const detectedArea =
-            addr.suburb || addr.neighbourhood || addr.residential || addr.road || "Detected Area";
+            addr.suburb || addr.neighbourhood || addr.residential || addr.road || addr.quarter || "Current Location";
           const detectedCity =
-            addr.city || addr.town || addr.village || addr.county || "Detected City";
+            addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || "Detected City";
           const detectedState = addr.state || "";
           const detectedPincode = addr.postcode || "";
 
@@ -119,7 +161,7 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
             city: detectedCity,
             state: detectedState,
             pincode: detectedPincode,
-            fullAddress: data.display_name || `${detectedArea}, ${detectedCity}`,
+            fullAddress: data.display_name || `${detectedArea}, ${detectedCity}, ${detectedState}`,
             lat: latitude,
             lng: longitude,
             addressType: selectedLocation.addressType || "Home"
@@ -138,7 +180,7 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
       (err) => {
         console.error("GPS Error:", err);
         setDetecting(false);
-        setError("GPS Permission denied or unavailable. Please search or pick a city below.");
+        setError("GPS Permission denied or unavailable. Please search your city/address below.");
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
@@ -146,17 +188,35 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
 
   const handleSelectSuggestion = (item) => {
     const displayName = item.display_name || "";
+    const addr = item.address || {};
     const parts = displayName.split(", ");
-    
-    const area = parts[0] || "Selected Location";
-    const city = parts[Math.min(1, parts.length - 1)] || "City";
-    const state = parts[parts.length - 2] || "";
+
+    const area =
+      addr.suburb ||
+      addr.neighbourhood ||
+      addr.residential ||
+      addr.road ||
+      addr.quarter ||
+      parts[0] ||
+      "Selected Area";
+
+    const city =
+      addr.city ||
+      addr.town ||
+      addr.village ||
+      addr.municipality ||
+      addr.county ||
+      addr.state_district ||
+      (parts.length > 1 ? parts[1] : parts[0]);
+
+    const state = addr.state || (parts.length > 2 ? parts[parts.length - 2] : "");
+    const pincode = addr.postcode || "";
 
     const newLoc = {
       area: area,
       city: city,
       state: state,
-      pincode: "",
+      pincode: pincode,
       fullAddress: displayName,
       lat: parseFloat(item.lat),
       lng: parseFloat(item.lon),
@@ -192,6 +252,10 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
     };
 
     localStorage.setItem("deliveryLocation", JSON.stringify(finalLocation));
+
+    // Dispatch global event so all open pages/components (Navbar, Home, Medicines, Checkout) update state
+    window.dispatchEvent(new CustomEvent("deliveryLocationUpdated", { detail: finalLocation }));
+
     if (onSaveLocation) {
       onSaveLocation(finalLocation);
     }
@@ -200,7 +264,9 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
 
   if (!isOpen) return null;
 
-  const mapSrc = `https://maps.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}&z=14&output=embed`;
+  // OpenStreetMap embed URL with pin marker at coordinates
+  const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${selectedLocation.lng - 0.015}%2C${selectedLocation.lat - 0.015}%2C${selectedLocation.lng + 0.015}%2C${selectedLocation.lat + 0.015}&layer=mapnik&marker=${selectedLocation.lat}%2C${selectedLocation.lng}`;
+  const gmapsUrl = `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}`;
 
   return (
     <div className="location-modal-overlay" onClick={onClose}>
@@ -213,7 +279,7 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
             </div>
             <div>
               <h3>Choose Delivery Location</h3>
-              <p>Select your location for fast 30-min medicine delivery</p>
+              <p>Select destination for medicine delivery</p>
             </div>
           </div>
           <button className="loc-close-btn" onClick={onClose} title="Close">
@@ -236,7 +302,7 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
             )}
             <div>
               <strong>{detecting ? "Detecting Current GPS Location..." : "Use Current Location (GPS)"}</strong>
-              <small>Using device location for precise medicine delivery</small>
+              <small>Use your device GPS for current location</small>
             </div>
           </button>
 
@@ -247,17 +313,30 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
             </div>
           )}
 
-          {/* Search Box */}
-          <div className="loc-search-box">
-            <Search className="loc-search-icon" />
+          {/* Search Box Form */}
+          <form className="loc-search-box" onSubmit={handleSearchSubmit}>
+            <Search className="loc-search-icon" onClick={handleSearchSubmit} style={{ cursor: "pointer" }} />
             <input
               type="text"
-              placeholder="Search area, landmark, street or city..."
+              placeholder="Search city, area, landmark (e.g. Aligarh, Koramangala)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="clear-search-btn"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSuggestions([]);
+                }}
+                title="Clear search"
+              >
+                <X className="clear-icon" />
+              </button>
+            )}
             {loadingSearch && <Loader2 className="spin-icon-right" />}
-          </div>
+          </form>
 
           {/* Search Suggestions Dropdown */}
           {suggestions.length > 0 && (
@@ -301,9 +380,32 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
           {/* Interactive Map Preview */}
           <div className="map-preview-container">
             <div className="map-hdr">
-              <Compass className="map-hdr-icon" />
-              <span>Selected Location Map View</span>
+              <div className="map-hdr-left">
+                <span className="live-pulse"></span>
+                <Compass className="map-hdr-icon" />
+                <span className="map-title-text">
+                  Selected Location Map View
+                </span>
+              </div>
+              <a
+                href={gmapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="gmaps-link"
+                title="Open in Google Maps"
+              >
+                <ExternalLink className="ext-icon" />
+                <span>Google Maps</span>
+              </a>
             </div>
+
+            <div className="map-detected-bar">
+              <MapPin className="pin-bar-icon" />
+              <span>
+                <strong>Detected on Map:</strong> {selectedLocation.area || selectedLocation.city}, {selectedLocation.state || selectedLocation.city} ({selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)})
+              </span>
+            </div>
+
             <iframe
               title="Delivery Map Preview"
               src={mapSrc}
@@ -381,3 +483,4 @@ const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => 
 };
 
 export default LocationModal;
+

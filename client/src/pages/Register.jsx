@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api";
 import {
   Pill,
@@ -13,12 +13,17 @@ import {
   Truck,
   CheckCircle2,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Clock
 } from "lucide-react";
 import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const initialRole = searchParams.get("role") === "admin" ? "admin" : "user";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,18 +31,71 @@ const Register = () => {
     phone: "",
     password: "",
     confirmPassword: "",
+    role: initialRole,
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  // const [loading, setLoading] = useState(false);
+
+  // Live Digital Watch (Date, Day & Time)
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatDay = (date) => {
+    return date.toLocaleDateString("en-US", { weekday: "long" });
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Ensure all fields are completely blank on initial page load (prevents browser autofill)
+  useEffect(() => {
+    const clearTimer = setTimeout(() => {
+      setFormData((prev) => ({
+        ...prev,
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+      }));
+    }, 120);
+    return () => clearTimeout(clearTimer);
+  }, []);
+
+  useEffect(() => {
+    const roleParam = searchParams.get("role");
+    if (roleParam === "admin") {
+      setFormData((prev) => ({ ...prev, role: "admin" }));
+    } else if (roleParam === "user") {
+      setFormData((prev) => ({ ...prev, role: "user" }));
+    }
+  }, [searchParams]);
 
   // =========================
   // HANDLE INPUT CHANGE
   // =========================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -49,7 +107,6 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
     // Required fields
@@ -95,17 +152,28 @@ const Register = () => {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
+        role: formData.role,
       });
 
       if (response.data.success) {
-        alert("Account created successfully! Please log in.");
-        navigate("/login");
+        const isRegisteredAdmin = formData.role === "admin";
+        if (isRegisteredAdmin) {
+          alert("✅ Pharmacy Admin Account created successfully! Please log in as Admin.");
+          navigate("/login?role=admin");
+        } else {
+          alert("✅ Customer Account created successfully! Please log in.");
+          navigate("/login?role=user");
+        }
       } else {
         setError(response.data.message || "Registration failed");
       }
     } catch (err) {
       console.error("Register Error:", err);
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      if (!err.response) {
+        setError("Unable to connect to backend server. Please make sure the backend server (port 5001) is running.");
+      } else {
+        setError(err.response?.data?.message || "Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -116,12 +184,25 @@ const Register = () => {
       {/* NAVBAR */}
       <header className="register-navbar">
         <div className="register-nav-container">
-          <Link to="/login" className="register-logo">
-            <div className="register-logo-icon">
-              <Pill className="nav-pill-icon" />
+          <div className="register-brand-col">
+            <Link to={`/login?role=${formData.role}`} className="register-logo">
+              <div className="register-logo-icon">
+                <Pill className="nav-pill-icon" />
+              </div>
+              Medi<span>Deliver</span>
+            </Link>
+
+            {/* LIVE DIGITAL WATCH UNDER MEDIDELIVER */}
+            <div className="register-live-clock">
+              <span className="live-pulse-dot" />
+              <Clock className="clock-icon-svg" />
+              <span className="clock-date">{formatDate(currentDateTime)}</span>
+              <span className="clock-sep">,</span>
+              <span className="clock-day">{formatDay(currentDateTime)}</span>
+              <span className="clock-sep">,</span>
+              <span className="clock-time">{formatTime(currentDateTime)}</span>
             </div>
-            Medi<span>Deliver</span>
-          </Link>
+          </div>
 
           <div className="register-secure-badge">
             <Lock className="lock-sm" /> <span>Secure Registration</span>
@@ -176,8 +257,8 @@ const Register = () => {
                   <ShieldCheck className="b-icon-svg" />
                 </div>
                 <div>
-                  <strong>Secure Account</strong>
-                  <small>Your personal and prescription data remains safe</small>
+                  <strong>Role-Based Account Security</strong>
+                  <small>Create Customer or Pharmacy Admin accounts safely</small>
                 </div>
               </div>
             </div>
@@ -186,8 +267,12 @@ const Register = () => {
           {/* RIGHT CARD */}
           <div className="register-card">
             <div className="register-card-heading">
-              <h2>Create your account</h2>
-              <p>Join MediDeliver to start ordering medicines</p>
+              <h2>
+                {formData.role === "admin"
+                  ? "Create Pharmacy Admin Account 🛡️"
+                  : "Create Customer Account 🛒"}
+              </h2>
+              <p>Fill in your details to create your account</p>
             </div>
 
             {error && (
@@ -197,15 +282,64 @@ const Register = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} autoComplete="off">
+              {/* Dummy hidden inputs to defeat aggressive browser autofill */}
+              <input type="text" style={{ display: "none" }} tabIndex="-1" autoComplete="off" />
+              <input type="password" style={{ display: "none" }} tabIndex="-1" autoComplete="off" />
+
+              {/* ROLE SELECTION RADIO CARDS */}
+              <div className="role-selection-group">
+                <label className="role-group-label">Select Account Type *</label>
+                <div className="role-cards-grid">
+                  <label
+                    className={`role-option-card ${formData.role === "user" ? "active" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value="user"
+                      checked={formData.role === "user"}
+                      onChange={handleChange}
+                    />
+                    <div className="role-card-inner">
+                      <User className="role-ic" />
+                      <div>
+                        <strong>Customer / Patient</strong>
+                        <small>Order & track medicines</small>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`role-option-card ${formData.role === "admin" ? "active" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      checked={formData.role === "admin"}
+                      onChange={handleChange}
+                    />
+                    <div className="role-card-inner">
+                      <ShieldCheck className="role-ic" />
+                      <div>
+                        <strong>Pharmacy Admin</strong>
+                        <small>Manage inventory & sales</small>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
               {/* NAME */}
               <div className="register-form-group">
-                <label>Full Name</label>
+                <label>Full Name *</label>
                 <div className="register-input">
-                  <User className="input-icon-svg" />
                   <input
                     type="text"
                     name="name"
+                    required
+                    autoComplete="off"
                     placeholder="Enter your full name"
                     value={formData.name}
                     onChange={handleChange}
@@ -215,13 +349,18 @@ const Register = () => {
 
               {/* EMAIL */}
               <div className="register-form-group">
-                <label>Email Address</label>
+                <label>Email Address *</label>
                 <div className="register-input">
-                  <Mail className="input-icon-svg" />
                   <input
                     type="email"
                     name="email"
-                    placeholder="name@example.com"
+                    required
+                    autoComplete="new-password"
+                    placeholder={
+                      formData.role === "admin"
+                        ? "admin@medideliver.com"
+                        : "name@example.com"
+                    }
                     value={formData.email}
                     onChange={handleChange}
                   />
@@ -230,12 +369,13 @@ const Register = () => {
 
               {/* PHONE */}
               <div className="register-form-group">
-                <label>Mobile Number</label>
+                <label>Mobile Number *</label>
                 <div className="register-input">
-                  <Phone className="input-icon-svg" />
                   <input
                     type="tel"
                     name="phone"
+                    required
+                    autoComplete="off"
                     placeholder="10 digit mobile number"
                     maxLength="10"
                     value={formData.phone}
@@ -246,13 +386,14 @@ const Register = () => {
 
               {/* PASSWORD */}
               <div className="register-form-group">
-                <label>Password</label>
+                <label>Password *</label>
                 <div className="register-input">
-                  <Lock className="input-icon-svg" />
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    placeholder="Create password"
+                    required
+                    autoComplete="new-password"
+                    placeholder="Create password (min 6 chars)"
                     value={formData.password}
                     onChange={handleChange}
                   />
@@ -272,12 +413,13 @@ const Register = () => {
 
               {/* CONFIRM PASSWORD */}
               <div className="register-form-group">
-                <label>Confirm Password</label>
+                <label>Confirm Password *</label>
                 <div className="register-input">
-                  <Lock className="input-icon-svg" />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
+                    required
+                    autoComplete="new-password"
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
@@ -297,19 +439,28 @@ const Register = () => {
               </div>
 
               {/* BUTTON */}
-              <button type="submit" className="register-submit" disabled={loading}>
-                <span>{loading ? "Creating Account..." : "Create Account"}</span>
+              <button
+                type="submit"
+                className={`register-submit ${formData.role === "admin" ? "admin-submit" : ""}`}
+                disabled={loading}
+              >
+                <span>
+                  {loading
+                    ? "Creating Account..."
+                    : formData.role === "admin"
+                    ? "Register as Pharmacy Admin ➔"
+                    : "Create Customer Account ➔"}
+                </span>
                 <ArrowRight className="btn-icon" />
               </button>
             </form>
 
             <div className="register-login">
               <span>Already have an account?</span>
-              <Link to="/login"> Login</Link>
+              <Link to={`/login?role=${formData.role}`}> Sign In</Link>
             </div>
 
             {/* SECURITY */}
-
             <div className="register-security">
               <ShieldCheck className="sec-icon-sm" />
               <span>Your personal information is safe & encrypted</span>

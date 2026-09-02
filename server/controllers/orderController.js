@@ -1,25 +1,20 @@
+const mongoose = require("mongoose");
 const Order = require("../models/Order");
 const Customer = require("../models/Customer");
 const Medicine = require("../models/Medicine");
 const Notification = require("../models/Notification");
+const Payment = require("../models/Payment");
 
 // ==========================================
 // Create Order
 // ==========================================
 const createOrder = async (req, res) => {
   try {
-    const { customer, items, deliveryAddress, paymentMethod } = req.body;
+    const { customer, items, deliveryAddress, paymentMethod, customerName, customerPhone, customerEmail } = req.body;
 
     // ==========================================
     // Validate Required Fields
     // ==========================================
-
-    if (!customer) {
-      return res.status(400).json({
-        success: false,
-        message: "Customer is required",
-      });
-    }
 
     if (!deliveryAddress || !deliveryAddress.trim()) {
       return res.status(400).json({
@@ -43,8 +38,18 @@ const createOrder = async (req, res) => {
     // Check or Auto-Create Customer
     // ==========================================
 
+    let finalName = customerName || "";
+    let finalPhone = customerPhone || "";
+    let finalEmail = customerEmail || "";
+
+    // Extract name/phone from deliveryAddress if not provided separately
+    if (!finalName && deliveryAddress) {
+      const parts = deliveryAddress.split(",");
+      if (parts.length > 0) finalName = parts[0].trim();
+    }
+
     let customerExists = null;
-    if (customer) {
+    if (customer && mongoose.Types.ObjectId.isValid(customer)) {
       try {
         customerExists = await Customer.findById(customer);
       } catch (e) {
@@ -52,15 +57,31 @@ const createOrder = async (req, res) => {
       }
     }
 
-    if (!customerExists) {
-      // Find or create default customer
-      customerExists = await Customer.findOne({ phone: "9876543210" });
-      if (!customerExists) {
+    if (!customerExists && finalEmail) {
+      customerExists = await Customer.findOne({ email: finalEmail.toLowerCase().trim() });
+    }
+
+    if (!customerExists && !finalEmail && finalPhone) {
+      customerExists = await Customer.findOne({ phone: finalPhone });
+    }
+
+    if (customerExists) {
+      if (finalName && (!customerExists.name || customerExists.name === "Pharmacy Customer")) {
+        customerExists.name = finalName;
+        await customerExists.save();
+      }
+    } else {
+      try {
         customerExists = await Customer.create({
-          name: "Guest Customer",
-          phone: "9876543210",
+          name: finalName || "Pharmacy Customer",
+          phone: finalPhone || `98${Math.floor(10000000 + Math.random() * 90000000)}`,
+          email: finalEmail || "",
           address: deliveryAddress.trim(),
         });
+      } catch (err) {
+        if (finalPhone) {
+          customerExists = await Customer.findOne({ phone: finalPhone });
+        }
       }
     }
 
@@ -135,13 +156,23 @@ const createOrder = async (req, res) => {
     // ==========================================
 
     const order = await Order.create({
-      customer: customerExists._id,
+      customer: customerExists?._id,
+      customerName: finalName || customerExists?.name || "Customer",
+      customerPhone: finalPhone || customerExists?.phone || "",
+      customerEmail: finalEmail || customerExists?.email || "",
       items: orderItems,
       totalAmount,
       deliveryAddress: deliveryAddress.trim(),
       paymentMethod,
       paymentStatus: "PENDING",
       orderStatus: "PLACED",
+      trackingId: `TRK-${(finalName ? finalName.slice(0, 3).toUpperCase() : "MED")}-${Math.floor(100000 + Math.random() * 900000)}`,
+      deliveryPartner: {
+        name: "Ramesh Sharma (MediDeliver Express Partner)",
+        phone: "+91 98765 43210",
+        vehicle: "Electric Bike (UP 81 AB 4920)",
+      },
+      estimatedDeliveryTime: "30-45 mins",
     });
 
     // ==========================================
@@ -195,6 +226,26 @@ const createOrder = async (req, res) => {
   }
 };
 
+// Helper to ensure tracking info on existing/legacy orders
+const enrichOrderData = (ord) => {
+  if (!ord) return ord;
+  const obj = ord.toObject ? ord.toObject() : { ...ord };
+  if (!obj.trackingId) {
+    obj.trackingId = `TRK-${(obj._id || "").toString().slice(-6).toUpperCase()}`;
+  }
+  if (!obj.deliveryPartner || !obj.deliveryPartner.name) {
+    obj.deliveryPartner = {
+      name: "Ramesh Sharma (MediDeliver Express Partner)",
+      phone: "+91 98765 43210",
+      vehicle: "Electric Bike (UP 81 AB 4920)",
+    };
+  }
+  if (!obj.estimatedDeliveryTime) {
+    obj.estimatedDeliveryTime = "30-45 mins";
+  }
+  return obj;
+};
+
 // ==========================================
 // Get All Orders
 // ==========================================
@@ -205,10 +256,12 @@ const getOrders = async (req, res) => {
       .populate("items.medicine")
       .sort({ createdAt: -1 });
 
+    const enrichedOrders = orders.map(enrichOrderData);
+
     res.status(200).json({
       success: true,
-      count: orders.length,
-      orders,
+      count: enrichedOrders.length,
+      orders: enrichedOrders,
     });
   } catch (error) {
     console.error("Get Orders Error:", error);
@@ -240,7 +293,7 @@ const getOrderById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      order,
+      order: enrichOrderData(order),
     });
   } catch (error) {
     console.error("Get Order By ID Error:", error);
@@ -258,7 +311,7 @@ const getOrderById = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { orderStatus } = req.body;
+    const { orderStatus, deliveryPartner, estimatedDeliveryTime } = req.body;
 
     // ==========================================
     // Allowed Statuses
@@ -267,6 +320,7 @@ const updateOrderStatus = async (req, res) => {
     const allowedStatuses = [
       "PLACED",
       "CONFIRMED",
+      "PACKED",
       "OUT_FOR_DELIVERY",
       "DELIVERED",
       "CANCELLED",
@@ -292,51 +346,63 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // ==========================================
-    // Prevent Changes
-    // ==========================================
-
-    if (order.orderStatus === "DELIVERED") {
-      return res.status(400).json({
-        success: false,
-        message: "Delivered order status cannot be changed",
-      });
-    }
-
-    if (order.orderStatus === "CANCELLED") {
-      return res.status(400).json({
-        success: false,
-        message: "Cancelled order status cannot be changed",
-      });
-    }
-
-    // ==========================================
-    // Valid Status Flow
-    // ==========================================
-
-    const validTransitions = {
-      PLACED: ["CONFIRMED", "CANCELLED"],
-      CONFIRMED: ["OUT_FOR_DELIVERY", "CANCELLED"],
-      OUT_FOR_DELIVERY: ["DELIVERED"],
-    };
-
-    const currentStatus = order.orderStatus;
-
-    if (
-      !validTransitions[currentStatus] ||
-      !validTransitions[currentStatus].includes(orderStatus)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change order status from ${currentStatus} to ${orderStatus}`,
-      });
-    }
-
-    // ==========================================
     // Update Status
-    // ==========================================
-
     order.orderStatus = orderStatus;
+
+    // Update Stage Timestamps
+    const now = new Date();
+    if (orderStatus === "CONFIRMED") {
+      if (!order.confirmedAt) order.confirmedAt = now;
+    } else if (orderStatus === "PACKED") {
+      if (!order.confirmedAt) order.confirmedAt = now;
+      if (!order.packedAt) order.packedAt = now;
+    } else if (orderStatus === "OUT_FOR_DELIVERY") {
+      if (!order.confirmedAt) order.confirmedAt = now;
+      if (!order.packedAt) order.packedAt = now;
+      if (!order.outForDeliveryAt) order.outForDeliveryAt = now;
+    } else if (orderStatus === "DELIVERED") {
+      if (!order.confirmedAt) order.confirmedAt = now;
+      if (!order.packedAt) order.packedAt = now;
+      if (!order.outForDeliveryAt) order.outForDeliveryAt = now;
+      if (!order.deliveredAt) order.deliveredAt = now;
+    }
+
+    if (deliveryPartner) {
+      order.deliveryPartner = {
+        name: deliveryPartner.name || order.deliveryPartner?.name || "Ramesh Sharma",
+        phone: deliveryPartner.phone || order.deliveryPartner?.phone || "+91 98765 43210",
+        vehicle: deliveryPartner.vehicle || order.deliveryPartner?.vehicle || "Electric Bike (UP 81 AB 4920)",
+      };
+    }
+
+    if (estimatedDeliveryTime) {
+      order.estimatedDeliveryTime = estimatedDeliveryTime;
+    }
+
+    // Auto mark payment status as PAID if delivered and sync Payment document
+    if (orderStatus === "DELIVERED") {
+      order.paymentStatus = "PAID";
+      try {
+        let paymentDoc = await Payment.findOne({ order: order._id });
+        if (paymentDoc) {
+          paymentDoc.paymentStatus = "PAID";
+          if (!paymentDoc.paidAt) paymentDoc.paidAt = new Date();
+          await paymentDoc.save();
+        } else if (order.customer) {
+          await Payment.create({
+            order: order._id,
+            customer: order.customer,
+            amount: order.totalAmount,
+            paymentMethod: order.paymentMethod,
+            paymentStatus: "PAID",
+            paidAt: new Date(),
+            transactionId: `TXN-${order._id.toString().slice(-6).toUpperCase()}`,
+          });
+        }
+      } catch (pErr) {
+        console.warn("Payment sync error:", pErr.message);
+      }
+    }
 
     await order.save();
 
@@ -351,20 +417,26 @@ const updateOrderStatus = async (req, res) => {
     switch (orderStatus) {
       case "CONFIRMED":
         notificationType = "ORDER_CONFIRMED";
-        title = "Order Confirmed";
-        message = "Your medicine order has been confirmed successfully.";
+        title = "Order Confirmed by Admin";
+        message = "Your medicine order has been verified and confirmed by pharmacy admin.";
+        break;
+
+      case "PACKED":
+        notificationType = "ORDER_PACKED";
+        title = "Order Packed & Ready";
+        message = "Your medicines have been safely packed and prepared for delivery dispatch.";
         break;
 
       case "OUT_FOR_DELIVERY":
         notificationType = "OUT_FOR_DELIVERY";
         title = "Order Out For Delivery";
-        message = "Your medicine order is out for delivery.";
+        message = `Your medicine order is out for delivery with ${order.deliveryPartner?.name || "our delivery partner"}.`;
         break;
 
       case "DELIVERED":
         notificationType = "ORDER_DELIVERED";
-        title = "Order Delivered";
-        message = "Your medicine order has been delivered successfully.";
+        title = "Order Delivered Successfully";
+        message = "Your medicine order has been delivered successfully. Thank you!";
         break;
 
       case "CANCELLED":
@@ -402,7 +474,7 @@ const updateOrderStatus = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Order status updated successfully",
-      order: populatedOrder,
+      order: enrichOrderData(populatedOrder),
     });
   } catch (error) {
     console.error("Update Order Status Error:", error);

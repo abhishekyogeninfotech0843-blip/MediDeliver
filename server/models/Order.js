@@ -37,6 +37,21 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    customerName: {
+      type: String,
+      default: "",
+    },
+
+    customerPhone: {
+      type: String,
+      default: "",
+    },
+
+    customerEmail: {
+      type: String,
+      default: "",
+    },
+
     items: {
       type: [orderItemSchema],
       required: true,
@@ -77,11 +92,57 @@ const orderSchema = new mongoose.Schema(
       enum: [
         "PLACED",
         "CONFIRMED",
+        "PACKED",
         "OUT_FOR_DELIVERY",
         "DELIVERED",
         "CANCELLED",
       ],
       default: "PLACED",
+    },
+
+    trackingId: {
+      type: String,
+      default: "",
+    },
+
+    deliveryPartner: {
+      name: {
+        type: String,
+        default: "Ramesh Sharma (MediDeliver Express Partner)",
+      },
+      phone: {
+        type: String,
+        default: "+91 98765 43210",
+      },
+      vehicle: {
+        type: String,
+        default: "Electric Bike (UP 81 AB 4920)",
+      },
+    },
+
+    estimatedDeliveryTime: {
+      type: String,
+      default: "30-45 mins",
+    },
+
+    confirmedAt: {
+      type: Date,
+      default: null,
+    },
+
+    packedAt: {
+      type: Date,
+      default: null,
+    },
+
+    outForDeliveryAt: {
+      type: Date,
+      default: null,
+    },
+
+    deliveredAt: {
+      type: Date,
+      default: null,
     },
   },
   {

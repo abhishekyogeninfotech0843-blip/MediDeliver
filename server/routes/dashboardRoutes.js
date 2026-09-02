@@ -8,12 +8,16 @@ const {
   getRecentPayments,
   getOrderStatusSummary,
   getSalesSummary,
+  getAllDashboardDetails,
 } = require("../controllers/dashboardController");
 
 const router = express.Router();
 
 // Dashboard Stats
 router.get("/", getDashboardStats);
+
+// All Dashboard Details with Date Filter
+router.get("/all-details", getAllDashboardDetails);
 
 // Recent Orders
 router.get("/recent-orders", getRecentOrders);

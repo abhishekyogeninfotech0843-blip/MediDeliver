@@ -21,10 +21,15 @@ import {
   User,
   MapPin,
   Building2,
-  X
+  X,
+  Edit,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import LocationModal from "../components/LocationModal";
 import UserProfileDropdown from "../components/UserProfileDropdown";
+import EditMedicineModal from "../components/EditMedicineModal";
+import { getMedicineImage } from "../utils/medicineImages";
 import "./Medicines.css";
 
 const Medicines = () => {
@@ -41,6 +46,21 @@ const Medicines = () => {
   const [user, setUser] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [deliveryLocation, setDeliveryLocation] = useState(null);
+  const [editingMedicine, setEditingMedicine] = useState(null);
+
+  // Pagination State (16 items per page - 4 rows x 4 cards)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 16;
+
+  const handleMedicineUpdated = (updatedMed, deletedId) => {
+    if (deletedId) {
+      setMedicines((prev) => prev.filter((m) => m._id !== deletedId));
+    } else if (updatedMed) {
+      setMedicines((prev) =>
+        prev.map((m) => (m._id === updatedMed._id ? { ...m, ...updatedMed } : m))
+      );
+    }
+  };
 
   // =========================
   // CART
@@ -63,12 +83,29 @@ const Medicines = () => {
       }
     }
 
-    const savedLoc = localStorage.getItem("deliveryLocation");
-    if (savedLoc) {
-      try {
-        setDeliveryLocation(JSON.parse(savedLoc));
-      } catch (e) {}
-    }
+    const loadSavedLocation = () => {
+      const savedLoc = localStorage.getItem("deliveryLocation");
+      if (savedLoc) {
+        try {
+          setDeliveryLocation(JSON.parse(savedLoc));
+        } catch (e) {}
+      }
+    };
+
+    loadSavedLocation();
+
+    const handleLocationEvent = (e) => {
+      if (e.detail) {
+        setDeliveryLocation(e.detail);
+      } else {
+        loadSavedLocation();
+      }
+    };
+
+    window.addEventListener("deliveryLocationUpdated", handleLocationEvent);
+    return () => {
+      window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
+    };
   }, []);
 
   useEffect(() => {
@@ -186,25 +223,40 @@ const Medicines = () => {
   });
 
   // =========================
-  // SORT
+  // SORT (Default: Alphabetical A to Z)
   // =========================
   if (sort === "price-low") {
     filteredMedicines.sort(
       (a, b) => Number(a.sellingPrice || 0) - Number(b.sellingPrice || 0),
     );
-  }
-
-  if (sort === "price-high") {
+  } else if (sort === "price-high") {
     filteredMedicines.sort(
       (a, b) => Number(b.sellingPrice || 0) - Number(a.sellingPrice || 0),
     );
-  }
-
-  if (sort === "name") {
+  } else {
+    // Default (All medicines) & "name": Sort Alphabetically A to Z
     filteredMedicines.sort((a, b) =>
       (a.name || "").localeCompare(b.name || ""),
     );
   }
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category, company, sort]);
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage) || 1;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentMedicines = filteredMedicines.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 280, behavior: "smooth" });
+    }
+  };
 
   // =========================
   // ADD TO CART
@@ -301,10 +353,12 @@ const Medicines = () => {
           </div>
 
           <div className="med-nav-right">
-            <Link to="/dashboard" className="medicines-login dashboard-nav-btn">
-              <LayoutDashboard className="nav-btn-icon" />
-              <span>Dashboard</span>
-            </Link>
+            {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+              <Link to="/dashboard" className="medicines-login dashboard-nav-btn">
+                <LayoutDashboard className="nav-btn-icon" />
+                <span>Dashboard</span>
+              </Link>
+            )}
 
             <UserProfileDropdown
               user={user}
@@ -493,7 +547,7 @@ const Medicines = () => {
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                 >
-                  <option value="default">Sort By: Featured</option>
+                  <option value="default">Sort By: Name (A to Z)</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="name">Name: A-Z</option>
@@ -584,7 +638,8 @@ const Medicines = () => {
           <>
             <div className="result-header">
               <div className="result-count">
-                Showing <strong>{filteredMedicines.length}</strong> medicines
+                Showing <strong>{indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredMedicines.length)}</strong> of <strong>{filteredMedicines.length}</strong> medicines
+                {totalPages > 1 && <span style={{ color: "#64748b", marginLeft: "8px" }}>(Page {currentPage} of {totalPages})</span>}
               </div>
             </div>
 
@@ -612,76 +667,133 @@ const Medicines = () => {
 
             {/* ================= MEDICINE CARDS ================= */}
             {filteredMedicines.length > 0 && (
-              <div className="medicines-grid">
-                {filteredMedicines.map((medicine) => {
-                  const stock = Number(medicine.stock || 0);
-                  const minimumStock = Number(medicine.minimumStock || 10);
-                  const outOfStock = stock <= 0;
-                  const lowStock = stock > 0 && stock <= minimumStock;
+              <>
+                <div className="medicines-grid">
+                  {currentMedicines.map((medicine) => {
+                    const stock = Number(medicine.stock || 0);
+                    const minimumStock = Number(medicine.minimumStock || 10);
+                    const outOfStock = stock <= 0;
+                    const lowStock = stock > 0 && stock <= minimumStock;
 
-                  return (
-                    <div className="medicine-card" key={medicine._id}>
-                      <div className="medicine-image">
-                        <div className="medicine-icon-box">
-                          <Pill className="card-pill-svg" />
-                        </div>
-
-                        {!outOfStock && (
-                          <span className="medicine-badge">
-                            <ShieldCheck className="badge-shield" /> Genuine
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="medicine-body">
-                        <div className="medicine-category">
-                          {medicine.category || "Healthcare"}
-                        </div>
-
-                        <h3 className="medicine-name">{medicine.name}</h3>
-
-                        <div className="medicine-company">
-                          {medicine.company || "Trusted Manufacturer"}
-                        </div>
-
-                        <div className="medicine-info">
-                          <div className="medicine-price">
-                            ₹{Number(medicine.sellingPrice || 0).toFixed(2)}
+                    return (
+                      <div className="medicine-card" key={medicine._id}>
+                        <div className="medicine-image">
+                          <div className="medicine-icon-box">
+                            <Pill className="card-pill-svg" />
                           </div>
 
-                          {outOfStock && (
-                            <div className="medicine-stock stock-out">
-                              <AlertCircle className="stock-icon" /> Out of stock
-                            </div>
-                          )}
-
-                          {!outOfStock && lowStock && (
-                            <div className="medicine-stock stock-low">
-                              <AlertTriangle className="stock-icon" /> Only {stock} left
-                            </div>
-                          )}
-
-                          {!outOfStock && !lowStock && (
-                            <div className="medicine-stock stock-good">
-                              <PackageCheck className="stock-icon" /> In stock
-                            </div>
+                          {!outOfStock && (
+                            <span className="medicine-badge">
+                              <ShieldCheck className="badge-shield" /> Genuine
+                            </span>
                           )}
                         </div>
 
-                        <button
-                          type="button"
-                          className="add-cart-button"
-                          disabled={outOfStock}
-                          onClick={() => handleAddToCart(medicine)}
-                        >
-                          <ShoppingCart className="btn-cart-svg" />
-                          <span>{outOfStock ? "Out of Stock" : "Add to Cart"}</span>
-                        </button>
+                        <div className="medicine-body">
+                          <div className="medicine-category">
+                            {medicine.category || "Healthcare"}
+                          </div>
+
+                          <h3 className="medicine-name">{medicine.name}</h3>
+
+                          <div className="medicine-company">
+                            {medicine.company || "Trusted Manufacturer"}
+                          </div>
+
+                          <div className="medicine-info">
+                            <div className="medicine-price">
+                              ₹{Number(medicine.sellingPrice || 0).toFixed(2)}
+                            </div>
+
+                            {outOfStock && (
+                              <div className="medicine-stock stock-out">
+                                <AlertCircle className="stock-icon" /> Out of stock
+                              </div>
+                            )}
+
+                            {!outOfStock && lowStock && (
+                              <div className="medicine-stock stock-low">
+                                <AlertTriangle className="stock-icon" /> Only {stock} left
+                              </div>
+                            )}
+
+                            {!outOfStock && !lowStock && (
+                              <div className="medicine-stock stock-good">
+                                <PackageCheck className="stock-icon" /> In stock
+                              </div>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            className="add-cart-button"
+                            disabled={outOfStock}
+                            onClick={() => handleAddToCart(medicine)}
+                          >
+                            <ShoppingCart className="btn-cart-svg" />
+                            <span>{outOfStock ? "Out of Stock" : "Add to Cart"}</span>
+                          </button>
+
+                          {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+                            <button
+                              type="button"
+                              className="admin-edit-card-btn"
+                              onClick={() => setEditingMedicine(medicine)}
+                            >
+                              <Edit className="edit-btn-svg" />
+                              <span>Edit Medicine & Stock</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                {/* ================= PAGINATION CONTROLS ================= */}
+                {totalPages > 1 && (
+                  <div className="pagination-wrapper">
+                    <div className="pagination-info">
+                      Showing page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> ({filteredMedicines.length} total medicines)
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div className="pagination-controls">
+                      <button
+                        type="button"
+                        className="page-btn prev-btn"
+                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                      >
+                        <ChevronLeft className="page-icon" />
+                        <span>Previous</span>
+                      </button>
+
+                      <div className="page-numbers">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                          <button
+                            key={pageNum}
+                            type="button"
+                            className={`page-num-btn ${currentPage === pageNum ? "active" : ""}`}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="page-btn next-btn"
+                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="page-icon" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -693,6 +805,14 @@ const Medicines = () => {
         onClose={() => setIsLocationModalOpen(false)}
         onSaveLocation={(loc) => setDeliveryLocation(loc)}
         currentLocation={deliveryLocation}
+      />
+
+      {/* EDIT MEDICINE MODAL (ADMIN ONLY) */}
+      <EditMedicineModal
+        isOpen={!!editingMedicine}
+        medicine={editingMedicine}
+        onClose={() => setEditingMedicine(null)}
+        onSuccess={handleMedicineUpdated}
       />
     </div>
   );
