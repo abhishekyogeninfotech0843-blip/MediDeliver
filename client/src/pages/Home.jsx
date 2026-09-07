@@ -22,19 +22,23 @@ import {
   LayoutDashboard,
   LogOut,
   User,
-  Building2
+  Building2,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import LocationModal from "../components/LocationModal";
 import UserProfileDropdown from "../components/UserProfileDropdown";
-import "./Home.css";
+import UploadPrescriptionModal from "../components/UploadPrescriptionModal";
+import { getDeliveryEstimate } from "../utils/deliveryZone";
+import "./home.css";
 
 const Home = () => {
   const navigate = useNavigate();
   const { cartCount } = useCart();
   const [user, setUser] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [deliveryLocation, setDeliveryLocation] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -46,13 +50,30 @@ const Home = () => {
       }
     }
 
+    const DEFAULT_ALIGARH = {
+      area: "Centre Point",
+      city: "Aligarh",
+      district: "Aligarh",
+      state: "Uttar Pradesh",
+      pincode: "202001",
+      lat: 27.8974,
+      lng: 78.088,
+    };
+
     const loadSavedLocation = () => {
       const savedLoc = localStorage.getItem("deliveryLocation");
       if (savedLoc) {
         try {
-          setDeliveryLocation(JSON.parse(savedLoc));
+          const parsed = JSON.parse(savedLoc);
+          const est = getDeliveryEstimate(parsed);
+          if (est.isDeliverable) {
+            setDeliveryLocation(parsed);
+            return;
+          }
         } catch (e) {}
       }
+      setDeliveryLocation(DEFAULT_ALIGARH);
+      localStorage.setItem("deliveryLocation", JSON.stringify(DEFAULT_ALIGARH));
     };
 
     loadSavedLocation();
@@ -70,6 +91,15 @@ const Home = () => {
       window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
     };
   }, []);
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/medicines?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate("/medicines");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -189,13 +219,24 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="nav-search">
-            <Search className="search-icon" />
+          <form className="nav-search" onSubmit={handleSearch}>
+            <Search
+              className="search-icon"
+              style={{ cursor: "pointer" }}
+              onClick={handleSearch}
+            />
             <input
               type="text"
               placeholder="Search medicines, brands or health products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch(e);
+                }
+              }}
             />
-          </div>
+          </form>
 
           <div className="nav-actions">
             {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
@@ -244,7 +285,11 @@ const Home = () => {
                 <ArrowRight className="btn-icon" />
               </Link>
 
-              <button className="secondary-btn">
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => setIsPrescriptionModalOpen(true)}
+              >
                 <FileText className="btn-icon" />
                 <span>Upload Prescription</span>
               </button>
@@ -566,10 +611,10 @@ const Home = () => {
 
           <div className="footer-column">
             <h4>Support & Return</h4>
-            <Link to="/returns" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Return Policy & Claims</Link>
-            <p>Help Center</p>
-            <p>Contact Us</p>
-            <p>Privacy Policy</p>
+            <Link to="/returns">Return Policy & Claims</Link>
+            <Link to="/contact">Help Center</Link>
+            <Link to="/contact">Contact Us</Link>
+            <Link to="/privacy-policy">Privacy Policy</Link>
           </div>
 
           <div className="footer-column">
@@ -591,6 +636,14 @@ const Home = () => {
         onClose={() => setIsLocationModalOpen(false)}
         onSaveLocation={(loc) => setDeliveryLocation(loc)}
         currentLocation={deliveryLocation}
+      />
+
+      {/* UPLOAD PRESCRIPTION MODAL */}
+      <UploadPrescriptionModal
+        isOpen={isPrescriptionModalOpen}
+        onClose={() => setIsPrescriptionModalOpen(false)}
+        user={user}
+        deliveryLocation={deliveryLocation}
       />
     </div>
   );

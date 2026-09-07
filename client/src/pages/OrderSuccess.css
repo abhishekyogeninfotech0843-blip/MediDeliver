@@ -167,3 +167,30 @@
   transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(5, 150, 105, 0.4);
 }
+
+/* ================= MOBILE RESPONSIVE ================= */
+@media (max-width: 640px) {
+  .order-success-page {
+    padding: 24px 16px;
+  }
+
+  .success-card {
+    padding: 28px 16px;
+  }
+
+  .success-card h1 {
+    font-size: 24px;
+  }
+
+  .receipt-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-item.full-width {
+    grid-column: span 1;
+  }
+
+  .continue-btn {
+    width: 100%;
+  }
+}

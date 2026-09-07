@@ -54,13 +54,50 @@ const orderSchema = new mongoose.Schema(
 
     items: {
       type: [orderItemSchema],
-      required: true,
+      default: [],
       validate: {
         validator: function (items) {
-          return items.length > 0;
+          if (this.orderType === "PRESCRIPTION") return true;
+          return Array.isArray(items) && items.length > 0;
         },
         message: "Order must contain at least one medicine",
       },
+    },
+
+    orderType: {
+      type: String,
+      enum: ["STANDARD", "PRESCRIPTION"],
+      default: "STANDARD",
+    },
+
+    prescriptionImage: {
+      type: String,
+      default: "",
+    },
+
+    prescriptionFileName: {
+      type: String,
+      default: "",
+    },
+
+    prescriptionNotes: {
+      type: String,
+      default: "",
+    },
+
+    doctorName: {
+      type: String,
+      default: "",
+    },
+
+    patientAge: {
+      type: String,
+      default: "",
+    },
+
+    patientGender: {
+      type: String,
+      default: "",
     },
 
     totalAmount: {
@@ -123,6 +160,11 @@ const orderSchema = new mongoose.Schema(
     estimatedDeliveryTime: {
       type: String,
       default: "30-45 mins",
+    },
+
+    deliveryDistance: {
+      type: Number,
+      default: 0,
     },
 
     confirmedAt: {

@@ -32,10 +32,12 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     role: initialRole,
+    adminSecretKey: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showAdminSecret, setShowAdminSecret] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -145,6 +147,11 @@ const Register = () => {
       return;
     }
 
+    if (formData.role === "admin" && !formData.adminSecretKey?.trim()) {
+      setError("🔒 Please enter the Admin Secret Security Key to create an Administrator account.");
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await api.post("/auth/register", {
@@ -153,6 +160,8 @@ const Register = () => {
         phone: formData.phone,
         password: formData.password,
         role: formData.role,
+        adminSecretKey:
+          formData.role === "admin" ? formData.adminSecretKey.trim() : undefined,
       });
 
       if (response.data.success) {
@@ -437,6 +446,38 @@ const Register = () => {
                   </button>
                 </div>
               </div>
+
+              {/* ADMIN MASTER SECRET KEY */}
+              {formData.role === "admin" && (
+                <div className="register-form-group admin-secret-group">
+                  <label>Admin Secret Passkey *</label>
+                  <div className="register-input">
+                    <input
+                      type={showAdminSecret ? "text" : "password"}
+                      name="adminSecretKey"
+                      required
+                      placeholder="Enter Master Admin Secret Passkey"
+                      value={formData.adminSecretKey}
+                      onChange={handleChange}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowAdminSecret(!showAdminSecret)}
+                      title={showAdminSecret ? "Hide Secret Key" : "Show Secret Key"}
+                    >
+                      {showAdminSecret ? (
+                        <EyeOff className="eye-svg" />
+                      ) : (
+                        <Eye className="eye-svg" />
+                      )}
+                    </button>
+                  </div>
+                  <small className="admin-secret-tip">
+                    🔒 Master key required. Unauthorized admin registration is prevented.
+                  </small>
+                </div>
+              )}
 
               {/* BUTTON */}
               <button

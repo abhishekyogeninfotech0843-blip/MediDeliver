@@ -52,6 +52,52 @@ const returnRequestSchema = new mongoose.Schema(
       enum: ["PENDING", "APPROVED", "REJECTED", "REFUNDED"],
       default: "PENDING",
     },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      default: null,
+    },
+    orderPaymentMethod: {
+      type: String,
+      default: "ONLINE",
+    },
+    orderTotal: {
+      type: Number,
+      default: 0,
+    },
+    refundAmount: {
+      type: Number,
+      default: 0,
+    },
+    refundMethod: {
+      type: String,
+      enum: ["ORIGINAL_SOURCE", "UPI", "BANK_TRANSFER"],
+      default: "ORIGINAL_SOURCE",
+    },
+    refundUpiId: {
+      type: String,
+      default: "",
+    },
+    refundAccountNumber: {
+      type: String,
+      default: "",
+    },
+    refundIfsc: {
+      type: String,
+      default: "",
+    },
+    refundAccountHolder: {
+      type: String,
+      default: "",
+    },
+    refundTransactionId: {
+      type: String,
+      default: "",
+    },
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
     adminNotes: {
       type: String,
       default: "",

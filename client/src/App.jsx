@@ -13,6 +13,7 @@ import AdminRoute from "./components/AdminRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import Medicines from "./pages/medicines";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -21,6 +22,8 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import Returns from "./pages/Returns";
 import MyOrders from "./pages/MyOrders";
 import Profile from "./pages/Profile";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // =========================
 // Razorpay Test
@@ -54,6 +57,20 @@ function App() {
               </PublicRoute>
             }
           />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+
+          {/* INFORMATIONAL / SUPPORT ROUTES */}
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/contact-us" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
           {/* PROTECTED ROUTES */}
           <Route

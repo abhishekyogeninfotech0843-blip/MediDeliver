@@ -12,7 +12,8 @@ import {
   RotateCcw,
   Package,
   UserCheck,
-  ShoppingCart
+  ShoppingCart,
+  HelpCircle
 } from "lucide-react";
 import "./UserProfileDropdown.css";
 
@@ -105,65 +106,105 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
 
           {/* MENU ITEMS */}
           <div className="dropdown-menu-list">
-            {isAdmin && (
-              <Link
-                to="/dashboard"
-                className="dropdown-item"
-                onClick={() => setIsOpen(false)}
-              >
-                <LayoutDashboard className="item-icon text-teal" />
-                <span>Admin Dashboard</span>
-              </Link>
-            )}
+            {isAdmin ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <LayoutDashboard className="item-icon text-teal" />
+                  <span>Admin Dashboard</span>
+                </Link>
 
-            <Link
-              to="/my-orders"
-              className="dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <Package className="item-icon text-blue" />
-              <span>My Orders</span>
-            </Link>
+                <Link
+                  to="/medicines"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Package className="item-icon text-blue" />
+                  <span>Manage Medicines</span>
+                </Link>
 
-            <Link
-              to="/profile"
-              className="dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <UserCheck className="item-icon text-purple" />
-              <span>My Profile</span>
-            </Link>
+                <Link
+                  to="/returns"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <RotateCcw className="item-icon text-teal" />
+                  <span>Customer Return Requests</span>
+                </Link>
 
-            <Link
-              to="/cart"
-              className="dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <ShoppingCart className="item-icon text-blue" />
-              <span>My Cart</span>
-            </Link>
+                <Link
+                  to="/profile"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <UserCheck className="item-icon text-purple" />
+                  <span>Admin Profile</span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/my-orders"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Package className="item-icon text-blue" />
+                  <span>My Orders</span>
+                </Link>
 
-            <Link
-              to="/returns"
-              className="dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <RotateCcw className="item-icon text-green" />
-              <span>Return Medicine</span>
-            </Link>
+                <Link
+                  to="/profile"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <UserCheck className="item-icon text-purple" />
+                  <span>My Profile</span>
+                </Link>
 
-            {onOpenLocation && (
-              <button
-                type="button"
-                className="dropdown-item"
-                onClick={() => {
-                  setIsOpen(false);
-                  onOpenLocation();
-                }}
-              >
-                <MapPin className="item-icon text-green" />
-                <span>Delivery Address</span>
-              </button>
+                <Link
+                  to="/cart"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <ShoppingCart className="item-icon text-blue" />
+                  <span>My Cart</span>
+                </Link>
+
+                <Link
+                  to="/returns"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <RotateCcw className="item-icon text-green" />
+                  <span>Return Medicine</span>
+                </Link>
+
+                <Link
+                  to="/contact"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <HelpCircle className="item-icon text-teal" />
+                  <span>Help & Support</span>
+                </Link>
+
+                {onOpenLocation && (
+                  <button
+                    type="button"
+                    className="dropdown-item"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onOpenLocation();
+                    }}
+                  >
+                    <MapPin className="item-icon text-green" />
+                    <span>Delivery Address</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
 

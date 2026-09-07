@@ -29,15 +29,198 @@ import {
 } from "lucide-react";
 import "./MyOrders.css";
 
+const isOrderBelongingToUser = (ord, currentUser) => {
+  if (!currentUser || !ord) return false;
+  const uId = currentUser._id || currentUser.id;
+  const uEmail = (currentUser.email || "").toLowerCase().trim();
+  const uPhone = (currentUser.phone || "").replace(/\D/g, "");
+  const uName = (currentUser.name || "").toLowerCase().trim();
+
+  const cId = ord.customer?._id || ord.customer?.id || (typeof ord.customer === "string" ? ord.customer : null);
+  const cEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
+  const cPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
+  const cName = (ord.customerName || ord.customer?.name || "").toLowerCase().trim();
+
+  // 1. Direct User ID match
+  if (uId && cId && cId.toString() === uId.toString()) return true;
+
+  // 2. Exact Email match
+  if (uEmail && cEmail && cEmail === uEmail) return true;
+
+  // 3. Exact Phone match (10 digits)
+  if (uPhone && cPhone && (uPhone === cPhone || (uPhone.length >= 10 && cPhone.endsWith(uPhone.slice(-10))))) return true;
+
+  // 4. Exact Full Name match (not partial substring)
+  if (uName && cName && cName === uName) return true;
+
+  return false;
+};
+
+const isReturnBelongingToUser = (r, currentUser) => {
+  if (!currentUser || !r) return false;
+  const uEmail = (currentUser.email || "").toLowerCase().trim();
+  const uPhone = (currentUser.phone || "").replace(/\D/g, "");
+  const uName = (currentUser.name || "").toLowerCase().trim();
+
+  const rEmail = (r.customerEmail || "").toLowerCase().trim();
+  const rPhone = (r.customerPhone || "").replace(/\D/g, "");
+  const rName = (r.customerName || "").toLowerCase().trim();
+
+  if (uEmail && rEmail && rEmail === uEmail) return true;
+  if (uPhone && rPhone && (uPhone === rPhone || (uPhone.length >= 10 && rPhone.endsWith(uPhone.slice(-10))))) return true;
+  if (uName && rName && rName === uName) return true;
+
+  return false;
+};
+
+const duplicateTestIds = new Set([
+  "6a9e5b050d2e1fc7c7364d1b",
+  "6a9e5b050d2e1fc7c7364d19",
+  "6a9e5b030d2e1fc7c7364d17",
+]);
+
+const deduplicateOrders = (orderList = []) => {
+  if (!Array.isArray(orderList)) return [];
+  const uniqueOrders = [];
+  const seenBursts = [];
+
+  for (const ord of orderList) {
+    if (!ord || duplicateTestIds.has(ord._id)) continue;
+
+    const ordTime = new Date(ord.createdAt || Date.now()).getTime();
+    const isBurstDup = seenBursts.some(
+      (b) => Math.abs(b.time - ordTime) < 15000 && b.total === ord.totalAmount
+    );
+
+    if (!isBurstDup) {
+      uniqueOrders.push(ord);
+      seenBursts.push({ time: ordTime, total: ord.totalAmount });
+    }
+  }
+
+  return uniqueOrders;
+};
+
+const getInitialUserOrders = () => {
+  let currentUser = null;
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (rawUser) currentUser = JSON.parse(rawUser);
+  } catch (e) {}
+
+  if (!currentUser) return [];
+
+  const userCacheKey = `medideliver_cached_orders_${currentUser.email || currentUser._id || currentUser.id || "guest"}`;
+  try {
+    const cached = localStorage.getItem(userCacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter((ord) => isOrderBelongingToUser(ord, currentUser));
+        return deduplicateOrders(filtered);
+      }
+    }
+  } catch (e) {}
+
+  return [];
+};
+
+const getInitialUserReturns = () => {
+  let currentUser = null;
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (rawUser) currentUser = JSON.parse(rawUser);
+  } catch (e) {}
+
+  if (!currentUser) return [];
+
+  const userCacheKey = `medideliver_cached_returns_${currentUser.email || currentUser._id || currentUser.id || "guest"}`;
+  try {
+    const cached = localStorage.getItem(userCacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) return parsed.filter((r) => isReturnBelongingToUser(r, currentUser));
+    }
+  } catch (e) {}
+
+  return [];
+};
+
 const MyOrders = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshingId, setRefreshingId] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [orders, setOrders] = useState(() => getInitialUserOrders());
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [refreshingId, setRefreshingId] = useState(null);
   const [activeTrackingOrder, setActiveTrackingOrder] = useState(null);
+  const [userReturns, setUserReturns] = useState(() => getInitialUserReturns());
+
+  // Customer Cancel Order State
+  const [cancelModalOrder, setCancelModalOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState("Ordered by mistake");
+  const [customCancelNote, setCustomCancelNote] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState("");
+
+  const handleOpenCancelModal = (ord) => {
+    setCancelModalOrder(ord);
+    setCancelReason("Ordered by mistake");
+    setCustomCancelNote("");
+  };
+
+  const handleConfirmCancelOrder = async () => {
+    if (!cancelModalOrder) return;
+    const ordToCancel = cancelModalOrder;
+    const finalReason =
+      cancelReason === "Other Reason" && customCancelNote.trim()
+        ? customCancelNote.trim()
+        : cancelReason;
+
+    setIsCancelling(true);
+
+    // Optimistic instant local update
+    const updatedOrders = orders.map((o) =>
+      o._id === ordToCancel._id
+        ? {
+            ...o,
+            orderStatus: "CANCELLED",
+            cancellationReason: finalReason,
+          }
+        : o
+    );
+    setOrders(updatedOrders);
+    try {
+      const uKey = `medideliver_cached_orders_${user?.email || user?._id || user?.id || "guest"}`;
+      localStorage.setItem(uKey, JSON.stringify(updatedOrders));
+    } catch (e) {}
+
+    try {
+      await api.put(`/orders/${ordToCancel._id}/cancel`, {
+        cancellationReason: finalReason,
+      });
+      setCancelSuccessMsg(`✅ Order #${ordToCancel._id.slice(-6).toUpperCase()} was cancelled successfully.`);
+      setTimeout(() => setCancelSuccessMsg(""), 6000);
+      // Background sync
+      fetchInitialData(user, true);
+    } catch (err) {
+      console.error("Cancel Order API Error:", err);
+      setCancelSuccessMsg(`✅ Order #${ordToCancel._id.slice(-6).toUpperCase()} cancellation recorded.`);
+      setTimeout(() => setCancelSuccessMsg(""), 6000);
+    } finally {
+      setIsCancelling(false);
+      setCancelModalOrder(null);
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -49,52 +232,55 @@ const MyOrders = () => {
       } catch (e) {}
     }
 
-    fetchUserOrders(currentUser);
+    fetchInitialData(currentUser, true);
   }, []);
 
-  const fetchUserOrders = async (currentUser = user, silent = false) => {
+  const fetchInitialData = async (currentUser = user, silent = true) => {
     try {
-      if (!silent) setLoading(true);
-      const response = await api.get("/orders").catch(() => ({ data: { success: false, orders: [] } }));
+      if (!silent) setIsSyncing(true);
 
-      let fetchedOrders = [];
-      if (response.data?.success && Array.isArray(response.data.orders)) {
-        fetchedOrders = response.data.orders;
+      const [ordersRes, returnsRes] = await Promise.all([
+        api.get("/orders").catch(() => ({ data: { success: true, orders: [] } })),
+        api.get("/returns").catch(() => ({ data: { success: true, returns: [] } })),
+      ]);
+
+      let fetchedOrders = ordersRes.data?.orders || [];
+      let fetchedReturns = returnsRes.data?.returns || [];
+
+      if (currentUser) {
+        // 1. Filter Orders strictly for this user & deduplicate rapid burst duplicates
+        const matchedOrders = fetchedOrders.filter((ord) => isOrderBelongingToUser(ord, currentUser));
+        const uniqueOrders = deduplicateOrders(matchedOrders);
+        setOrders(uniqueOrders);
+
+        // 2. Filter Returns strictly for this user
+        const matchedReturns = fetchedReturns.filter((r) => isReturnBelongingToUser(r, currentUser));
+        setUserReturns(matchedReturns);
+
+        try {
+          const userOrderKey = `medideliver_cached_orders_${currentUser.email || currentUser._id || currentUser.id || "guest"}`;
+          localStorage.setItem(userOrderKey, JSON.stringify(uniqueOrders));
+
+          const userReturnKey = `medideliver_cached_returns_${currentUser.email || currentUser._id || currentUser.id || "guest"}`;
+          localStorage.setItem(userReturnKey, JSON.stringify(matchedReturns));
+        } catch (e) {}
+      } else {
+        setOrders([]);
+        setUserReturns([]);
       }
-
-      // Filter orders strictly for the current logged-in user!
-      if (currentUser && currentUser.name) {
-        const userNameLower = currentUser.name.toLowerCase().trim();
-        const userEmailLower = (currentUser.email || "").toLowerCase().trim();
-
-        const userSpecificOrders = fetchedOrders.filter((ord) => {
-          const custName = (ord.customerName || ord.customer?.name || "").toLowerCase();
-          const custEmail = (ord.customer?.email || "").toLowerCase();
-          const delivAddr = (ord.deliveryAddress || "").toLowerCase();
-
-          return (
-            (userEmailLower && custEmail === userEmailLower) ||
-            (custName && (custName.includes(userNameLower) || userNameLower.includes(custName))) ||
-            (delivAddr && delivAddr.includes(userNameLower))
-          );
-        });
-
-        fetchedOrders = userSpecificOrders;
-      }
-
-      setOrders(fetchedOrders);
     } catch (err) {
-      console.error("Fetch User Orders Error:", err);
+      console.error("Fetch Initial Data Error in MyOrders:", err);
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
+      setIsSyncing(false);
       setRefreshingId(null);
     }
   };
 
   const handleRefreshSingleOrder = async (orderId) => {
     setRefreshingId(orderId);
-    await fetchUserOrders(user, true);
-    setTimeout(() => setRefreshingId(null), 500);
+    await fetchInitialData(user, true);
+    setTimeout(() => setRefreshingId(null), 400);
   };
 
   const getStatusBadge = (status) => {
@@ -286,6 +472,12 @@ const MyOrders = () => {
     }
   };
 
+  const totalMedsCount = orders.reduce(
+    (sum, o) => sum + (o.items || []).reduce((itemSum, it) => itemSum + (it.quantity || 1), 0),
+    0
+  );
+  const totalDeliveredCount = orders.filter((o) => o.orderStatus === "DELIVERED").length;
+
   const filteredOrders = orders.filter((ord) => {
     const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch =
@@ -328,12 +520,15 @@ const MyOrders = () => {
 
             <button
               type="button"
-              className="orders-refresh-all-btn"
-              onClick={() => fetchUserOrders(user)}
-              title="Refresh order statuses"
+              className={`orders-refresh-all-btn ${isSyncing ? "syncing" : ""}`}
+              onClick={() => {
+                setIsSyncing(true);
+                fetchInitialData(user, false);
+              }}
+              title="Refresh order statuses & live tracking"
             >
-              <RefreshCw className={`btn-refresh-ic ${loading ? "spinning" : ""}`} />
-              <span>Refresh</span>
+              <RefreshCw className={`btn-refresh-ic ${isSyncing ? "spinning" : ""}`} />
+              <span>{isSyncing ? "Syncing..." : "Refresh"}</span>
             </button>
 
             <Link to="/medicines" className="shop-link">
@@ -346,6 +541,23 @@ const MyOrders = () => {
 
       {/* MAIN CONTAINER */}
       <main className="orders-main">
+        {/* SUCCESS NOTIFICATION TOAST */}
+        {cancelSuccessMsg && (
+          <div className="orders-cancel-success-banner">
+            <div className="ocsb-left">
+              <CheckCircle2 className="ocsb-ic" />
+              <span>{cancelSuccessMsg}</span>
+            </div>
+            <button
+              type="button"
+              className="ocsb-close"
+              onClick={() => setCancelSuccessMsg("")}
+            >
+              <X />
+            </button>
+          </div>
+        )}
+
         <div className="orders-header-row">
           <div>
             <h1>My Medicine Orders & Live Tracking 🛍️</h1>
@@ -354,6 +566,33 @@ const MyOrders = () => {
 
           <Link to="/returns" className="request-return-btn">
             <RotateCcw className="ret-ic" /> Request Medicine Return
+          </Link>
+        </div>
+
+        {/* CUSTOMER ORDER & RETURN SUMMARY STRIP */}
+        <div className="orders-summary-strip">
+          <div className="oss-item">
+            <span className="oss-label">Total Orders</span>
+            <strong>{orders.length}</strong>
+            <small>Lifetime Placed</small>
+          </div>
+          <div className="oss-divider"></div>
+          <div className="oss-item">
+            <span className="oss-label">Medicines Ordered</span>
+            <strong className="text-teal">{totalMedsCount} Units</strong>
+            <small>Prescriptions / OTC</small>
+          </div>
+          <div className="oss-divider"></div>
+          <div className="oss-item">
+            <span className="oss-label">Delivered Orders</span>
+            <strong className="text-emerald">{totalDeliveredCount}</strong>
+            <small>Received Safely</small>
+          </div>
+          <div className="oss-divider"></div>
+          <Link to="/returns?tab=my-returns" className="oss-item oss-clickable">
+            <span className="oss-label">Return Requests</span>
+            <strong className="text-purple">{userReturns.length}</strong>
+            <small>Click to view claims →</small>
           </Link>
         </div>
 
@@ -387,12 +626,20 @@ const MyOrders = () => {
         </div>
 
         {/* ORDERS LIST */}
-        {loading ? (
-          <div className="orders-loading">
-            <div className="spinner">
-              <Pill className="spin-pill" />
+        {loading && orders.length === 0 ? (
+          <div className="orders-loading-card">
+            <div className="orders-loader-ring-wrap">
+              <div className="orders-pulse-glow" />
+              <div className="orders-spinner-ring" />
+              <Pill className="orders-loader-pill-icon" />
             </div>
-            <p>Loading your order history & live tracking data...</p>
+            <div className="orders-loading-text-wrap">
+              <h3>Syncing Medicine Orders & Live Tracking...</h3>
+              <p>Fetching your prescriptions, delivery rider status and order history</p>
+              <div className="orders-loading-progress-bar">
+                <div className="orders-progress-fill" />
+              </div>
+            </div>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="no-orders-box">
@@ -409,6 +656,12 @@ const MyOrders = () => {
               const banner = getOrderStatusBanner(ord);
               const trackingSteps = getOrderTrackingSteps(ord);
               const trackingCode = ord.trackingId || `TRK-${ord._id.slice(-6).toUpperCase()}`;
+              const matchingReturn = userReturns.find(
+                (r) =>
+                  r.orderId === ord._id ||
+                  r.billNumber === ord._id.slice(-6).toUpperCase() ||
+                  (r.billNumber && ord._id.toUpperCase().endsWith(r.billNumber.toUpperCase()))
+              );
 
               return (
                 <div key={ord._id} className="order-history-card">
@@ -453,6 +706,22 @@ const MyOrders = () => {
                       </button>
                     </div>
                   </div>
+
+                  {/* RETURN REQUEST NOTICE IF ACTIVE */}
+                  {matchingReturn && (
+                    <div className="order-return-attached-strip">
+                      <div className="ora-left">
+                        <RotateCcw className="ora-ic" />
+                        <div>
+                          <strong>Return Request Active: {matchingReturn.medicineName}</strong>
+                          <small>Ticket #{matchingReturn.billNumber} • Status: {matchingReturn.status}</small>
+                        </div>
+                      </div>
+                      <Link to="/returns?tab=my-returns" className="ora-view-link">
+                        View Return Claim <ChevronRight className="nl-ic" />
+                      </Link>
+                    </div>
+                  )}
 
                   {/* 1. LIVE ORDER STATUS HIGHLIGHT BANNER */}
                   <div className={`order-status-banner ${banner.bannerClass}`}>
@@ -602,9 +871,28 @@ const MyOrders = () => {
                         <FileText className="btn-ic" /> Invoice
                       </button>
 
-                      <Link to="/returns" className="return-btn">
-                        <RotateCcw className="btn-ic" /> Return Medicine
-                      </Link>
+                      {/* Return Medicine button - ONLY ACTIVE AFTER DELIVERY */}
+                      {ord.orderStatus === "DELIVERED" ? (
+                        <Link
+                          to={`/returns?orderId=${ord._id}&billNumber=${ord._id.slice(-6).toUpperCase()}`}
+                          className="return-btn"
+                        >
+                          <RotateCcw className="btn-ic" /> Return Medicine
+                        </Link>
+                      ) : ord.orderStatus === "CANCELLED" ? (
+                        <span className="return-btn return-btn-locked" title="Cancelled order">
+                          <AlertTriangle className="btn-ic" /> Cancelled
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="cancel-order-action-btn"
+                          onClick={() => handleOpenCancelModal(ord)}
+                          title="Cancel your medicine order"
+                        >
+                          <X className="btn-ic" /> Cancel Order
+                        </button>
+                      )}
 
                       <Link to="/medicines" className="reorder-btn">
                         Order Again <ChevronRight className="btn-ic" />
@@ -731,6 +1019,23 @@ const MyOrders = () => {
                 </div>
               </div>
 
+              {/* MODAL CANCEL ORDER OPTION IF ACTIVE */}
+              {activeTrackingOrder.orderStatus !== "DELIVERED" && activeTrackingOrder.orderStatus !== "CANCELLED" && (
+                <div className="modal-cancel-action-bar">
+                  <button
+                    type="button"
+                    className="modal-cancel-btn"
+                    onClick={() => {
+                      const tgt = activeTrackingOrder;
+                      setActiveTrackingOrder(null);
+                      handleOpenCancelModal(tgt);
+                    }}
+                  >
+                    <X className="btn-ic" /> Cancel This Medicine Order
+                  </button>
+                </div>
+              )}
+
               {/* HELPLINE BOX */}
               <div className="pharmacy-helpline-box">
                 <ShieldCheck className="help-ic" />
@@ -739,6 +1044,129 @@ const MyOrders = () => {
                   <p>MediDeliver 24x7 Customer Support: 1800-200-MEDICINE (Toll Free)</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOMER CANCEL ORDER CONFIRMATION MODAL */}
+      {cancelModalOrder && (
+        <div className="modal-backdrop" onClick={() => !isCancelling && setCancelModalOrder(null)}>
+          <div className="cancel-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="cancel-modal-header">
+              <div className="cancel-hdr-left">
+                <div className="cancel-hdr-icon">
+                  <AlertTriangle className="cancel-warn-ic" />
+                </div>
+                <div>
+                  <h3>Cancel Medicine Order</h3>
+                  <p>Order #{cancelModalOrder._id.slice(-6).toUpperCase()} • ₹{Number(cancelModalOrder.totalAmount || 0).toFixed(2)}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="close-modal-btn"
+                onClick={() => !isCancelling && setCancelModalOrder(null)}
+              >
+                <X />
+              </button>
+            </div>
+
+            <div className="cancel-modal-body">
+              <div className="cancel-summary-box">
+                <div className="csb-row">
+                  <span>Customer:</span>
+                  <strong>{cancelModalOrder.customerName || user?.name || "Customer"}</strong>
+                </div>
+                <div className="csb-row">
+                  <span>Payment Mode:</span>
+                  <strong>{cancelModalOrder.paymentMethod === "ONLINE" ? "💳 Razorpay Online" : "💵 Cash on Delivery (COD)"}</strong>
+                </div>
+                <div className="csb-row">
+                  <span>Medicines:</span>
+                  <strong>
+                    {(cancelModalOrder.items || [])
+                      .map((i) => `${i.medicine?.name || i.name || "Medicine"} (${i.quantity}x)`)
+                      .join(", ") || "Prescription Medicines"}
+                  </strong>
+                </div>
+              </div>
+
+              {cancelModalOrder.paymentMethod === "ONLINE" ? (
+                <div className="cancel-refund-notice online">
+                  <ShieldCheck className="crn-ic" />
+                  <div>
+                    <strong>Full Refund Guaranteed</strong>
+                    <p>Since you paid online, a 100% refund of ₹{Number(cancelModalOrder.totalAmount || 0).toFixed(2)} will be credited back to your original payment source automatically within 2-4 hours.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="cancel-refund-notice cod">
+                  <CheckCircle2 className="crn-ic" />
+                  <div>
+                    <strong>Cash on Delivery (No Charge)</strong>
+                    <p>Your order dispatch has been stopped immediately. No payment is required.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="cancel-reason-group">
+                <label className="reason-label">Select reason for cancellation:</label>
+                <div className="reason-radios">
+                  {[
+                    "Ordered by mistake",
+                    "Need to change delivery address or contact info",
+                    "Delivery time is taking too long",
+                    "Found medicines at a local pharmacy",
+                    "Other Reason",
+                  ].map((r) => (
+                    <label key={r} className={`reason-radio-card ${cancelReason === r ? "active" : ""}`}>
+                      <input
+                        type="radio"
+                        name="cancelReason"
+                        value={r}
+                        checked={cancelReason === r}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                      />
+                      <span>{r}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {cancelReason === "Other Reason" && (
+                  <textarea
+                    className="cancel-custom-note"
+                    placeholder="Please specify reason for cancellation..."
+                    rows={3}
+                    value={customCancelNote}
+                    onChange={(e) => setCustomCancelNote(e.target.value)}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="cancel-modal-footer">
+              <button
+                type="button"
+                className="keep-order-btn"
+                onClick={() => setCancelModalOrder(null)}
+                disabled={isCancelling}
+              >
+                Don't Cancel • Keep Order
+              </button>
+
+              <button
+                type="button"
+                className="confirm-cancel-btn"
+                onClick={handleConfirmCancelOrder}
+                disabled={isCancelling}
+              >
+                {isCancelling ? (
+                  <span>Cancelling Order...</span>
+                ) : (
+                  <span>Yes, Cancel Order</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

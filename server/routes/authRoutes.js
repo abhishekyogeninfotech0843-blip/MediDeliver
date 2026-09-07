@@ -1,5 +1,10 @@
 const express = require("express");
-const { registerUser, loginUser } = require("../controllers/authController");
+const {
+  registerUser,
+  loginUser,
+  requestPasswordResetOtp,
+  resetPassword,
+} = require("../controllers/authController");
 
 const router = express.Router();
 
@@ -8,6 +13,12 @@ router.post("/register", registerUser);
 
 // Login Route
 router.post("/login", loginUser);
+
+// Forgot Password - Request OTP Route
+router.post("/forgot-password/request-otp", requestPasswordResetOtp);
+
+// Forgot Password - Reset Password Route
+router.post("/forgot-password/reset-password", resetPassword);
 
 // Auth Test Route
 router.get("/test", (req, res) => {

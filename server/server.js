@@ -18,6 +18,7 @@ const deliveryRoutes = require("./routes/deliveryRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const returnRoutes = require("./routes/returnRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
 
@@ -73,6 +74,9 @@ app.use("/api/dashboard", dashboardRoutes);
 
 // Return Policy Routes
 app.use("/api/returns", returnRoutes);
+
+// Contact & Support Inquiry Routes
+app.use("/api/contact", contactRoutes);
 
 // ==========================================
 // Root Route

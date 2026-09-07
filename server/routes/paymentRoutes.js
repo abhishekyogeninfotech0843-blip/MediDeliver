@@ -17,14 +17,16 @@ const router = express.Router();
 router.post("/", createPayment);
 
 // ==========================================
-// Create Razorpay Order
+// Create Razorpay Order (supports both endpoint formats)
 // ==========================================
 router.post("/razorpay/order", createRazorpayOrder);
+router.post("/create-razorpay-order", createRazorpayOrder);
 
 // ==========================================
-// Verify Razorpay Payment
+// Verify Razorpay Payment (supports both endpoint formats)
 // ==========================================
 router.post("/razorpay/verify", verifyRazorpayPayment);
+router.post("/verify-razorpay-payment", verifyRazorpayPayment);
 
 // ==========================================
 // Get All Payments

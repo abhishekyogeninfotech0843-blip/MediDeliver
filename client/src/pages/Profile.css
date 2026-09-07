@@ -384,3 +384,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .profile-content {
+    padding: 24px 16px 60px;
+  }
+
+  .profile-sidebar-card {
+    padding: 24px 16px;
+  }
+
+  .profile-content-card {
+    padding: 24px 16px;
+  }
+
+  .save-profile-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

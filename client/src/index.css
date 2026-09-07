@@ -68,6 +68,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root {
@@ -75,6 +77,14 @@ html, body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+}
+
+img, svg, video {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 a {
@@ -84,10 +94,18 @@ a {
 
 button, input, select, textarea {
   font-family: inherit;
+  max-width: 100%;
 }
 
 button {
   cursor: pointer;
   border: none;
   background: none;
+}
+
+/* Responsive Table Wrapper Utility */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

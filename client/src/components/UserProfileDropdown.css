@@ -267,3 +267,26 @@
   width: 16px;
   height: 16px;
 }
+
+/* ================= MOBILE RESPONSIVE ================= */
+@media (max-width: 640px) {
+  .profile-trigger-btn {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+  
+  .profile-user-name {
+    max-width: 80px;
+    font-size: 13px;
+  }
+  
+  .profile-dropdown-menu {
+    position: fixed;
+    top: 64px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: calc(100vw - 24px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  }
+}

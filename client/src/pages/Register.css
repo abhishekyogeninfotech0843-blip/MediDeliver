@@ -472,3 +472,46 @@ input:-webkit-autofill:active {
 .register-submit.admin-submit {
   background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
 }
+
+.admin-secret-group {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px dashed #cbd5e1;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.admin-secret-group:focus-within {
+  border-color: #0d9488;
+  background: #f0fdf4;
+}
+
+.admin-secret-tip {
+  display: block;
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+/* ==================================================
+   REGISTER PAGE MOBILE RESPONSIVE
+   ================================================== */
+
+@media (max-width: 640px) {
+  .register-card {
+    padding: 24px 16px;
+    margin: 10px 16px 40px;
+    border-radius: 18px;
+  }
+
+  .register-header h1 {
+    font-size: 24px;
+  }
+
+  .role-selection-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

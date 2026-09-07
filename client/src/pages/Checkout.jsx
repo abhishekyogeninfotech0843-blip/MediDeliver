@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import api from "../api/api";
 import UserProfileDropdown from "../components/UserProfileDropdown";
+import InteractiveMapPicker from "../components/InteractiveMapPicker";
 import {
   Pill,
   Lock,
@@ -17,80 +18,59 @@ import {
   Building,
   Map,
   ShoppingBag,
-  Loader2
+  Loader2,
+  Clock,
+  ShieldAlert,
+  Sparkles,
+  Compass,
+  Edit3
 } from "lucide-react";
+import {
+  STORE_LOCATION,
+  ALIGARH_AREAS,
+  ALIGARH_PINCODE_MAP,
+  getDeliveryEstimate,
+  detectAligarhCustomLocation
+} from "../utils/deliveryZone";
 import "./Checkout.css";
-
-const INDIAN_STATES_CITIES = {
-  "Uttar Pradesh": [
-    "Aligarh",
-    "Noida",
-    "Greater Noida",
-    "Ghaziabad",
-    "Lucknow",
-    "Kanpur",
-    "Agra",
-    "Varanasi",
-    "Prayagraj (Allahabad)",
-    "Meerut",
-    "Bareilly",
-    "Gorakhpur",
-    "Mathura",
-    "Moradabad",
-  ],
-  "Delhi NCR": ["New Delhi", "Central Delhi", "East Delhi", "North Delhi", "South Delhi", "West Delhi"],
-  Haryana: ["Gurgaon (Gurugram)", "Faridabad", "Panipat", "Ambala", "Karnal", "Hisar", "Rohtak"],
-  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Navi Mumbai"],
-  Karnataka: ["Bangalore (Bengaluru)", "Mysore", "Hubli", "Mangalore", "Belgaum"],
-  Punjab: ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Mohali"],
-  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer"],
-  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar"],
-  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
-  Telangana: ["Hyderabad", "Warangal", "Nizamabad"],
-  Kerala: ["Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur"],
-  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-  Bihar: ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur"],
-  "Other / Custom": ["Other City"],
-};
-
-const COMMON_PINCODES = {
-  202001: { city: "Aligarh", state: "Uttar Pradesh" },
-  202002: { city: "Aligarh", state: "Uttar Pradesh" },
-  201301: { city: "Noida", state: "Uttar Pradesh" },
-  201309: { city: "Greater Noida", state: "Uttar Pradesh" },
-  201001: { city: "Ghaziabad", state: "Uttar Pradesh" },
-  110001: { city: "New Delhi", state: "Delhi NCR" },
-  122001: { city: "Gurgaon (Gurugram)", state: "Haryana" },
-  121001: { city: "Faridabad", state: "Haryana" },
-  400001: { city: "Mumbai", state: "Maharashtra" },
-  411001: { city: "Pune", state: "Maharashtra" },
-  560001: { city: "Bangalore (Bengaluru)", state: "Karnataka" },
-  600001: { city: "Chennai", state: "Tamil Nadu" },
-  500001: { city: "Hyderabad", state: "Telangana" },
-  700001: { city: "Kolkata", state: "West Bengal" },
-  380001: { city: "Ahmedabad", state: "Gujarat" },
-  302001: { city: "Jaipur", state: "Rajasthan" },
-};
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
+  const isSubmittingRef = useRef(false);
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [customLocQuery, setCustomLocQuery] = useState("");
 
   const [address, setAddress] = useState({
     name: "",
     phone: "",
     pincode: "202001",
     address: "",
-    city: "Aligarh",
+    city: "Centre Point",
     state: "Uttar Pradesh",
+    lat: 27.8974,
+    lng: 78.088,
   });
+
+  const handleMapLocationSelect = (loc) => {
+    if (!loc) return;
+    setAddress((prev) => ({
+      ...prev,
+      city: loc.city || loc.area || prev.city,
+      pincode: loc.pincode || prev.pincode,
+      lat: loc.lat || prev.lat,
+      lng: loc.lng || prev.lng,
+      address: prev.address ? prev.address : `${loc.city || loc.area}, Aligarh, Uttar Pradesh - ${loc.pincode}`,
+    }));
+    setError("");
+    setShowMapPicker(false);
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -119,9 +99,11 @@ const Checkout = () => {
           name: prev.name || initialUser.name || "",
           phone: prev.phone || initialUser.phone || "",
           address: initialLoc.fullAddress || initialLoc.area || prev.address,
-          city: initialLoc.city || prev.city || "Aligarh",
-          state: initialLoc.state || prev.state || "Uttar Pradesh",
-          pincode: initialLoc.pincode || prev.pincode || "202001",
+          city: initialLoc.area || initialLoc.city || "Centre Point",
+          state: "Uttar Pradesh",
+          pincode: initialLoc.pincode || "202001",
+          lat: initialLoc.lat || 27.8974,
+          lng: initialLoc.lng || 78.088,
         }));
       } else {
         setAddress((prev) => ({
@@ -146,55 +128,79 @@ const Checkout = () => {
     };
   }, []);
 
+  // Compute live estimate based on address inputs
+  const deliveryEstimate = getDeliveryEstimate({
+    lat: address.lat,
+    lng: address.lng,
+    pincode: address.pincode,
+    city: address.city,
+    address: address.address,
+  });
+
   const deliveryCharge = cartTotal >= 500 ? 0 : 40;
   const finalTotal = cartTotal + deliveryCharge;
 
   const handleAddressChange = (field, value) => {
-    setAddress((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setAddress((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "address" && value.length >= 3) {
+        const custom = detectAligarhCustomLocation(value);
+        if (custom && custom.isDeliverable) {
+          next.lat = custom.lat;
+          next.lng = custom.lng;
+        }
+      }
+      return next;
+    });
   };
 
-  const handlePincodeInput = async (val) => {
+  const handleCityChange = (cityName) => {
+    const matched = ALIGARH_AREAS.find((a) => a.name === cityName);
+    if (matched) {
+      setAddress((prev) => ({
+        ...prev,
+        city: matched.name,
+        pincode: matched.pincode,
+        lat: matched.lat,
+        lng: matched.lng,
+      }));
+      setError("");
+    } else {
+      const custom = detectAligarhCustomLocation(cityName);
+      if (custom && custom.isDeliverable) {
+        setAddress((prev) => ({
+          ...prev,
+          city: custom.area,
+          pincode: custom.pincode,
+          lat: custom.lat,
+          lng: custom.lng,
+        }));
+        setError("");
+      } else {
+        handleAddressChange("city", cityName);
+      }
+    }
+  };
+
+  const handlePincodeInput = (val) => {
     handleAddressChange("pincode", val);
 
     if (val.length === 6 && /^[0-9]{6}$/.test(val)) {
-      const pinNum = Number(val);
-      // 1. Instant local dictionary lookup
-      if (COMMON_PINCODES[pinNum]) {
-        const { city, state } = COMMON_PINCODES[pinNum];
-        setAddress((prev) => ({ ...prev, city, state }));
+      if (!val.startsWith("202")) {
+        setError(
+          `❌ PIN code ${val} is outside Aligarh district. MediDeliver operates exclusively within Aligarh District (PIN: 202xxx).`
+        );
         return;
       }
 
-      // 2. Postal Pincode API lookup
-      try {
-        setPincodeLoading(true);
-        const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
-        const data = await res.json();
-
-        if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
-          const postOffice = data[0].PostOffice[0];
-          const rawState = postOffice.State || "";
-          const rawDistrict = postOffice.District || postOffice.Block || postOffice.Name || "";
-
-          // Match state key
-          const matchedState =
-            Object.keys(INDIAN_STATES_CITIES).find(
-              (s) => s.toLowerCase() === rawState.toLowerCase()
-            ) || rawState || "Uttar Pradesh";
-
-          setAddress((prev) => ({
-            ...prev,
-            state: matchedState,
-            city: rawDistrict || prev.city,
-          }));
-        }
-      } catch (err) {
-        console.warn("Pincode lookup error:", err);
-      } finally {
-        setPincodeLoading(false);
+      setError("");
+      if (ALIGARH_PINCODE_MAP[val]) {
+        const info = ALIGARH_PINCODE_MAP[val];
+        setAddress((prev) => ({
+          ...prev,
+          city: info.area,
+          state: "Uttar Pradesh",
+        }));
       }
     }
   };
@@ -225,13 +231,19 @@ const Checkout = () => {
       return false;
     }
     if (!address.city.trim()) {
-      setError("Please select city");
+      setError("Please select city / locality in Aligarh");
       return false;
     }
-    if (!address.state.trim()) {
-      setError("Please select state");
+
+    // Aligarh service area validation
+    if (!deliveryEstimate.isDeliverable) {
+      setError(
+        deliveryEstimate.message ||
+          "Delivery is not available outside Aligarh District (up to 45 km radius)."
+      );
       return false;
     }
+
     return true;
   };
 
@@ -242,16 +254,18 @@ const Checkout = () => {
         quantity: medicine.quantity,
       }));
 
-      const deliveryAddress = `${address.name}, ${address.address}, ${address.city}, ${address.state} - ${address.pincode}`;
+      const deliveryAddress = `${address.name}, ${address.address}, ${address.city}, Aligarh, Uttar Pradesh - ${address.pincode}`;
 
       const response = await api.post("/orders", {
         customerName: address.name || user?.name || "Customer",
         customerPhone: address.phone || user?.phone || "",
         customerEmail: user?.email || "",
-        customer: user?.id || "6a856810a35113391007d0cb",
+        customer: user?._id || user?.id || "6a856810a35113391007d0cb",
         items: orderItems,
         deliveryAddress,
         paymentMethod,
+        deliveryDistance: deliveryEstimate.distanceKm || 4.0,
+        estimatedDeliveryTime: deliveryEstimate.deliveryTime || "30-45 mins",
       });
 
       return response.data.order;
@@ -268,99 +282,135 @@ const Checkout = () => {
       await api.post("/payments", {
         order: order._id,
         paymentMethod: "COD",
+        amount: finalTotal,
       });
 
-      alert("Order placed successfully! 🎉");
       clearCart();
-      navigate("/");
+      navigate(`/order-success?orderId=${order._id}`);
     } catch (err) {
-      console.error("COD Error:", err);
-      setError(err.message);
+      isSubmittingRef.current = false;
+      setError(err.message || "Failed to place COD order. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   };
 
   const handleOnlinePayment = async () => {
     try {
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        isSubmittingRef.current = false;
+        setError("Razorpay SDK failed to load. Please check internet connection.");
+        setLoading(false);
+        return;
+      }
+
       const order = await createOrder();
 
-      const response = await api.post("/payments/razorpay/order", {
-        order: order._id,
+      const rpRes = await api.post("/payments/create-razorpay-order", {
+        amount: finalTotal,
       });
 
-      const { razorpayOrder, keyId } = response.data;
+      if (!rpRes.data.success) {
+        isSubmittingRef.current = false;
+        setError("Failed to initialize online payment. Please try COD.");
+        setLoading(false);
+        return;
+      }
+
+      const razorpayOrder = rpRes.data.order || rpRes.data.razorpayOrder;
+      const razorpayKey = rpRes.data.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_YourKeyHere";
 
       const options = {
-        key: keyId,
+        key: razorpayKey,
         amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        name: "MediDeliver",
-        description: "Medicine Order",
+        currency: razorpayOrder.currency || "INR",
+        name: "MediDeliver Aligarh",
+        description: `Order Payment (${deliveryEstimate.deliveryTime} Delivery)`,
         order_id: razorpayOrder.id,
-        handler: async function (paymentResponse) {
-          try {
-            const verifyResponse = await api.post("/payments/razorpay/verify", {
-              order: order._id,
-              razorpay_order_id: paymentResponse.razorpay_order_id,
-              razorpay_payment_id: paymentResponse.razorpay_payment_id,
-              razorpay_signature: paymentResponse.razorpay_signature,
-            });
-
-            if (verifyResponse.data.success) {
-              alert("Payment successful! Order placed successfully 🎉");
-              clearCart();
-              navigate("/");
-            }
-          } catch (err) {
-            console.error("Payment Verification Error:", err);
-            setError(
-              err.response?.data?.message || "Payment verification failed"
-            );
-          }
-        },
         prefill: {
           name: address.name,
           contact: address.phone,
-        },
-        notes: {
-          orderId: order._id,
+          email: user?.email || "customer@medideliver.com",
         },
         theme: {
-          color: "#059669",
+          color: "#0d9488",
+        },
+        handler: async function (response) {
+          try {
+            setLoading(true);
+            const verifyRes = await api.post("/payments/verify-razorpay-payment", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId: order._id,
+              paymentMethod: "ONLINE",
+            });
+
+            if (verifyRes.data.success) {
+              clearCart();
+              navigate(`/order-success?orderId=${order._id}`);
+            } else {
+              isSubmittingRef.current = false;
+              setError("Payment verification failed. Please contact support.");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            isSubmittingRef.current = false;
+            setError("Error verifying payment.");
+          } finally {
+            setLoading(false);
+          }
         },
         modal: {
           ondismiss: function () {
+            isSubmittingRef.current = false;
             setLoading(false);
+            setError("Payment window closed. Order was not placed.");
           },
         },
       };
 
-      if (!window.Razorpay) {
-        setError("Razorpay Checkout is not loaded. Please refresh the page.");
-        return;
-      }
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
     } catch (err) {
-      console.error("Online Payment Error:", err);
-      setError(err.message);
+      console.error("Online payment error:", err);
+      isSubmittingRef.current = false;
+      setError(err.message || "Failed to process payment. Please try again.");
       setLoading(false);
     }
   };
 
   const handlePlaceOrder = async () => {
+    if (isSubmittingRef.current || loading) return;
     setError("");
-    const isValid = validateAddress();
-    if (!isValid) return;
+    if (!validateAddress()) return;
 
     try {
+      isSubmittingRef.current = true;
       setLoading(true);
       if (paymentMethod === "COD") {
         await handleCODPayment();
       } else {
         await handleOnlinePayment();
       }
-    } finally {
+    } catch (err) {
+      isSubmittingRef.current = false;
+      setError(err.message || "Something went wrong.");
       setLoading(false);
     }
   };
@@ -368,12 +418,20 @@ const Checkout = () => {
   if (cart.length === 0) {
     return (
       <div className="checkout-page">
-        <div className="checkout-empty">
-          <div className="empty-cart-icon-box">
-            <ShoppingBag className="empty-bag-svg" />
+        <header className="checkout-navbar">
+          <div className="checkout-nav-container">
+            <Link to="/" className="checkout-logo">
+              <div className="checkout-logo-icon">
+                <Pill className="nav-pill-icon" />
+              </div>
+              Medi<span>Deliver</span>
+            </Link>
           </div>
-          <h2>Your cart is empty</h2>
-          <p>Please add medicines before continuing to checkout.</p>
+        </header>
+        <div className="checkout-empty">
+          <ShoppingBag className="empty-cart-svg" />
+          <h2>Your Cart is Empty</h2>
+          <p>Please add medicines to your cart before proceeding to checkout.</p>
           <Link to="/medicines" className="shop-btn">
             Browse Medicines
           </Link>
@@ -381,8 +439,6 @@ const Checkout = () => {
       </div>
     );
   }
-
-  const availableCities = INDIAN_STATES_CITIES[address.state] || [address.city || "Aligarh"];
 
   return (
     <div className="checkout-page">
@@ -408,9 +464,9 @@ const Checkout = () => {
       {/* MAIN */}
       <main className="checkout-content">
         <div className="checkout-heading">
-          <span className="checkout-sub-label">MEDIDELIVER CHECKOUT</span>
+          <span className="checkout-sub-label">MEDIDELIVER ALIGARH</span>
           <h1>Shipping & Payment</h1>
-          <p>Complete your delivery address and payment method to confirm order.</p>
+          <p>Exclusive pharmacy delivery for Aligarh District (Up to 45 km radius).</p>
         </div>
 
         {error && (
@@ -428,9 +484,57 @@ const Checkout = () => {
               <div className="checkout-card-header">
                 <span className="step-number">1</span>
                 <div>
-                  <h2>Delivery Address</h2>
-                  <p>Where should we deliver your medicines?</p>
+                  <h2>Delivery Address (Aligarh District)</h2>
+                  <p>Medicines will be dispatched directly from our Aligarh Central Pharmacy.</p>
                 </div>
+              </div>
+
+              {/* Service Boundary Notice */}
+              <div className="checkout-zone-tag">
+                <Truck className="cz-icon" />
+                <span>
+                  <strong>Aligarh Coverage Zone:</strong> We deliver to all Aligarh city localities and Tehsils (Koil, Atrauli, Khair, Iglas, Gabhana).
+                </span>
+              </div>
+
+              {/* Interactive Map Action Card */}
+              <div className="checkout-map-action-card">
+                <div className="cma-left">
+                  <div className="cma-icon-wrap">
+                    <Map className="cma-icon" />
+                  </div>
+                  <div className="cma-text">
+                    <h4>Pin Custom Delivery Location on Map</h4>
+                    <p>Ordering for another address? (e.g. Gular Road, Banna Devi Thana, Civil Lines)</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="cma-open-btn"
+                  onClick={() => setShowMapPicker(true)}
+                >
+                  <MapPin className="cma-btn-icon" />
+                  <span>Pin on Map</span>
+                </button>
+              </div>
+
+              {/* Pinned Location Status Bar */}
+              <div className="checkout-pinned-status-bar">
+                <div className="cps-info">
+                  <MapPin className="cps-pin-icon" />
+                  <div>
+                    <strong>📍 Selected Spot: {address.city || "Centre Point, Aligarh"}</strong>
+                    <span>PIN: {address.pincode} • Coords: {address.lat?.toFixed(4)}, {address.lng?.toFixed(4)}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="cps-adjust-btn"
+                  onClick={() => setShowMapPicker(true)}
+                >
+                  <Edit3 style={{ width: 13, height: 13, display: "inline", marginRight: 4, verticalAlign: "middle" }} />
+                  Adjust on Map
+                </button>
               </div>
 
               <div className="address-form">
@@ -465,10 +569,10 @@ const Checkout = () => {
 
                   <div className="form-group">
                     <div className="pincode-label-row">
-                      <label>PIN Code *</label>
+                      <label>PIN Code (Aligarh: 202xxx) *</label>
                       {pincodeLoading && (
                         <span className="detecting-spin">
-                          <Loader2 className="spin-ic" /> Auto-detecting...
+                          <Loader2 className="spin-ic" /> Checking...
                         </span>
                       )}
                     </div>
@@ -484,12 +588,61 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* Custom Location Quick Finder */}
                 <div className="form-group">
-                  <label>Complete Address *</label>
+                  <div className="pincode-label-row">
+                    <label>
+                      <Sparkles style={{ width: 14, height: 14, color: "#0d9488", display: "inline", marginRight: 4 }} />
+                      Quick Search Custom Location / Colony in Aligarh
+                    </label>
+                    <span
+                      style={{ fontSize: "12px", color: "#0d9488", cursor: "pointer", fontWeight: 600 }}
+                      onClick={() => setShowMapPicker(true)}
+                    >
+                      📍 Open Full Map
+                    </span>
+                  </div>
+                  <div className="input-wrapper" style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      type="text"
+                      placeholder="Type custom location (e.g. Gular Road, Banna Devi Thana, Centre Point)..."
+                      value={customLocQuery}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomLocQuery(val);
+                        if (val.length >= 2) {
+                          const custom = detectAligarhCustomLocation(val);
+                          if (custom && custom.isDeliverable) {
+                            setAddress((prev) => ({
+                              ...prev,
+                              city: custom.area || val,
+                              pincode: custom.pincode || prev.pincode,
+                              lat: custom.lat || prev.lat,
+                              lng: custom.lng || prev.lng,
+                            }));
+                            setError("");
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="cps-adjust-btn"
+                      style={{ padding: "0 16px", height: "42px", display: "flex", alignItems: "center", gap: "6px" }}
+                      onClick={() => setShowMapPicker(true)}
+                    >
+                      <MapPin style={{ width: 16, height: 16 }} />
+                      <span>Pin on Map</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Complete Street Address & Landmark *</label>
                   <div className="input-wrapper textarea-wrapper">
                     <textarea
                       rows="3"
-                      placeholder="House No., Street, Landmark, Area"
+                      placeholder="House No., Street, Colony, Landmark (e.g. Near Banna Devi Thana / Gular Road / Centre Point)"
                       value={address.address}
                       onChange={(e) =>
                         handleAddressChange("address", e.target.value)
@@ -499,57 +652,69 @@ const Checkout = () => {
                 </div>
 
                 <div className="form-row">
-                  {/* STATE DROPDOWN */}
+                  {/* STATE - LOCKED TO UP */}
                   <div className="form-group">
-                    <label>State *</label>
+                    <label>State (Service Region) *</label>
+                    <div className="input-wrapper">
+                      <select value="Uttar Pradesh" disabled>
+                        <option value="Uttar Pradesh">
+                          Uttar Pradesh (Aligarh District Service)
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* ALIGARH LOCALITY / TEHSIL SELECTOR */}
+                  <div className="form-group">
+                    <label>Locality / Tehsil in Aligarh *</label>
                     <div className="input-wrapper">
                       <select
-                        value={address.state || "Uttar Pradesh"}
-                        onChange={(e) => {
-                          const selectedSt = e.target.value;
-                          const cities = INDIAN_STATES_CITIES[selectedSt] || [];
-                          setAddress((prev) => ({
-                            ...prev,
-                            state: selectedSt,
-                            city: cities[0] || prev.city,
-                          }));
-                        }}
+                        value={address.city}
+                        onChange={(e) => handleCityChange(e.target.value)}
                       >
-                        {Object.keys(INDIAN_STATES_CITIES).map((st) => (
-                          <option key={st} value={st}>
-                            {st}
+                        {!ALIGARH_AREAS.some((a) => a.name === address.city) && (
+                          <option value={address.city}>
+                            📍 {address.city} (Custom Area)
+                          </option>
+                        )}
+                        {ALIGARH_AREAS.map((a) => (
+                          <option key={a.name} value={a.name}>
+                            {a.name} ({a.pincode}) - {a.deliveryTime}
                           </option>
                         ))}
                       </select>
                     </div>
                   </div>
+                </div>
 
-                  {/* CITY DROPDOWN */}
-                  <div className="form-group">
-                    <label>City *</label>
-                    <div className="input-wrapper">
-                      {INDIAN_STATES_CITIES[address.state] ? (
-                        <select
-                          value={address.city}
-                          onChange={(e) => handleAddressChange("city", e.target.value)}
-                        >
-                          {availableCities.map((ct) => (
-                            <option key={ct} value={ct}>
-                              {ct}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          placeholder="Enter city"
-                          value={address.city}
-                          onChange={(e) => handleAddressChange("city", e.target.value)}
-                        />
-                      )}
+                {/* Dynamic Delivery Time & Distance Card */}
+                {deliveryEstimate.isDeliverable ? (
+                  <div className="checkout-delivery-estimate-card">
+                    <div className="cd-est-icon">
+                      <Clock className="cd-svg" />
+                    </div>
+                    <div className="cd-est-info">
+                      <div className="cd-badge-row">
+                        <span className="cd-badge">{deliveryEstimate.deliveryBadge}</span>
+                        <span className="cd-dist">
+                          ~{deliveryEstimate.distanceKm} km from Pharmacy Hub
+                        </span>
+                      </div>
+                      <h4 className="cd-time">
+                        Estimated Delivery: {deliveryEstimate.deliveryTime}
+                      </h4>
+                      <p className="cd-note">{deliveryEstimate.message}</p>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="checkout-delivery-alert-card">
+                    <ShieldAlert className="cd-alert-svg" />
+                    <div>
+                      <h4>Delivery Not Available at this Location</h4>
+                      <p>{deliveryEstimate.message}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -598,7 +763,7 @@ const Checkout = () => {
                     checked={paymentMethod === "COD"}
                     onChange={() => setPaymentMethod("COD")}
                   />
-                  <div className="pay-card-icon cod">
+                  <div className="pay-card-icon">
                     <Truck className="pay-svg" />
                   </div>
                   <div className="pay-card-info">
@@ -606,7 +771,7 @@ const Checkout = () => {
                       <strong>Cash on Delivery (COD)</strong>
                       <span className="pay-badge blue">Pay at Doorstep</span>
                     </div>
-                    <p>Pay with cash or UPI QR code when medicine arrives at your doorstep.</p>
+                    <p>Pay cash or scan QR when medicines arrive at your doorstep</p>
                   </div>
                 </label>
               </div>
@@ -615,21 +780,43 @@ const Checkout = () => {
 
           {/* RIGHT SIDE: SUMMARY */}
           <div className="checkout-right">
-            <div className="order-summary-card">
-              <h2>Order Details</h2>
+            <div className="checkout-summary">
+              <div className="summary-header-row">
+                <div className="sum-hdr-left">
+                  <div className="sum-hdr-icon">
+                    <ShoppingBag className="sum-bag-ic" />
+                  </div>
+                  <div>
+                    <h3>Order Summary</h3>
+                    <p className="summary-subtitle">
+                      {cart.length} medicine{cart.length !== 1 ? "s" : ""} in cart
+                    </p>
+                  </div>
+                </div>
+                <span className="items-count-badge">
+                  {cart.reduce((total, it) => total + (it.quantity || 1), 0)} Items
+                </span>
+              </div>
 
-              <div className="summary-items">
+              <div className="summary-items-list">
                 {cart.map((item) => (
-                  <div className="summary-item" key={item._id}>
-                    <div className="sum-item-icon">
-                      <Pill className="sum-pill-svg" />
+                  <div key={item._id} className="summary-item-row">
+                    <div className="sum-item-left">
+                      <div className="sum-item-med-icon">
+                        <Pill className="sum-pill-ic" />
+                      </div>
+                      <div className="sum-item-details">
+                        <strong className="sum-item-name">{item.name}</strong>
+                        <div className="sum-item-meta">
+                          <span className="sum-qty-pill">Qty: {item.quantity}</span>
+                          <span className="sum-unit-price">₹{item.sellingPrice} each</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="sum-item-details">
-                      <strong>{item.name}</strong>
-                      <small>Qty: {item.quantity}</small>
-                    </div>
-                    <div className="sum-item-price">
-                      ₹{(item.sellingPrice * item.quantity).toFixed(2)}
+                    <div className="sum-item-right">
+                      <span className="sum-item-price">
+                        ₹{(item.quantity * item.sellingPrice).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -637,52 +824,104 @@ const Checkout = () => {
 
               <div className="summary-divider"></div>
 
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <strong>₹{cartTotal.toFixed(2)}</strong>
-              </div>
+              <div className="summary-pricing-table">
+                <div className="summary-row">
+                  <span>Item Subtotal</span>
+                  <strong>₹{cartTotal.toFixed(2)}</strong>
+                </div>
 
-              <div className="summary-row">
-                <span>Delivery Charge</span>
-                {deliveryCharge === 0 ? (
-                  <span className="free-badge">FREE</span>
-                ) : (
-                  <strong>₹{deliveryCharge.toFixed(2)}</strong>
-                )}
+                <div className="summary-row">
+                  <span>Delivery Partner Fee</span>
+                  {deliveryCharge === 0 ? (
+                    <span className="free-badge">🎉 FREE Delivery</span>
+                  ) : (
+                    <strong>₹{deliveryCharge.toFixed(2)}</strong>
+                  )}
+                </div>
+
+                {/* Dynamic Delivery Time summary line */}
+                <div className="summary-row">
+                  <span className="est-time-label">
+                    <Clock className="mini-clock-ic" /> Estimated Arrival
+                  </span>
+                  <span className="est-time-val">
+                    {deliveryEstimate.isDeliverable
+                      ? deliveryEstimate.deliveryTime
+                      : "Not Deliverable"}
+                  </span>
+                </div>
               </div>
 
               <div className="summary-divider"></div>
 
               <div className="summary-row total-row">
-                <span>Total Payable</span>
+                <div>
+                  <span className="total-label">Total Payable</span>
+                  <small className="tax-inclusive-tag">Inclusive of all taxes</small>
+                </div>
                 <span className="total-price">₹{finalTotal.toFixed(2)}</span>
               </div>
 
               <button
                 type="button"
-                className="place-order-btn"
+                className={`place-order-btn ${!deliveryEstimate.isDeliverable ? "disabled-btn" : ""}`}
                 onClick={handlePlaceOrder}
-                disabled={loading}
+                disabled={loading || !deliveryEstimate.isDeliverable}
+                title={
+                  !deliveryEstimate.isDeliverable
+                    ? "Cannot order outside Aligarh district"
+                    : "Place Order"
+                }
               >
                 {loading ? (
-                  <span>Processing Order...</span>
+                  <span className="btn-spinner-wrap">
+                    <Loader2 className="spin-ic" /> Processing Order...
+                  </span>
+                ) : !deliveryEstimate.isDeliverable ? (
+                  <span>Outside Aligarh Service Zone</span>
                 ) : (
-                  <span>Confirm & Place Order</span>
+                  <span>
+                    Confirm & Place Order • ₹{finalTotal.toFixed(2)}
+                  </span>
                 )}
               </button>
 
               <div className="trust-footer">
                 <ShieldCheck className="trust-ic" />
-                <span>Money-back guarantee & genuine products</span>
+                <span>100% Genuine Medicines • Direct Aligarh Pharmacy Dispatch</span>
               </div>
             </div>
           </div>
         </div>
       </main>
 
+      {/* INTERACTIVE MAP LOCATION PICKER MODAL */}
+      {showMapPicker && (
+        <div
+          className="checkout-map-modal-backdrop"
+          onClick={() => setShowMapPicker(false)}
+        >
+          <div
+            className="checkout-map-modal-container"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <InteractiveMapPicker
+              initialLat={address.lat}
+              initialLng={address.lng}
+              initialCity={address.city}
+              initialPincode={address.pincode}
+              initialAddress={address.address}
+              onLocationSelect={handleMapLocationSelect}
+              onClose={() => setShowMapPicker(false)}
+              isModal={true}
+            />
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer className="checkout-footer">
-        © 2026 MediDeliver. All rights reserved. Express Healthcare Delivery.
+        © 2026 MediDeliver Aligarh. All rights reserved. 24/7 Healthcare Delivery.
       </footer>
     </div>
   );

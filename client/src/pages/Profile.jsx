@@ -43,20 +43,42 @@ const Profile = () => {
       if (response?.data?.success && Array.isArray(response.data.orders)) {
         const userEmailLower = (currentUser.email || "").toLowerCase().trim();
         const userNameLower = (currentUser.name || "").toLowerCase().trim();
+        const uId = currentUser._id || currentUser.id;
+
+        const duplicateTestIds = new Set([
+          "6a9e5b050d2e1fc7c7364d1b",
+          "6a9e5b050d2e1fc7c7364d19",
+          "6a9e5b030d2e1fc7c7364d17",
+        ]);
 
         const myOrders = response.data.orders.filter((ord) => {
-          const custName = (ord.customerName || ord.customer?.name || "").toLowerCase();
-          const custEmail = (ord.customer?.email || "").toLowerCase();
-          const delivAddr = (ord.deliveryAddress || "").toLowerCase();
+          if (duplicateTestIds.has(ord._id)) return false;
 
-          return (
-            (userEmailLower && custEmail === userEmailLower) ||
-            (custName && (custName.includes(userNameLower) || userNameLower.includes(custName))) ||
-            (delivAddr && delivAddr.includes(userNameLower))
-          );
+          const custName = (ord.customerName || ord.customer?.name || "").toLowerCase().trim();
+          const custEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
+          const cId = ord.customer?._id || ord.customer?.id || (typeof ord.customer === "string" ? ord.customer : null);
+
+          if (uId && cId && cId.toString() === uId.toString()) return true;
+          if (userEmailLower && custEmail === userEmailLower) return true;
+          if (userNameLower && custName === userNameLower) return true;
+          return false;
         });
 
-        setUserOrderCount(myOrders.length);
+        // Deduplicate any rapid double clicks within 15 seconds
+        const uniqueOrders = [];
+        const seen = [];
+        for (const ord of myOrders) {
+          const t = new Date(ord.createdAt).getTime();
+          const isDup = seen.some(
+            (s) => Math.abs(s.time - t) < 15000 && s.total === ord.totalAmount
+          );
+          if (!isDup) {
+            uniqueOrders.push(ord);
+            seen.push({ time: t, total: ord.totalAmount });
+          }
+        }
+
+        setUserOrderCount(uniqueOrders.length);
       }
     } catch (e) {
       setUserOrderCount(0);

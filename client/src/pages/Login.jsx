@@ -26,12 +26,14 @@ const Login = () => {
   const [loginRole, setLoginRole] = useState(initialRole);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showAdminSecret, setShowAdminSecret] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    adminSecretKey: "",
   });
 
   // Live Digital Watch (Date, Day & Time)
@@ -73,6 +75,30 @@ const Login = () => {
     }
   }, [searchParams]);
 
+  // Ensure all login inputs are strictly blank on page load / logout redirection
+  useEffect(() => {
+    const clearForm = () => {
+      setFormData({
+        email: "",
+        password: "",
+        adminSecretKey: "",
+      });
+    };
+
+    clearForm();
+    const t1 = setTimeout(clearForm, 50);
+    const t2 = setTimeout(clearForm, 150);
+    const t3 = setTimeout(clearForm, 300);
+    const t4 = setTimeout(clearForm, 600);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [loginRole]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -88,6 +114,7 @@ const Login = () => {
     setFormData({
       email: "",
       password: "",
+      adminSecretKey: "",
     });
   };
 
@@ -105,12 +132,19 @@ const Login = () => {
       return;
     }
 
+    if (loginRole === "admin" && !formData.adminSecretKey.trim()) {
+      setError("🔒 Please enter the Admin Secret Security Key.");
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await api.post("/auth/login", {
         email: formData.email,
         password: formData.password,
         role: loginRole,
+        adminSecretKey:
+          loginRole === "admin" ? formData.adminSecretKey.trim() : undefined,
       });
 
       if (response.data.success) {
@@ -276,7 +310,23 @@ const Login = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} autoComplete="off">
+              {/* Hidden dummy fields to prevent browser aggressive autofill */}
+              <input
+                type="text"
+                name="prevent_autofill_email"
+                tabIndex="-1"
+                autoComplete="off"
+                style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
+              />
+              <input
+                type="password"
+                name="prevent_autofill_pwd"
+                tabIndex="-1"
+                autoComplete="off"
+                style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
+              />
+
               {/* EMAIL */}
               <div className="login-form-group">
                 <label htmlFor="email">
@@ -288,6 +338,7 @@ const Login = () => {
                     type="email"
                     name="email"
                     required
+                    autoComplete="new-password"
                     placeholder={
                       loginRole === "admin"
                         ? "admin@medideliver.com"
@@ -303,7 +354,10 @@ const Login = () => {
               <div className="login-form-group">
                 <div className="password-label-row">
                   <label htmlFor="password">Password</label>
-                  <Link to="/forgot-password" className="forgot-link">
+                  <Link
+                    to={`/forgot-password?role=${loginRole}`}
+                    className="forgot-link"
+                  >
                     Forgot Password?
                   </Link>
                 </div>
@@ -314,6 +368,7 @@ const Login = () => {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required
+                    autoComplete="new-password"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
@@ -329,9 +384,48 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* ADMIN MASTER SECRET KEY */}
+              {loginRole === "admin" && (
+                <div className="login-form-group admin-secret-group">
+                  <div className="password-label-row">
+                    <label htmlFor="adminSecretKey">Admin Secret Passkey *</label>
+                    <span className="secret-badge-tag">🔒 Master Auth</span>
+                  </div>
+
+                  <div className="input-wrapper">
+                    <input
+                      id="adminSecretKey"
+                      type={showAdminSecret ? "text" : "password"}
+                      name="adminSecretKey"
+                      required
+                      autoComplete="new-password"
+                      placeholder="Enter Admin Secret Passkey"
+                      value={formData.adminSecretKey}
+                      onChange={handleChange}
+                    />
+
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowAdminSecret(!showAdminSecret)}
+                      title={showAdminSecret ? "Hide Secret Key" : "Show Secret Key"}
+                    >
+                      {showAdminSecret ? (
+                        <EyeOff className="eye-svg" />
+                      ) : (
+                        <Eye className="eye-svg" />
+                      )}
+                    </button>
+                  </div>
+                  <small className="admin-secret-tip">
+                    🔒 Only authorized administrators with the master passkey can log in.
+                  </small>
+                </div>
+              )}
+
               <div className="remember-row">
                 <label className="checkbox-label">
-                  <input type="checkbox" defaultChecked />
+                  <input type="checkbox" />
                   <span>Remember me on this device</span>
                 </label>
               </div>

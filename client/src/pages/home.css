@@ -121,7 +121,7 @@
   width: 18px;
   height: 18px;
   color: var(--text-light);
-  pointer-events: none;
+  transition: var(--transition-fast);
 }
 
 .nav-search input {
@@ -1245,4 +1245,121 @@
 
 .company-card:hover .comp-arrow {
   transform: translateX(4px);
+}
+
+/* ==================================================
+   RESPONSIVE MEDIA QUERIES (TABLETS & MOBILE)
+   ================================================== */
+
+@media (max-width: 1024px) {
+  .nav-container {
+    padding: 0 16px;
+    gap: 16px;
+  }
+  
+  .hero-container {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .hero-stats {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .features-grid,
+  .quick-services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .popular-medicines-grid,
+  .companies-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .location-pill {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding: 6px 12px;
+  }
+  
+  .search-form {
+    order: 4;
+    width: 100%;
+    min-width: 100%;
+  }
+  
+  .hero-section {
+    padding: 40px 0 20px 0;
+  }
+  
+  .hero-title {
+    font-size: 32px;
+    line-height: 1.2;
+  }
+  
+  .hero-desc {
+    font-size: 15px;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .hero-actions a,
+  .hero-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .quick-services-grid,
+  .features-grid,
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .popular-medicines-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .companies-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    font-size: 20px;
+  }
+  
+  .logo-badge {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .hero-title {
+    font-size: 26px;
+  }
+  
+  .hero-stat-card {
+    flex: 1 1 100%;
+  }
+  
+  .service-card {
+    padding: 20px;
+  }
 }

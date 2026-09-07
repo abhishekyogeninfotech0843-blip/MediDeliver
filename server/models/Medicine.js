@@ -22,19 +22,18 @@ const medicineSchema = new mongoose.Schema(
 
     batchNumber: {
       type: String,
-      required: true,
-      unique: true,
+      default: () => `BATCH-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
       trim: true,
     },
 
     expiryDate: {
       type: Date,
-      required: true,
+      default: () => new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000),
     },
 
     purchasePrice: {
       type: Number,
-      required: true,
+      default: 0,
       min: 0,
     },
 

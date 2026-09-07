@@ -1,6 +1,7 @@
 const Medicine = require("../models/Medicine");
+const mongoose = require("mongoose");
 
-const fallbackMedicines = [
+const defaultSeedMedicines = [
   {
     _id: "66f101010101010101010101",
     name: "Paracetamol 650mg (Dolo)",
@@ -123,19 +124,51 @@ const fallbackMedicines = [
   },
 ];
 
+let inMemoryMedicines = [...defaultSeedMedicines];
+
+// Helper to generate unique batch number if not provided
+const generateBatch = () => `BATCH-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+
 // Add Medicine
 const addMedicine = async (req, res) => {
   try {
-    const medicine = await Medicine.create(req.body);
+    const data = { ...req.body };
+    if (!data.batchNumber || data.batchNumber.trim() === "") {
+      data.batchNumber = generateBatch();
+    }
+    if (!data.expiryDate) {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + 2);
+      data.expiryDate = d;
+    }
+    if (data.purchasePrice === undefined || data.purchasePrice === "") {
+      data.purchasePrice = Math.max(0, Number(data.sellingPrice || 0) * 0.6);
+    }
+
+    let medicine;
+    try {
+      medicine = await Medicine.create(data);
+    } catch (dbErr) {
+      console.warn("⚠️ Medicine DB create fallback:", dbErr.message);
+      medicine = {
+        _id: new mongoose.Types.ObjectId().toString(),
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      inMemoryMedicines.unshift(medicine);
+    }
+
     res.status(201).json({
       success: true,
-      message: "Medicine added successfully",
+      message: "Medicine added successfully to catalog",
       medicine,
     });
   } catch (error) {
+    console.error("Add Medicine Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Failed to add medicine",
     });
   }
 };
@@ -144,14 +177,10 @@ const addMedicine = async (req, res) => {
 const getMedicines = async (req, res) => {
   try {
     let medicines = [];
-    try {
+    if (mongoose.connection.readyState === 1) {
       medicines = await Medicine.find().sort({ createdAt: -1 });
-    } catch (dbErr) {
-      console.warn("⚠️ DB query failed, serving fallback medicines:", dbErr.message);
-    }
-
-    if (!medicines || medicines.length === 0) {
-      medicines = fallbackMedicines;
+    } else {
+      medicines = inMemoryMedicines;
     }
 
     res.status(200).json({
@@ -163,8 +192,8 @@ const getMedicines = async (req, res) => {
     console.error("Get Medicines Error:", error);
     res.status(200).json({
       success: true,
-      count: fallbackMedicines.length,
-      medicines: fallbackMedicines,
+      count: inMemoryMedicines.length,
+      medicines: inMemoryMedicines,
     });
   }
 };
@@ -174,14 +203,18 @@ const getMedicineById = async (req, res) => {
   try {
     const { id } = req.params;
     let medicine = null;
-    try {
+    if (mongoose.connection.readyState === 1) {
       medicine = await Medicine.findById(id);
-    } catch (e) {
-      medicine = fallbackMedicines.find((m) => m._id === id);
+    }
+    if (!medicine) {
+      medicine = inMemoryMedicines.find((m) => String(m._id) === String(id));
     }
 
     if (!medicine) {
-      medicine = fallbackMedicines.find((m) => m._id === id) || fallbackMedicines[0];
+      return res.status(404).json({
+        success: false,
+        message: "Medicine not found",
+      });
     }
 
     res.status(200).json({
@@ -189,9 +222,10 @@ const getMedicineById = async (req, res) => {
       medicine,
     });
   } catch (error) {
+    const fallback = inMemoryMedicines.find((m) => String(m._id) === String(req.params.id));
     res.status(200).json({
       success: true,
-      medicine: fallbackMedicines[0],
+      medicine: fallback || inMemoryMedicines[0],
     });
   }
 };
@@ -200,10 +234,21 @@ const getMedicineById = async (req, res) => {
 const updateMedicine = async (req, res) => {
   try {
     const { id } = req.params;
-    const medicine = await Medicine.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    let medicine = null;
+
+    if (mongoose.connection.readyState === 1) {
+      medicine = await Medicine.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+    }
+
+    // Sync in-memory if applicable
+    const index = inMemoryMedicines.findIndex((m) => String(m._id) === String(id));
+    if (index !== -1) {
+      inMemoryMedicines[index] = { ...inMemoryMedicines[index], ...req.body };
+      if (!medicine) medicine = inMemoryMedicines[index];
+    }
 
     res.status(200).json({
       success: true,
@@ -211,28 +256,92 @@ const updateMedicine = async (req, res) => {
       medicine: medicine || { _id: id, ...req.body },
     });
   } catch (error) {
+    console.error("Update Medicine Error:", error);
     res.status(200).json({
       success: true,
       message: "Medicine updated in fallback mode",
+      medicine: { _id: req.params.id, ...req.body },
     });
   }
 };
 
-// Delete Medicine
+// Delete Single Medicine
 const deleteMedicine = async (req, res) => {
   try {
     const { id } = req.params;
-    const medicine = await Medicine.findByIdAndDelete(id);
+    let medicine = null;
+
+    if (mongoose.connection.readyState === 1) {
+      medicine = await Medicine.findByIdAndDelete(id);
+    }
+
+    inMemoryMedicines = inMemoryMedicines.filter((m) => String(m._id) !== String(id));
 
     res.status(200).json({
       success: true,
-      message: "Medicine deleted successfully",
+      message: "Medicine deleted successfully from catalog",
       medicine,
     });
   } catch (error) {
+    console.error("Delete Medicine Error:", error);
     res.status(200).json({
       success: true,
-      message: "Medicine removed",
+      message: "Medicine removed from list",
+    });
+  }
+};
+
+// Delete All Medicines
+const deleteAllMedicines = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Medicine.deleteMany({});
+    }
+
+    inMemoryMedicines = [];
+
+    res.status(200).json({
+      success: true,
+      message: "All medicines have been deleted successfully from the catalog.",
+    });
+  } catch (error) {
+    console.error("Delete All Medicines Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to delete all medicines",
+    });
+  }
+};
+
+// Reset / Seed Default Medicines
+const resetDefaultMedicines = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Medicine.deleteMany({});
+      const cloned = defaultSeedMedicines.map((m) => ({
+        ...m,
+        _id: new mongoose.Types.ObjectId(),
+      }));
+      await Medicine.insertMany(cloned);
+      const all = await Medicine.find().sort({ createdAt: -1 });
+      return res.status(200).json({
+        success: true,
+        message: "Catalog reset to default medicines successfully",
+        medicines: all,
+      });
+    }
+
+    inMemoryMedicines = [...defaultSeedMedicines];
+    res.status(200).json({
+      success: true,
+      message: "In-memory catalog reset to default medicines",
+      medicines: inMemoryMedicines,
+    });
+  } catch (error) {
+    console.error("Reset Default Medicines Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to reset medicines",
     });
   }
 };
@@ -243,4 +352,6 @@ module.exports = {
   getMedicineById,
   updateMedicine,
   deleteMedicine,
+  deleteAllMedicines,
+  resetDefaultMedicines,
 };

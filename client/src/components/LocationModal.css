@@ -244,6 +244,120 @@
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
+/* CUSTOM LOCATION ACTION CARD */
+.custom-location-action-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: fadeInModal 0.2s ease;
+}
+
+.custom-location-action-card.deliverable {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1.5px solid #86efac;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+}
+
+.custom-location-action-card.deliverable:hover {
+  transform: translateY(-1px);
+  border-color: #0d9488;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.18);
+}
+
+.custom-location-action-card.blocked {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+}
+
+.cla-icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.custom-location-action-card.blocked .cla-icon-circle {
+  background: #fee2e2;
+}
+
+.cla-icon {
+  width: 18px;
+  height: 18px;
+  color: #16a34a;
+}
+
+.custom-location-action-card.blocked .cla-icon {
+  color: #dc2626;
+}
+
+.cla-text-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.cla-header-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cla-header-line strong {
+  font-size: 13.5px;
+  color: #0f172a;
+}
+
+.cla-badge-time {
+  background: #15803d;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.cla-badge-blocked {
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.cla-desc {
+  margin: 3px 0 0 0;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.3;
+}
+
+.cla-use-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #0d9488;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.cla-use-btn:hover {
+  background: #0f766e;
+  transform: scale(1.02);
+}
+
 /* SUGGESTIONS LIST */
 .suggestions-list {
   background: #ffffff;
@@ -631,18 +745,202 @@
   transition: all 0.2s ease;
 }
 
-.confirm-loc-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
+.confirm-loc-btn:disabled,
+.confirm-loc-btn.disabled-btn {
+  background: #cbd5e1 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-.check-icon {
+/* Service Zone Notice Banner */
+.service-zone-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: #f0fdf4;
+  border-bottom: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 12.5px;
+}
+
+.zone-icon {
   width: 18px;
   height: 18px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* Chip Time Badge */
+.chip-time-badge {
+  font-size: 10px;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.city-chip.active .chip-time-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-sublabel {
+  font-size: 11px;
+  color: #0d9488;
+  font-weight: 500;
+}
+
+.pincode-tag {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+/* Dynamic Delivery Estimate Card */
+.delivery-estimate-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-top: 4px;
+  transition: all 0.2s ease;
+}
+
+.delivery-estimate-card.serviceable {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #86efac;
+}
+
+.delivery-estimate-card.unserviceable {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.estimate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.estimate-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.estimate-icon {
+  width: 24px;
+  height: 24px;
+  color: #16a34a;
+}
+
+.estimate-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.estimate-value {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.distance-pill {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.estimate-footer-note {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.deliverable-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #15803d;
+  font-weight: 500;
+}
+
+.mini-check {
+  width: 14px;
+  height: 14px;
+  color: #16a34a;
+}
+
+.undeliverable-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.mini-alert {
+  width: 16px;
+  height: 16px;
+  color: #dc2626;
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
+  .location-modal-card {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 16px;
+  }
+
+  .location-modal-header {
+    padding: 16px;
+  }
+
+  .location-modal-body {
+    padding: 16px;
+  }
+
   .address-inputs-row {
     grid-template-columns: 1fr;
   }
+
+  .estimate-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .location-modal-footer {
+    padding: 14px 16px;
+    flex-direction: column;
+  }
+
+  .location-modal-footer button {
+    width: 100%;
+  }
 }
+
