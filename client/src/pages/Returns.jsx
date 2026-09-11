@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api";
 import UserProfileDropdown from "../components/UserProfileDropdown";
 import {
@@ -284,6 +284,7 @@ const getCachedStats = (initialList = []) => {
 };
 
 const Returns = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [user, setUser] = useState(() => {
     try {
@@ -939,7 +940,24 @@ const Returns = () => {
             <span>{isAdmin ? "Pharmacy Admin Return Portal" : "Medicine Returns Center"}</span>
           </div>
 
-          <UserProfileDropdown user={user} />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/");
+                }
+              }}
+              title="Go back"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+            <UserProfileDropdown user={user} />
+          </div>
         </div>
       </header>
 

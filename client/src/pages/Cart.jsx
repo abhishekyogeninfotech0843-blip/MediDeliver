@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import UserProfileDropdown from "../components/UserProfileDropdown";
 import {
@@ -17,6 +17,7 @@ import {
 import "./Cart.css";
 
 const Cart = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const {
     cart,
@@ -58,9 +59,25 @@ const Cart = () => {
             Medi<span>Deliver</span>
           </Link>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/medicines");
+                }
+              }}
+              title="Go back"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+
             <Link to="/medicines" className="continue-shopping">
-              <ArrowLeft className="nav-back-icon" />
+              <ShoppingBag className="nav-back-icon" />
               <span>Continue Shopping</span>
             </Link>
 

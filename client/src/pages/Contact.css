@@ -22,9 +22,9 @@
 }
 
 .contact-header-container {
-  max-width: 1280px;
+  max-width: 1560px;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 14px 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -76,6 +76,34 @@
   color: #059669;
   background-color: #ecfdf5;
   font-weight: 700;
+}
+
+.orders-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  padding: 8px 16px;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.orders-back-btn:hover {
+  background-color: #f8fafc;
+  border-color: #059669;
+  color: #059669;
+  transform: translateX(-2px);
+}
+
+.orders-back-btn .back-ic {
+  width: 16px;
+  height: 16px;
 }
 
 .auth-btns {
@@ -184,9 +212,9 @@
 
 /* ================= CONTAINER & EMERGENCY STRIP ================= */
 .contact-container {
-  max-width: 1280px;
+  max-width: 1560px;
   margin: -10px auto 60px;
-  padding: 0 24px;
+  padding: 0 36px;
   width: 100%;
 }
 

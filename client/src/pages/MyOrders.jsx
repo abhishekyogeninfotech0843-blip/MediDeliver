@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import UserProfileDropdown from "../components/UserProfileDropdown";
+import InvoiceModal from "../components/InvoiceModal";
 import {
   Pill,
   ShoppingBag,
@@ -17,6 +18,9 @@ import {
   Calendar,
   FileText,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
   ArrowLeft,
   Phone,
   MapPin,
@@ -472,6 +476,11 @@ const MyOrders = () => {
     }
   };
 
+  const [expandedOrderIds, setExpandedOrderIds] = useState(() => new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const ordersPerPage = 4;
+
   const totalMedsCount = orders.reduce(
     (sum, o) => sum + (o.items || []).reduce((itemSum, it) => itemSum + (it.quantity || 1), 0),
     0
@@ -488,6 +497,28 @@ const MyOrders = () => {
     const matchesStatus = statusFilter === "ALL" || ord.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Reset pagination when searching or changing status filter
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const toggleOrderExpand = (orderId) => {
+    setExpandedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage));
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
 
   return (
     <div className="my-orders-page">
@@ -652,7 +683,7 @@ const MyOrders = () => {
           </div>
         ) : (
           <div className="orders-grid-list">
-            {filteredOrders.map((ord) => {
+            {currentOrders.map((ord) => {
               const banner = getOrderStatusBanner(ord);
               const trackingSteps = getOrderTrackingSteps(ord);
               const trackingCode = ord.trackingId || `TRK-${ord._id.slice(-6).toUpperCase()}`;
@@ -662,11 +693,24 @@ const MyOrders = () => {
                   r.billNumber === ord._id.slice(-6).toUpperCase() ||
                   (r.billNumber && ord._id.toUpperCase().endsWith(r.billNumber.toUpperCase()))
               );
+              const isExpanded = expandedOrderIds.has(ord._id);
+              const totalItemsCount = (ord.items || []).reduce((acc, it) => acc + (it.quantity || 1), 0);
 
               return (
-                <div key={ord._id} className="order-history-card">
-                  {/* CARD HEADER */}
-                  <div className="ord-card-hdr">
+                <div key={ord._id} className={`order-history-card ${isExpanded ? "card-expanded" : "card-collapsed"}`}>
+                  {/* CARD HEADER (CLICKABLE ACCORDION HEADER) */}
+                  <div
+                    className={`ord-card-hdr ${isExpanded ? "hdr-expanded" : ""}`}
+                    onClick={() => toggleOrderExpand(ord._id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleOrderExpand(ord._id);
+                      }
+                    }}
+                  >
                     <div className="ord-id-wrap">
                       <Package className="ord-box-ic" />
                       <div>
@@ -678,19 +722,24 @@ const MyOrders = () => {
                             <Navigation className="trk-tag-ic" /> {trackingCode}
                           </span>
                         </div>
-                        <span className="ord-date-text">
-                          <Calendar className="cal-ic" />{" "}
-                          {new Date(ord.createdAt).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                          {" • "}
-                          {new Date(ord.createdAt).toLocaleTimeString("en-IN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                        <div className="ord-meta-row">
+                          <span className="ord-date-text">
+                            <Calendar className="cal-ic" />{" "}
+                            {new Date(ord.createdAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                            {" • "}
+                            {new Date(ord.createdAt).toLocaleTimeString("en-IN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          <span className="ord-items-snippet">
+                            {totalItemsCount} {totalItemsCount === 1 ? "item" : "items"} • ₹{Number(ord.totalAmount || 0).toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -699,209 +748,285 @@ const MyOrders = () => {
                       <button
                         type="button"
                         className="refresh-card-btn"
-                        onClick={() => handleRefreshSingleOrder(ord._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRefreshSingleOrder(ord._id);
+                        }}
                         title="Check latest status"
                       >
                         <RefreshCw className={`ref-ic ${refreshingId === ord._id ? "spinning" : ""}`} />
                       </button>
-                    </div>
-                  </div>
 
-                  {/* RETURN REQUEST NOTICE IF ACTIVE */}
-                  {matchingReturn && (
-                    <div className="order-return-attached-strip">
-                      <div className="ora-left">
-                        <RotateCcw className="ora-ic" />
-                        <div>
-                          <strong>Return Request Active: {matchingReturn.medicineName}</strong>
-                          <small>Ticket #{matchingReturn.billNumber} • Status: {matchingReturn.status}</small>
-                        </div>
-                      </div>
-                      <Link to="/returns?tab=my-returns" className="ora-view-link">
-                        View Return Claim <ChevronRight className="nl-ic" />
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* 1. LIVE ORDER STATUS HIGHLIGHT BANNER */}
-                  <div className={`order-status-banner ${banner.bannerClass}`}>
-                    <div className="os-banner-left">
-                      <div className="os-banner-icon-box">{banner.icon}</div>
-                      <div className="os-banner-text">
-                        <span className="os-stage-tag">{banner.stageLabel}</span>
-                        <h4>{banner.title}</h4>
-                        <p>{banner.desc}</p>
-                      </div>
-                    </div>
-
-                    <div className="os-banner-right">
-                      <div className="os-eta-badge">
-                        <Clock className="eta-ic" />
-                        <span>{banner.eta}</span>
-                      </div>
                       <button
                         type="button"
-                        className="track-live-btn"
-                        onClick={() => setActiveTrackingOrder(ord)}
+                        className={`ord-expand-toggle-btn ${isExpanded ? "btn-expanded" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOrderExpand(ord._id);
+                        }}
+                        aria-expanded={isExpanded}
                       >
-                        <Navigation className="trk-ic" />
-                        <span>Track Live Status</span>
+                        <span>{isExpanded ? "Hide Details" : "View Details"}</span>
+                        {isExpanded ? (
+                          <ChevronUp className="toggle-chevron-ic" />
+                        ) : (
+                          <ChevronDown className="toggle-chevron-ic" />
+                        )}
                       </button>
                     </div>
                   </div>
 
-                  {/* 2. FIVE-STAGE VISUAL TIMELINE STEPPER */}
-                  <div className="order-stepper-wrapper">
-                    <div className="stepper-track-line" />
-                    <div className="stepper-steps-row">
-                      {trackingSteps.map((s, idx) => {
-                        let stepStateClass = "step-pending";
-                        if (s.isDone) stepStateClass = "step-completed";
-                        else if (s.isCurrent) stepStateClass = "step-active";
-
-                        return (
-                          <div key={idx} className={`stepper-step-item ${stepStateClass}`}>
-                            <div className="step-circle">
-                              {s.isDone ? (
-                                <Check className="step-ic-done" />
-                              ) : s.isCurrent ? (
-                                <span className="step-active-dot" />
-                              ) : (
-                                <span className="step-number">{s.step}</span>
-                              )}
-                            </div>
-                            <div className="step-label-box">
-                              <strong className="step-name">{s.title}</strong>
-                              <small className="step-sub">{s.shortDesc}</small>
-                              <span className="step-time">{s.time}</span>
+                  {/* EXPANDABLE CONTENT */}
+                  {isExpanded && (
+                    <div className="ord-card-expanded-content">
+                      {/* RETURN REQUEST NOTICE IF ACTIVE */}
+                      {matchingReturn && (
+                        <div className="order-return-attached-strip">
+                          <div className="ora-left">
+                            <RotateCcw className="ora-ic" />
+                            <div>
+                              <strong>Return Request Active: {matchingReturn.medicineName}</strong>
+                              <small>Ticket #{matchingReturn.billNumber} • Status: {matchingReturn.status}</small>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 3. DELIVERY PARTNER CARD IF OUT FOR DELIVERY */}
-                  {ord.orderStatus === "OUT_FOR_DELIVERY" && banner.partner && (
-                    <div className="active-rider-card">
-                      <div className="rider-avatar-box">
-                        <Bike className="rider-bike-ic" />
-                      </div>
-                      <div className="rider-details-box">
-                        <div className="rider-name-row">
-                          <strong>{banner.partner.name}</strong>
-                          <span className="rider-badge">🛵 Assigned Delivery Partner</span>
+                          <Link to="/returns?tab=my-returns" className="ora-view-link">
+                            View Return Claim <ChevronRight className="nl-ic" />
+                          </Link>
                         </div>
-                        <small className="rider-sub">
-                          Vehicle: {banner.partner.vehicle || "Electric Scooter (UP 81 AB 4920)"} • Contact: {banner.partner.phone || "+91 98765 43210"}
-                        </small>
-                      </div>
-                      <a
-                        href={`tel:${banner.partner.phone || "9876543210"}`}
-                        className="rider-call-button"
-                      >
-                        <Phone className="phone-ic" /> Call Rider
-                      </a>
-                    </div>
-                  )}
-
-                  {/* CARD BODY: ITEMS & SUMMARY */}
-                  <div className="ord-card-body">
-                    <div className="items-list-container">
-                      <h4 className="body-section-title">Purchased Medicines:</h4>
-                      {(ord.items || []).map((item, idx) => (
-                        <div key={idx} className="order-item-row">
-                          <div className="item-med-icon">
-                            <Pill className="med-pill-svg" />
-                          </div>
-                          <div className="item-med-details">
-                            <strong>{item.medicine?.name || item.name || "Medicine Item"}</strong>
-                            <small>Quantity: {item.quantity} x ₹{item.price || item.medicine?.sellingPrice || 50}</small>
-                          </div>
-                          <strong className="item-row-total">
-                            ₹{((item.price || item.medicine?.sellingPrice || 50) * item.quantity).toFixed(2)}
-                          </strong>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="ord-summary-sidebar">
-                      <div className="address-snippet">
-                        <small className="snippet-label">Delivery Address:</small>
-                        <p>{ord.deliveryAddress || "Address on File"}</p>
-                      </div>
-
-                      <div className="payment-snippet">
-                        <small className="snippet-label">Payment Status:</small>
-                        <strong>
-                          {ord.paymentMethod === "ONLINE" ? "Razorpay Online" : "Cash on Delivery (COD)"}
-                          <span className={`mini-pay-tag ${ord.paymentStatus?.toLowerCase()}`}>
-                            {ord.paymentStatus || "PAID"}
-                          </span>
-                        </strong>
-                      </div>
-
-                      <div className="amount-total-box">
-                        <span>Total Paid:</span>
-                        <strong className="final-amt">₹{Number(ord.totalAmount || 0).toFixed(2)}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CARD FOOTER ACTIONS */}
-                  <div className="ord-card-ftr">
-                    <div className="ftr-left-info">
-                      <ShieldCheck className="shield-sm" /> 100% Genuine Pharmacy Order • Temperature Controlled
-                    </div>
-
-                    <div className="ftr-buttons">
-                      <button
-                        type="button"
-                        className="track-btn-secondary"
-                        onClick={() => setActiveTrackingOrder(ord)}
-                      >
-                        <Navigation className="btn-ic" /> Live Tracking
-                      </button>
-
-                      <button
-                        type="button"
-                        className="invoice-btn"
-                        onClick={() => alert(`📄 Downloading Invoice for Order #${ord._id.slice(-6).toUpperCase()}...`)}
-                      >
-                        <FileText className="btn-ic" /> Invoice
-                      </button>
-
-                      {/* Return Medicine button - ONLY ACTIVE AFTER DELIVERY */}
-                      {ord.orderStatus === "DELIVERED" ? (
-                        <Link
-                          to={`/returns?orderId=${ord._id}&billNumber=${ord._id.slice(-6).toUpperCase()}`}
-                          className="return-btn"
-                        >
-                          <RotateCcw className="btn-ic" /> Return Medicine
-                        </Link>
-                      ) : ord.orderStatus === "CANCELLED" ? (
-                        <span className="return-btn return-btn-locked" title="Cancelled order">
-                          <AlertTriangle className="btn-ic" /> Cancelled
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="cancel-order-action-btn"
-                          onClick={() => handleOpenCancelModal(ord)}
-                          title="Cancel your medicine order"
-                        >
-                          <X className="btn-ic" /> Cancel Order
-                        </button>
                       )}
 
-                      <Link to="/medicines" className="reorder-btn">
-                        Order Again <ChevronRight className="btn-ic" />
-                      </Link>
+                      {/* 1. LIVE ORDER STATUS HIGHLIGHT BANNER */}
+                      <div className={`order-status-banner ${banner.bannerClass}`}>
+                        <div className="os-banner-left">
+                          <div className="os-banner-icon-box">{banner.icon}</div>
+                          <div className="os-banner-text">
+                            <span className="os-stage-tag">{banner.stageLabel}</span>
+                            <h4>{banner.title}</h4>
+                            <p>{banner.desc}</p>
+                          </div>
+                        </div>
+
+                        <div className="os-banner-right">
+                          <div className="os-eta-badge">
+                            <Clock className="eta-ic" />
+                            <span>{banner.eta}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="track-live-btn"
+                            onClick={() => setActiveTrackingOrder(ord)}
+                          >
+                            <Navigation className="trk-ic" />
+                            <span>Track Live Status</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 2. FIVE-STAGE VISUAL TIMELINE STEPPER */}
+                      <div className="order-stepper-wrapper">
+                        <div className="stepper-track-line" />
+                        <div className="stepper-steps-row">
+                          {trackingSteps.map((s, idx) => {
+                            let stepStateClass = "step-pending";
+                            if (s.isDone) stepStateClass = "step-completed";
+                            else if (s.isCurrent) stepStateClass = "step-active";
+
+                            return (
+                              <div key={idx} className={`stepper-step-item ${stepStateClass}`}>
+                                <div className="step-circle">
+                                  {s.isDone ? (
+                                    <Check className="step-ic-done" />
+                                  ) : s.isCurrent ? (
+                                    <span className="step-active-dot" />
+                                  ) : (
+                                    <span className="step-number">{s.step}</span>
+                                  )}
+                                </div>
+                                <div className="step-label-box">
+                                  <strong className="step-name">{s.title}</strong>
+                                  <small className="step-sub">{s.shortDesc}</small>
+                                  <span className="step-time">{s.time}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 3. DELIVERY PARTNER CARD IF OUT FOR DELIVERY */}
+                      {ord.orderStatus === "OUT_FOR_DELIVERY" && banner.partner && (
+                        <div className="active-rider-card">
+                          <div className="rider-avatar-box">
+                            <Bike className="rider-bike-ic" />
+                          </div>
+                          <div className="rider-details-box">
+                            <div className="rider-name-row">
+                              <strong>{banner.partner.name}</strong>
+                              <span className="rider-badge">🛵 Assigned Delivery Partner</span>
+                            </div>
+                            <small className="rider-sub">
+                              Vehicle: {banner.partner.vehicle || "Electric Scooter (UP 81 AB 4920)"} • Contact: {banner.partner.phone || "+91 98765 43210"}
+                            </small>
+                          </div>
+                          <a
+                            href={`tel:${banner.partner.phone || "9876543210"}`}
+                            className="rider-call-button"
+                          >
+                            <Phone className="phone-ic" /> Call Rider
+                          </a>
+                        </div>
+                      )}
+
+                      {/* CARD BODY: ITEMS & SUMMARY */}
+                      <div className="ord-card-body">
+                        <div className="items-list-container">
+                          <h4 className="body-section-title">Purchased Medicines:</h4>
+                          {(ord.items || []).map((item, idx) => (
+                            <div key={idx} className="order-item-row">
+                              <div className="item-med-icon">
+                                <Pill className="med-pill-svg" />
+                              </div>
+                              <div className="item-med-details">
+                                <strong>{item.medicine?.name || item.name || "Medicine Item"}</strong>
+                                <small>Quantity: {item.quantity} x ₹{item.price || item.medicine?.sellingPrice || 50}</small>
+                              </div>
+                              <strong className="item-row-total">
+                                ₹{((item.price || item.medicine?.sellingPrice || 50) * item.quantity).toFixed(2)}
+                              </strong>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="ord-summary-sidebar">
+                          <div className="address-snippet">
+                            <small className="snippet-label">Delivery Address:</small>
+                            <p>{ord.deliveryAddress || "Address on File"}</p>
+                          </div>
+
+                          <div className="payment-snippet">
+                            <small className="snippet-label">Payment Status:</small>
+                            <strong>
+                              {ord.paymentMethod === "ONLINE" ? "Razorpay Online" : "Cash on Delivery (COD)"}
+                              <span className={`mini-pay-tag ${ord.paymentStatus?.toLowerCase()}`}>
+                                {ord.paymentStatus || "PAID"}
+                              </span>
+                            </strong>
+                          </div>
+
+                          <div className="amount-total-box">
+                            <span>Total Paid:</span>
+                            <strong className="final-amt">₹{Number(ord.totalAmount || 0).toFixed(2)}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* CARD FOOTER ACTIONS */}
+                      <div className="ord-card-ftr">
+                        <div className="ftr-left-info">
+                          <ShieldCheck className="shield-sm" /> 100% Genuine Pharmacy Order • Temperature Controlled
+                        </div>
+
+                        <div className="ftr-buttons">
+                          <button
+                            type="button"
+                            className="track-btn-secondary"
+                            onClick={() => setActiveTrackingOrder(ord)}
+                          >
+                            <Navigation className="btn-ic" /> Live Tracking
+                          </button>
+
+                          <button
+                            type="button"
+                            className="invoice-btn"
+                            onClick={() => setSelectedInvoiceOrder(ord)}
+                            title="Preview & Print Official Tax Invoice"
+                          >
+                            <FileText className="btn-ic" /> Invoice
+                          </button>
+
+                          {/* Return Medicine button - ONLY ACTIVE AFTER DELIVERY */}
+                          {ord.orderStatus === "DELIVERED" ? (
+                            <Link
+                              to={`/returns?orderId=${ord._id}&billNumber=${ord._id.slice(-6).toUpperCase()}`}
+                              className="return-btn"
+                            >
+                              <RotateCcw className="btn-ic" /> Return Medicine
+                            </Link>
+                          ) : ord.orderStatus === "CANCELLED" ? (
+                            <span className="return-btn return-btn-locked" title="Cancelled order">
+                              <AlertTriangle className="btn-ic" /> Cancelled
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="cancel-order-action-btn"
+                              onClick={() => handleOpenCancelModal(ord)}
+                              title="Cancel your medicine order"
+                            >
+                              <X className="btn-ic" /> Cancel Order
+                            </button>
+                          )}
+
+                          <Link to="/medicines" className="reorder-btn">
+                            Order Again <ChevronRight className="btn-ic" />
+                          </Link>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* PAGINATION CONTROLS */}
+        {filteredOrders.length > ordersPerPage && (
+          <div className="orders-pagination">
+            <div className="orders-pagination-info">
+              Showing <strong>{indexOfFirstOrder + 1}</strong> - <strong>{Math.min(indexOfLastOrder, filteredOrders.length)}</strong> of <strong>{filteredOrders.length}</strong> orders
+            </div>
+            <div className="orders-pagination-controls">
+              <button
+                type="button"
+                className="orders-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => {
+                  setCurrentPage((prev) => Math.max(1, prev - 1));
+                  window.scrollTo({ top: 200, behavior: "smooth" });
+                }}
+              >
+                <ChevronLeft className="page-arr-ic" /> Prev
+              </button>
+
+              <div className="orders-page-numbers">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    className={`orders-page-num-btn ${currentPage === pageNum ? "active" : ""}`}
+                    onClick={() => {
+                      setCurrentPage(pageNum);
+                      window.scrollTo({ top: 200, behavior: "smooth" });
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="orders-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => {
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                  window.scrollTo({ top: 200, behavior: "smooth" });
+                }}
+              >
+                Next <ChevronRight className="page-arr-ic" />
+              </button>
+            </div>
           </div>
         )}
       </main>
@@ -1170,6 +1295,15 @@ const MyOrders = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* TAX INVOICE PREVIEW & PRINT MODAL */}
+      {selectedInvoiceOrder && (
+        <InvoiceModal
+          order={selectedInvoiceOrder}
+          user={user}
+          onClose={() => setSelectedInvoiceOrder(null)}
+        />
       )}
 
       {/* FOOTER */}

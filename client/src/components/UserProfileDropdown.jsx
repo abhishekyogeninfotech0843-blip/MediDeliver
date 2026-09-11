@@ -11,16 +11,19 @@ import {
   Mail,
   RotateCcw,
   Package,
+  FileText,
   UserCheck,
   ShoppingCart,
   HelpCircle
 } from "lucide-react";
+import { useCart } from "../context/CartContext";
 import "./UserProfileDropdown.css";
 
 const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const { cartCount } = useCart();
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -156,6 +159,15 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
                 </Link>
 
                 <Link
+                  to="/my-invoices"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <FileText className="item-icon text-teal" />
+                  <span>My Invoices</span>
+                </Link>
+
+                <Link
                   to="/profile"
                   className="dropdown-item"
                   onClick={() => setIsOpen(false)}
@@ -171,6 +183,9 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
                 >
                   <ShoppingCart className="item-icon text-blue" />
                   <span>My Cart</span>
+                  {Number(cartCount) > 0 && (
+                    <span className="dropdown-cart-badge">{cartCount}</span>
+                  )}
                 </Link>
 
                 <Link

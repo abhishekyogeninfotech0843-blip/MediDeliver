@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import UserProfileDropdown from "../components/UserProfileDropdown";
 import {
   Pill,
@@ -17,12 +17,14 @@ import {
   Sparkles,
   CheckCircle2,
   ChevronRight,
+  ArrowLeft,
   HeartHandshake,
   Building2
 } from "lucide-react";
 import "./PrivacyPolicy.css";
 
 const PrivacyPolicy = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [activeSection, setActiveSection] = useState("overview");
 
@@ -65,6 +67,22 @@ const PrivacyPolicy = () => {
           </nav>
 
           <div className="privacy-header-actions">
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/");
+                }
+              }}
+              title="Go back"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+
             {user ? (
               <UserProfileDropdown user={user} />
             ) : (

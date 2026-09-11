@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   Sparkles,
   Compass,
+  ArrowLeft,
   Edit3
 } from "lucide-react";
 import {
@@ -452,7 +453,23 @@ const Checkout = () => {
             Medi<span>Deliver</span>
           </Link>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/cart");
+                }
+              }}
+              title="Go back to cart"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+
             <div className="checkout-secure-badge">
               <Lock className="lock-sm" /> <span>256-bit Encrypted Checkout</span>
             </div>

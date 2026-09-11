@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import UserProfileDropdown from "../components/UserProfileDropdown";
 import {
@@ -22,6 +22,7 @@ import {
   Sparkles,
   ExternalLink,
   Info,
+  ArrowLeft,
   PhoneCall
 } from "lucide-react";
 import "./Contact.css";
@@ -54,6 +55,7 @@ const FAQ_ITEMS = [
 ];
 
 const Contact = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -176,6 +178,22 @@ const Contact = () => {
           </nav>
 
           <div className="contact-header-actions">
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/");
+                }
+              }}
+              title="Go back"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+
             {user ? (
               <UserProfileDropdown user={user} />
             ) : (

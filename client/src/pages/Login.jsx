@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Truck,
   AlertCircle,
@@ -213,10 +214,28 @@ const Login = () => {
           </div>
         </div>
 
-        <Link to={`/register?role=${loginRole}`} className="back-home">
-          <ArrowRight className="back-icon" />
-          <span>Create Account</span>
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            className="orders-back-btn"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate("/");
+              }
+            }}
+            title="Go back"
+          >
+            <ArrowLeft className="back-ic" />
+            <span>Back</span>
+          </button>
+
+          <Link to={`/register?role=${loginRole}`} className="back-home">
+            <ArrowRight className="back-icon" />
+            <span>Create Account</span>
+          </Link>
+        </div>
       </header>
 
       {/* MAIN */}

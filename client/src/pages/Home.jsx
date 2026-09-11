@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Pill,
   MapPin,
   Search,
-  ShoppingCart,
   ArrowRight,
   FileText,
   ShieldCheck,
@@ -23,7 +22,11 @@ import {
   LogOut,
   User,
   Building2,
+  X,
+  ChevronRight,
+  Sparkle
 } from "lucide-react";
+import api from "../api/api";
 import { useCart } from "../context/CartContext";
 import LocationModal from "../components/LocationModal";
 import UserProfileDropdown from "../components/UserProfileDropdown";
@@ -39,6 +42,9 @@ const Home = () => {
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [deliveryLocation, setDeliveryLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [medicinesList, setMedicinesList] = useState([]);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -92,14 +98,91 @@ const Home = () => {
     };
   }, []);
 
+  // Fetch medicines list for live search autocomplete
+  useEffect(() => {
+    const fetchMeds = async () => {
+      try {
+        const res = await api.get("/medicines");
+        if (res.data?.success && Array.isArray(res.data.medicines)) {
+          setMedicinesList(res.data.medicines);
+        }
+      } catch (err) {
+        console.log("Could not load medicines catalog for search suggestions:", err);
+      }
+    };
+    fetchMeds();
+  }, []);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleSearch = (e) => {
     if (e) e.preventDefault();
+    setIsSearchOpen(false);
     if (searchQuery.trim()) {
       navigate(`/medicines?search=${encodeURIComponent(searchQuery.trim())}`);
     } else {
       navigate("/medicines");
     }
   };
+
+  const handleSelectSuggestion = (medicineName) => {
+    setSearchQuery(medicineName);
+    setIsSearchOpen(false);
+    navigate(`/medicines?search=${encodeURIComponent(medicineName)}`);
+  };
+
+  const fallbackCatalog = [
+    { name: "Amoxicillin 500mg", company: "Cipla Ltd", category: "Medicines", sellingPrice: 85, stock: 60 },
+    { name: "Azithromycin 500mg (Azee)", company: "Cipla Ltd", category: "Medicines", sellingPrice: 120, stock: 45 },
+    { name: "Brufen 400mg Tablet", company: "Abbott India", category: "Medicines", sellingPrice: 38, stock: 90 },
+    { name: "Betadine 10% Ointment", company: "Win-Medicare", category: "Personal Care", sellingPrice: 110, stock: 35 },
+    { name: "Benadryl Cough Syrup (100ml)", company: "Johnson & Johnson", category: "Medicines", sellingPrice: 135, stock: 50 },
+    { name: "Becosules Z Capsules", company: "Pfizer", category: "Vitamins & Supplements", sellingPrice: 52, stock: 120 },
+    { name: "Baby Dove Rich Moisture Lotion", company: "Hindustan Unilever", category: "Baby Care", sellingPrice: 220, stock: 30 },
+    { name: "Cetirizine 10mg (Cetzine)", company: "Dr. Reddy's", category: "Medicines", sellingPrice: 22, stock: 150 },
+    { name: "Crocin 650 Advance", company: "GSK Consumer", category: "Medicines", sellingPrice: 32, stock: 140 },
+    { name: "Digene Gel Acidity Relief (200ml)", company: "Abbott", category: "Medicines", sellingPrice: 165, stock: 60 },
+    { name: "Dolo 650mg Paracetamol", company: "Micro Labs Ltd", category: "Medicines", sellingPrice: 30, stock: 200 },
+    { name: "Dettol Antiseptic Liquid (500ml)", company: "Reckitt", category: "Personal Care", sellingPrice: 185, stock: 80 },
+    { name: "Evion 400mg Vitamin E", company: "Merck", category: "Vitamins & Supplements", sellingPrice: 78, stock: 95 },
+    { name: "Gelusil MPS Antacid Syrup", company: "Pfizer", category: "Medicines", sellingPrice: 140, stock: 40 },
+    { name: "Himalaya Liv.52 DS Tablets", company: "Himalaya Wellness", category: "Medicines", sellingPrice: 195, stock: 75 },
+    { name: "Ibuprofen & Paracetamol (Combiflam)", company: "Sanofi", category: "Medicines", sellingPrice: 48, stock: 110 },
+    { name: "Limcee Vitamin C 500mg", company: "Abbott", category: "Vitamins & Supplements", sellingPrice: 25, stock: 180 },
+    { name: "Metformin 500mg Glycomet", company: "USV Ltd", category: "Diabetes Care", sellingPrice: 45, stock: 85 },
+    { name: "Montair-LC Tablet", company: "Cipla Ltd", category: "Medicines", sellingPrice: 198, stock: 65 },
+    { name: "Neurobion Forte Tablet", company: "Procter & Gamble", category: "Vitamins & Supplements", sellingPrice: 38, stock: 130 },
+    { name: "Omeprazole 20mg (Omez)", company: "Dr. Reddy's", category: "Medicines", sellingPrice: 62, stock: 90 },
+    { name: "Pantoprazole 40mg (Pan 40)", company: "Alkem Laboratories", category: "Medicines", sellingPrice: 115, stock: 80 },
+    { name: "Shelcal 500 Calcium Tablets", company: "Torrent Pharma", category: "Vitamins & Supplements", sellingPrice: 125, stock: 70 },
+    { name: "Telmisartan 40mg (Telma)", company: "Glenmark", category: "Heart Care", sellingPrice: 145, stock: 55 },
+    { name: "Volini Pain Relief Gel (50g)", company: "Sun Pharma", category: "Personal Care", sellingPrice: 155, stock: 60 },
+    { name: "Zifi 200 Cefixime Tablet", company: "FDC Ltd", category: "Medicines", sellingPrice: 112, stock: 40 },
+  ];
+
+  const allAvailableMeds = medicinesList.length > 0 ? medicinesList : fallbackCatalog;
+  const qClean = searchQuery.trim().toLowerCase();
+  const searchSuggestions = qClean
+    ? allAvailableMeds
+        .filter((med) => {
+          const name = (med.name || "").toLowerCase();
+          const comp = (med.company || "").toLowerCase();
+          const cat = (med.category || "").toLowerCase();
+          return name.includes(qClean) || comp.includes(qClean) || cat.includes(qClean);
+        })
+        .slice(0, 7)
+    : [];
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -196,47 +279,150 @@ const Home = () => {
       {/* ================= NAVBAR ================= */}
       <header className="navbar">
         <div className="nav-container">
-          <Link to="/" className="logo">
-            <div className="logo-badge">
-              <Pill className="logo-icon" />
-            </div>
-            Medi<span className="logo-accent">Deliver</span>
-          </Link>
+          <div className="nav-left-group">
+            <Link to="/" className="logo">
+              <div className="logo-badge">
+                <Pill className="logo-icon" />
+              </div>
+              Medi<span className="logo-accent">Deliver</span>
+            </Link>
 
-          <div
-            className="location-pill"
-            onClick={() => setIsLocationModalOpen(true)}
-            title="Click to change delivery location"
-          >
-            <MapPin className="location-icon" />
-            <div className="location-text">
-              <small>Deliver to</small>
-              <strong>
-                {deliveryLocation
-                  ? `${deliveryLocation.area || deliveryLocation.city} ▾`
-                  : "Your Location ▾"}
-              </strong>
+            <div
+              className="location-pill"
+              onClick={() => setIsLocationModalOpen(true)}
+              title="Click to change delivery location"
+            >
+              <MapPin className="location-icon" />
+              <div className="location-text">
+                <small>Deliver to</small>
+                <strong>
+                  {deliveryLocation
+                    ? `${deliveryLocation.area || deliveryLocation.city} ▾`
+                    : "Your Location ▾"}
+                </strong>
+              </div>
             </div>
           </div>
 
-          <form className="nav-search" onSubmit={handleSearch}>
-            <Search
-              className="search-icon"
-              style={{ cursor: "pointer" }}
-              onClick={handleSearch}
-            />
-            <input
-              type="text"
-              placeholder="Search medicines, brands or health products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearch(e);
-                }
-              }}
-            />
-          </form>
+          <div className="nav-search-wrapper" ref={searchRef}>
+            <form className="nav-search" onSubmit={handleSearch}>
+              <Search
+                className="search-icon"
+                style={{ cursor: "pointer" }}
+                onClick={handleSearch}
+              />
+              <input
+                type="text"
+                placeholder="Search medicines, brands or health products..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                }}
+                onFocus={() => {
+                  if (searchQuery.trim()) setIsSearchOpen(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch(e);
+                  } else if (e.key === "Escape") {
+                    setIsSearchOpen(false);
+                  }
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchOpen(false);
+                  }}
+                  title="Clear search"
+                >
+                  <X className="clear-icon-svg" />
+                </button>
+              )}
+            </form>
+
+            {/* LIVE AUTOCOMPLETE DROPDOWN */}
+            {isSearchOpen && searchQuery.trim().length > 0 && (
+              <div className="search-dropdown-menu">
+                <div className="search-dropdown-header">
+                  <span className="dropdown-title">
+                    <Search className="mini-search-icon" /> Results for "<strong>{searchQuery}</strong>"
+                  </span>
+                  <span className="results-count-pill">
+                    {searchSuggestions.length} {searchSuggestions.length === 1 ? "match" : "matches"}
+                  </span>
+                </div>
+
+                {searchSuggestions.length > 0 ? (
+                  <div className="suggestions-list">
+                    {searchSuggestions.map((item, idx) => (
+                      <div
+                        key={item._id || idx}
+                        className="suggestion-item"
+                        onClick={() => handleSelectSuggestion(item.name)}
+                      >
+                        <div className="sugg-icon-box">
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} className="sugg-img" />
+                          ) : (
+                            <Pill className="sugg-pill-icon" />
+                          )}
+                        </div>
+
+                        <div className="sugg-info">
+                          <div className="sugg-name-row">
+                            <span className="sugg-name">{item.name}</span>
+                          </div>
+                          <div className="sugg-meta">
+                            <span className="sugg-cat">{item.category || "Healthcare"}</span>
+                            <span className="sugg-dot">•</span>
+                            <span className="sugg-company">{item.company || "Generic"}</span>
+                          </div>
+                        </div>
+
+                        <div className="sugg-right">
+                          <span className="sugg-price">
+                            ₹{item.sellingPrice || item.price || 40}
+                          </span>
+                          <span
+                            className={`sugg-stock-badge ${
+                              Number(item.stock) === 0 ? "out-stock" : "in-stock"
+                            }`}
+                          >
+                            {Number(item.stock) === 0 ? "Out of Stock" : "In Stock"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      className="search-dropdown-footer-btn"
+                      onClick={handleSearch}
+                    >
+                      <span>See all matching products</span>
+                      <ChevronRight className="footer-arrow-icon" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="no-suggestions-box">
+                    <p>No medicines found for "<strong>{searchQuery}</strong>"</p>
+                    <button
+                      type="button"
+                      className="no-sugg-browse-btn"
+                      onClick={handleSearch}
+                    >
+                      Browse full catalog in Medicines ➔
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="nav-actions">
             {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
@@ -251,11 +437,6 @@ const Home = () => {
               onLogout={handleLogout}
               onOpenLocation={() => setIsLocationModalOpen(true)}
             />
-
-            <Link to="/cart" className="cart-btn">
-              <ShoppingCart className="cart-icon-svg" />
-              <span className="cart-badge">{cartCount || 0}</span>
-            </Link>
           </div>
         </div>
       </header>

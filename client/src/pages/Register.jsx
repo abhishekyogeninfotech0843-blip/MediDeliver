@@ -13,6 +13,7 @@ import {
   Truck,
   CheckCircle2,
   ArrowRight,
+  ArrowLeft,
   AlertCircle,
   Building2,
   Clock
@@ -213,8 +214,26 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="register-secure-badge">
-            <Lock className="lock-sm" /> <span>Secure Registration</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/");
+                }
+              }}
+              title="Go back"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+
+            <div className="register-secure-badge">
+              <Lock className="lock-sm" /> <span>Secure Registration</span>
+            </div>
           </div>
         </div>
       </header>

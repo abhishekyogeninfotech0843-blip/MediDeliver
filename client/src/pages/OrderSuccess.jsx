@@ -71,12 +71,23 @@ const OrderSuccess = () => {
           </div>
         )}
 
-        <div className="success-actions">
-          <Link to="/medicines" className="continue-btn">
-            <Pill className="btn-icon" />
-            <span>Continue Shopping</span>
+        <div className="success-actions" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <Link to="/my-orders" className="continue-btn" style={{ background: "#059669" }}>
+            <PackageCheck className="btn-icon" />
+            <span>Track Order & Live Status</span>
             <ArrowRight className="btn-icon" />
           </Link>
+
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+            <Link to="/medicines" className="continue-btn" style={{ background: "#ffffff", border: "1.5px solid #cbd5e1", color: "#334155", boxShadow: "none" }}>
+              <Pill className="btn-icon" />
+              <span>Browse Medicines</span>
+            </Link>
+
+            <Link to="/" className="continue-btn" style={{ background: "#ffffff", border: "1.5px solid #cbd5e1", color: "#334155", boxShadow: "none" }}>
+              <span>Home</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

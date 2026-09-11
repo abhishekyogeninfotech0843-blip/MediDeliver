@@ -103,21 +103,43 @@ export const CartProvider = ({ children }) => {
   // UPDATE QUANTITY DIRECTLY
   // ==============================
 
-  const updateQuantity = (medicineId, newQuantity) => {
+  const updateQuantity = (medicineOrId, newQuantity) => {
+    const medicineId = typeof medicineOrId === "object" ? medicineOrId._id : medicineOrId;
     const parsedQty = parseInt(newQuantity, 10);
-    if (isNaN(parsedQty) || parsedQty <= 0) {
+
+    if (isNaN(parsedQty)) {
       return;
     }
-    setCart((currentCart) =>
-      currentCart.map((item) =>
-        item._id === medicineId
-          ? {
-              ...item,
-              quantity: Math.min(Math.max(1, parsedQty), 999),
-            }
-          : item,
-      ),
-    );
+
+    if (parsedQty <= 0) {
+      setCart((currentCart) =>
+        currentCart.filter((item) => item._id !== medicineId),
+      );
+      return;
+    }
+
+    setCart((currentCart) => {
+      const existing = currentCart.find((item) => item._id === medicineId);
+      if (existing) {
+        return currentCart.map((item) =>
+          item._id === medicineId
+            ? {
+                ...item,
+                quantity: Math.min(Math.max(1, parsedQty), 999),
+              }
+            : item,
+        );
+      } else if (typeof medicineOrId === "object") {
+        return [
+          ...currentCart,
+          {
+            ...medicineOrId,
+            quantity: Math.min(Math.max(1, parsedQty), 999),
+          },
+        ];
+      }
+      return currentCart;
+    });
   };
 
   // ==============================

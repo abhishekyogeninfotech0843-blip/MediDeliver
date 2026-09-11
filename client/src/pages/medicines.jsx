@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api";
 import { useCart } from "../context/CartContext";
@@ -25,9 +25,11 @@ import {
   Edit,
   Trash2,
   Plus,
+  Minus,
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft,
   ShieldAlert,
   Boxes
 } from "lucide-react";
@@ -60,6 +62,12 @@ const Medicines = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [stockFilter, setStockFilter] = useState("all"); // "all" | "instock" | "lowstock" | "outstock"
+
+  // Live search dropdown states
+  const [isNavSearchOpen, setIsNavSearchOpen] = useState(false);
+  const [isTbSearchOpen, setIsTbSearchOpen] = useState(false);
+  const navSearchRef = useRef(null);
+  const tbSearchRef = useRef(null);
 
   // Pagination State (16 items per page - 4 rows x 4 cards)
   const [currentPage, setCurrentPage] = useState(1);
@@ -140,7 +148,15 @@ const Medicines = () => {
   // =========================
   // CART
   // =========================
-  const { addToCart, cartCount } = useCart();
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    increaseQuantity,
+    decreaseQuantity,
+    updateQuantity,
+    cartCount,
+  } = useCart();
 
   // =========================
   // PRESCRIPTION
@@ -249,6 +265,48 @@ const Medicines = () => {
   useEffect(() => {
     fetchMedicines();
   }, []);
+
+  // Close search dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (navSearchRef.current && !navSearchRef.current.contains(e.target)) {
+        setIsNavSearchOpen(false);
+      }
+      if (tbSearchRef.current && !tbSearchRef.current.contains(e.target)) {
+        setIsTbSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const qClean = (search || "").trim().toLowerCase();
+  const searchSuggestions = qClean
+    ? medicines
+        .filter((med) => {
+          const name = (med.name || "").toLowerCase();
+          const comp = (med.company || "").toLowerCase();
+          const cat = (med.category || "").toLowerCase();
+          return name.includes(qClean) || comp.includes(qClean) || cat.includes(qClean);
+        })
+        .slice(0, 7)
+    : [];
+
+  const handleSelectSuggestion = (medicineName) => {
+    setSearch(medicineName);
+    setIsNavSearchOpen(false);
+    setIsTbSearchOpen(false);
+    setCurrentPage(1);
+
+    setTimeout(() => {
+      const section = document.getElementById("medicines-catalog-section");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
+  };
 
   // =========================
   // CATEGORIES & COMPANIES LIST
@@ -439,50 +497,146 @@ const Medicines = () => {
       {/* ================= NAVBAR ================= */}
       <header className="medicines-navbar">
         <div className="medicines-nav-container">
-          <Link to="/" className="medicines-logo">
-            <div className="med-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
-            Medi<span>Deliver</span>
-          </Link>
+          <div className="medicines-nav-left">
+            <Link to="/" className="medicines-logo">
+              <div className="med-logo-icon">
+                <Pill className="nav-pill-icon" />
+              </div>
+              Medi<span>Deliver</span>
+            </Link>
 
-          <div
-            className="location-pill"
-            onClick={() => setIsLocationModalOpen(true)}
-            title="Click to change delivery location"
-          >
-            <MapPin className="location-icon" />
-            <div className="location-text">
-              <small>Deliver to</small>
-              <strong>
-                {deliveryLocation
-                  ? `${deliveryLocation.area || deliveryLocation.city} ▾`
-                  : "Your Location ▾"}
-              </strong>
+            <div
+              className="location-pill"
+              onClick={() => setIsLocationModalOpen(true)}
+              title="Click to change delivery location"
+            >
+              <MapPin className="location-icon" />
+              <div className="location-text">
+                <small>Deliver to</small>
+                <strong>
+                  {deliveryLocation
+                    ? `${deliveryLocation.area || deliveryLocation.city} ▾`
+                    : "Your Location ▾"}
+                </strong>
+              </div>
             </div>
           </div>
 
-          <div className="medicines-search">
-            <Search className="search-icon-svg" />
-            <input
-              type="text"
-              placeholder="Search medicines, brands or categories..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button
-                type="button"
-                className="med-search-clear-btn"
-                onClick={() => setSearch("")}
-                title="Clear search"
-              >
-                <X className="clear-icon-svg" />
-              </button>
+          <div className="medicines-search-wrapper" ref={navSearchRef}>
+            <div className="medicines-search">
+              <Search className="search-icon-svg" />
+              <input
+                type="text"
+                placeholder="Search medicines, brands or categories..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setIsNavSearchOpen(true);
+                }}
+                onFocus={() => {
+                  if (search.trim()) setIsNavSearchOpen(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setIsNavSearchOpen(false);
+                  }
+                }}
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="med-search-clear-btn"
+                  onClick={() => {
+                    setSearch("");
+                    setIsNavSearchOpen(false);
+                  }}
+                  title="Clear search"
+                >
+                  <X className="clear-icon-svg" />
+                </button>
+              )}
+            </div>
+
+            {/* LIVE AUTOCOMPLETE DROPDOWN (NAVBAR) */}
+            {isNavSearchOpen && search.trim().length > 0 && (
+              <div className="search-dropdown-menu">
+                <div className="search-dropdown-header">
+                  <span className="dropdown-title">
+                    <Search className="mini-search-icon" /> Results for "<strong>{search}</strong>"
+                  </span>
+                  <span className="results-count-pill">
+                    {searchSuggestions.length} found
+                  </span>
+                </div>
+
+                {searchSuggestions.length > 0 ? (
+                  <div className="suggestions-list">
+                    {searchSuggestions.map((item, idx) => (
+                      <div
+                        key={item._id || idx}
+                        className="suggestion-item"
+                        onClick={() => handleSelectSuggestion(item.name)}
+                      >
+                        <div className="sugg-icon-box">
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} className="sugg-img" />
+                          ) : (
+                            <Pill className="sugg-pill-icon" />
+                          )}
+                        </div>
+
+                        <div className="sugg-info">
+                          <div className="sugg-name-row">
+                            <span className="sugg-name">{item.name}</span>
+                          </div>
+                          <div className="sugg-meta">
+                            <span className="sugg-cat">{item.category || "Healthcare"}</span>
+                            <span className="sugg-dot">•</span>
+                            <span className="sugg-company">{item.company || "Generic"}</span>
+                          </div>
+                        </div>
+
+                        <div className="sugg-right">
+                          <span className="sugg-price">
+                            ₹{item.sellingPrice || item.price || 40}
+                          </span>
+                          <span
+                            className={`sugg-stock-badge ${
+                              Number(item.stock) === 0 ? "out-stock" : "in-stock"
+                            }`}
+                          >
+                            {Number(item.stock) === 0 ? "Out of Stock" : "In Stock"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-suggestions-box">
+                    <p>No medicines found for "<strong>{search}</strong>"</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
           <div className="med-nav-right">
+            <button
+              type="button"
+              className="med-nav-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/");
+                }
+              }}
+              title="Go back to previous page"
+            >
+              <ArrowLeft className="nav-btn-icon" />
+              <span>Back</span>
+            </button>
+
             {isAdmin && (
               <Link to="/dashboard" className="medicines-login dashboard-nav-btn">
                 <LayoutDashboard className="nav-btn-icon" />
@@ -495,11 +649,6 @@ const Medicines = () => {
               onLogout={handleLogout}
               onOpenLocation={() => setIsLocationModalOpen(true)}
             />
-
-            <Link to="/cart" className="medicines-cart">
-              <ShoppingCart className="cart-icon-svg" />
-              <span className="medicines-cart-count">{cartCount}</span>
-            </Link>
           </div>
         </div>
       </header>
@@ -968,23 +1117,104 @@ const Medicines = () => {
         {!loading && !error && medicines.length > 0 && (
           <>
             <div className="medicine-toolbar">
-              <div className={`toolbar-search ${search ? "is-searching" : ""}`}>
-                <Search className="tb-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search medicine name, company or category..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                {search && (
-                  <button
-                    type="button"
-                    className="tb-search-clear-btn"
-                    onClick={() => setSearch("")}
-                    title="Clear search"
-                  >
-                    <X className="clear-icon-svg" />
-                  </button>
+              <div
+                className={`toolbar-search-wrapper ${search ? "is-searching" : ""}`}
+                ref={tbSearchRef}
+              >
+                <div className="toolbar-search">
+                  <Search className="tb-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search medicine name, company or category..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setIsTbSearchOpen(true);
+                    }}
+                    onFocus={() => {
+                      if (search.trim()) setIsTbSearchOpen(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setIsTbSearchOpen(false);
+                      }
+                    }}
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      className="tb-search-clear-btn"
+                      onClick={() => {
+                        setSearch("");
+                        setIsTbSearchOpen(false);
+                      }}
+                      title="Clear search"
+                    >
+                      <X className="clear-icon-svg" />
+                    </button>
+                  )}
+                </div>
+
+                {/* LIVE AUTOCOMPLETE DROPDOWN (TOOLBAR) */}
+                {isTbSearchOpen && search.trim().length > 0 && (
+                  <div className="search-dropdown-menu">
+                    <div className="search-dropdown-header">
+                      <span className="dropdown-title">
+                        <Search className="mini-search-icon" /> Results for "<strong>{search}</strong>"
+                      </span>
+                      <span className="results-count-pill">
+                        {searchSuggestions.length} found
+                      </span>
+                    </div>
+
+                    {searchSuggestions.length > 0 ? (
+                      <div className="suggestions-list">
+                        {searchSuggestions.map((item, idx) => (
+                          <div
+                            key={item._id || idx}
+                            className="suggestion-item"
+                            onClick={() => handleSelectSuggestion(item.name)}
+                          >
+                            <div className="sugg-icon-box">
+                              {item.image ? (
+                                <img src={item.image} alt={item.name} className="sugg-img" />
+                              ) : (
+                                <Pill className="sugg-pill-icon" />
+                              )}
+                            </div>
+
+                            <div className="sugg-info">
+                              <div className="sugg-name-row">
+                                <span className="sugg-name">{item.name}</span>
+                              </div>
+                              <div className="sugg-meta">
+                                <span className="sugg-cat">{item.category || "Healthcare"}</span>
+                                <span className="sugg-dot">•</span>
+                                <span className="sugg-company">{item.company || "Generic"}</span>
+                              </div>
+                            </div>
+
+                            <div className="sugg-right">
+                              <span className="sugg-price">
+                                ₹{item.sellingPrice || item.price || 40}
+                              </span>
+                              <span
+                                className={`sugg-stock-badge ${
+                                  Number(item.stock) === 0 ? "out-stock" : "in-stock"
+                                }`}
+                              >
+                                {Number(item.stock) === 0 ? "Out of Stock" : "In Stock"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-suggestions-box">
+                        <p>No medicines found for "<strong>{search}</strong>"</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -1321,15 +1551,82 @@ const Medicines = () => {
                             )}
                           </div>
 
-                          <button
-                            type="button"
-                            className="add-cart-button"
-                            disabled={outOfStock}
-                            onClick={() => handleAddToCart(medicine)}
-                          >
-                            <ShoppingCart className="btn-cart-svg" />
-                            <span>{outOfStock ? "Out of Stock" : "Add to Cart"}</span>
-                          </button>
+                          {outOfStock ? (
+                            <button
+                              type="button"
+                              className="add-cart-button disabled"
+                              disabled
+                            >
+                              <span>Out of Stock</span>
+                            </button>
+                          ) : (() => {
+                            const cartItem = cart?.find((item) => item._id === medicine._id);
+                            const cartQty = cartItem ? cartItem.quantity : 0;
+
+                            if (cartQty > 0) {
+                              return (
+                                <div className="card-qty-control-wrapper">
+                                  <button
+                                    type="button"
+                                    className="card-qty-btn decrease-btn"
+                                    onClick={() => decreaseQuantity(medicine._id)}
+                                    title="Decrease quantity"
+                                  >
+                                    <Minus className="qty-btn-icon" />
+                                  </button>
+
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max={medicine.stock ? Number(medicine.stock) : 999}
+                                    className="card-qty-input"
+                                    value={cartQty}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === "") return;
+                                      const parsed = parseInt(val, 10);
+                                      if (!isNaN(parsed)) {
+                                        const maxStock = medicine.stock ? Number(medicine.stock) : 999;
+                                        updateQuantity(medicine._id, Math.min(Math.max(0, parsed), maxStock));
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      if (!e.target.value || parseInt(e.target.value, 10) <= 0) {
+                                        removeFromCart(medicine._id);
+                                      }
+                                    }}
+                                    title="Click to type quantity manually"
+                                  />
+
+                                  <button
+                                    type="button"
+                                    className="card-qty-btn increase-btn"
+                                    onClick={() => {
+                                      const maxStock = medicine.stock ? Number(medicine.stock) : 999;
+                                      if (cartQty < maxStock) {
+                                        increaseQuantity(medicine._id);
+                                      }
+                                    }}
+                                    disabled={Boolean(medicine.stock && cartQty >= Number(medicine.stock))}
+                                    title="Increase quantity"
+                                  >
+                                    <Plus className="qty-btn-icon" />
+                                  </button>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <button
+                                type="button"
+                                className="add-cart-button"
+                                onClick={() => handleAddToCart(medicine)}
+                              >
+                                <ShoppingCart className="btn-cart-svg" />
+                                <span>Add to Cart</span>
+                              </button>
+                            );
+                          })()}
 
                           {/* ADMIN EDIT & DELETE ACTIONS (ADMIN ONLY) */}
                           {isAdmin && (

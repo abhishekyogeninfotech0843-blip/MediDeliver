@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import UserProfileDropdown from "../components/UserProfileDropdown";
 import {
@@ -16,11 +16,13 @@ import {
   Building2,
   Lock,
   ArrowRight,
+  ArrowLeft,
   LogOut
 } from "lucide-react";
 import "./Profile.css";
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -181,6 +183,22 @@ const Profile = () => {
           </Link>
 
           <div className="profile-nav-actions">
+            <button
+              type="button"
+              className="orders-back-btn"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/");
+                }
+              }}
+              title="Go back"
+            >
+              <ArrowLeft className="back-ic" />
+              <span>Back</span>
+            </button>
+
             <Link to="/my-orders" className="my-orders-link">
               <Package className="link-ic" /> My Orders
             </Link>

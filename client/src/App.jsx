@@ -21,6 +21,7 @@ import OrderSuccess from "./pages/OrderSuccess";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Returns from "./pages/Returns";
 import MyOrders from "./pages/MyOrders";
+import MyInvoices from "./pages/MyInvoices";
 import Profile from "./pages/Profile";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -118,6 +119,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-invoices"
+            element={
+              <ProtectedRoute>
+                <MyInvoices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoices"
+            element={
+              <ProtectedRoute>
+                <MyInvoices />
               </ProtectedRoute>
             }
           />
