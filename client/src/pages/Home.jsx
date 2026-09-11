@@ -498,15 +498,16 @@ const Home = () => {
           <div className="hero-image">
             <div className="hero-circle-backdrop"></div>
 
-            <div className="medicine-box">
-              <div className="box-icon-wrap">
-                <Pill className="box-pill-icon" />
+            <div className="hero-image-card">
+              <img
+                src="/images/hero-medicine.jpg"
+                alt="Express Medicine and Pharmacy Delivery"
+                className="hero-med-main-img"
+              />
+              <div className="hero-img-badge">
+                <Pill className="hero-badge-icon" />
+                <span>Express Pharmacy Store</span>
               </div>
-              <div className="box-text">
-                <strong>Medi</strong>
-                <span>Deliver</span>
-              </div>
-              <small>24/7 EXPRESS PHARMACY</small>
             </div>
 
             <div className="floating-card delivery-card">
@@ -682,11 +683,18 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="offer-circle">
-            <div className="offer-badge-content">
-              <strong>UP TO</strong>
-              <b>25%</b>
-              <span>OFF</span>
+          <div className="offer-visual-wrap">
+            <img
+              src="/images/offer-banner.jpg"
+              alt="Health & Medicine Deals"
+              className="offer-banner-img"
+            />
+            <div className="offer-circle">
+              <div className="offer-badge-content">
+                <strong>UP TO</strong>
+                <b>25%</b>
+                <span>OFF</span>
+              </div>
             </div>
           </div>
         </div>
