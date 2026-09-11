@@ -3,14 +3,36 @@
    ================================================== */
 
 .login-page {
+  position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: var(--bg);
+  overflow-x: hidden;
+  isolation: isolate;
+}
+
+.login-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/hero-medicine.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.14;
+  filter: saturate(1.15) brightness(1.02);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .login-navbar {
+  position: relative;
+  z-index: 1;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
@@ -151,6 +173,37 @@
   height: 16px;
 }
 
+.login-nav-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.login-nav-create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(5, 150, 105, 0.45);
+  color: #ffffff !important;
+}
+
+.login-nav-create-btn .nav-btn-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.login-nav-create-btn:hover .nav-btn-icon {
+  transform: translateX(3px);
+}
+
 .back-home {
   display: flex;
   align-items: center;
@@ -171,6 +224,8 @@
 }
 
 .login-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   align-items: center;
@@ -476,6 +531,8 @@
 }
 
 .login-footer {
+  position: relative;
+  z-index: 1;
   padding: 24px;
   text-align: center;
   font-size: 13px;

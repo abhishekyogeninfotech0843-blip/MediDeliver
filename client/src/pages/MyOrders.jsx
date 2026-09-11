@@ -60,19 +60,38 @@ const isOrderBelongingToUser = (ord, currentUser) => {
   return false;
 };
 
-const isReturnBelongingToUser = (r, currentUser) => {
+const isReturnBelongingToUser = (r, currentUser, userOrders = []) => {
   if (!currentUser || !r) return false;
+  const uId = currentUser._id || currentUser.id;
   const uEmail = (currentUser.email || "").toLowerCase().trim();
-  const uPhone = (currentUser.phone || "").replace(/\D/g, "");
-  const uName = (currentUser.name || "").toLowerCase().trim();
 
   const rEmail = (r.customerEmail || "").toLowerCase().trim();
-  const rPhone = (r.customerPhone || "").replace(/\D/g, "");
-  const rName = (r.customerName || "").toLowerCase().trim();
+  const rOrderId = r.orderId?._id || r.orderId;
+  const rBill = (r.billNumber || "").toUpperCase();
 
-  if (uEmail && rEmail && rEmail === uEmail) return true;
-  if (uPhone && rPhone && (uPhone === rPhone || (uPhone.length >= 10 && rPhone.endsWith(uPhone.slice(-10))))) return true;
-  if (uName && rName && rName === uName) return true;
+  // 1. If return explicitly matches one of user's orders
+  if (Array.isArray(userOrders) && userOrders.length > 0) {
+    const isMatchingOrder = userOrders.some((ord) => {
+      const ordId = (ord._id || "").toString();
+      const trackingId = (ord.trackingId || "").toUpperCase();
+      return (
+        (rOrderId && ordId && rOrderId.toString() === ordId) ||
+        (rBill && ordId && ordId.toUpperCase().endsWith(rBill)) ||
+        (rBill && trackingId && trackingId.includes(rBill))
+      );
+    });
+    if (isMatchingOrder) return true;
+  }
+
+  // 2. If user has placed 0 orders, they cannot have return claims
+  if (!userOrders || userOrders.length === 0) {
+    return false;
+  }
+
+  // 3. Exact Email match (if not default fallback identifier)
+  if (uEmail && !uEmail.endsWith("@medideliver.user") && rEmail && rEmail === uEmail) {
+    return true;
+  }
 
   return false;
 };
@@ -138,12 +157,13 @@ const getInitialUserReturns = () => {
 
   if (!currentUser) return [];
 
+  const initialOrders = getInitialUserOrders();
   const userCacheKey = `medideliver_cached_returns_${currentUser.email || currentUser._id || currentUser.id || "guest"}`;
   try {
     const cached = localStorage.getItem(userCacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed)) return parsed.filter((r) => isReturnBelongingToUser(r, currentUser));
+      if (Array.isArray(parsed)) return parsed.filter((r) => isReturnBelongingToUser(r, currentUser, initialOrders));
     }
   } catch (e) {}
 
@@ -257,8 +277,10 @@ const MyOrders = () => {
         const uniqueOrders = deduplicateOrders(matchedOrders);
         setOrders(uniqueOrders);
 
-        // 2. Filter Returns strictly for this user
-        const matchedReturns = fetchedReturns.filter((r) => isReturnBelongingToUser(r, currentUser));
+        // 2. Filter Returns strictly for this user's placed orders
+        const matchedReturns = fetchedReturns.filter((r) =>
+          isReturnBelongingToUser(r, currentUser, uniqueOrders)
+        );
         setUserReturns(matchedReturns);
 
         try {

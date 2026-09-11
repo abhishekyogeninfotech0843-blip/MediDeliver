@@ -112,20 +112,30 @@ const Register = () => {
     e.preventDefault();
     setError("");
 
-    // Required fields
+    // Required fields: Full Name, Mobile Number, Password, Confirm Password
     if (
-      !formData.name ||
-      !formData.email ||
-      !formData.phone ||
+      !formData.name?.trim() ||
+      !formData.phone?.trim() ||
       !formData.password ||
       !formData.confirmPassword
     ) {
-      setError("Please fill all fields.");
+      setError("Please fill all required fields (Name, Mobile Number, and Password).");
       return;
     }
 
-    // Email validation
-    if (!formData.email.includes("@")) {
+    // Phone validation (10 digits)
+    if (!/^[0-9]{10}$/.test(formData.phone.trim())) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    // Email validation if provided or required for admin
+    if (formData.role === "admin" && !formData.email?.trim()) {
+      setError("Email address is required to register an Administrator account.");
+      return;
+    }
+
+    if (formData.email?.trim() && !formData.email.includes("@")) {
       setError("Please enter a valid email address.");
       return;
     }
@@ -142,12 +152,6 @@ const Register = () => {
       return;
     }
 
-    // Phone validation
-    if (!/^[0-9]{10}$/.test(formData.phone)) {
-      setError("Please enter a valid 10-digit mobile number.");
-      return;
-    }
-
     if (formData.role === "admin" && !formData.adminSecretKey?.trim()) {
       setError("🔒 Please enter the Admin Secret Security Key to create an Administrator account.");
       return;
@@ -155,10 +159,14 @@ const Register = () => {
 
     try {
       setLoading(true);
+      const cleanPhone = formData.phone.trim();
+      const effectiveEmail =
+        formData.email?.trim() || `${cleanPhone}@medideliver.user`;
+
       const response = await api.post("/auth/register", {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: formData.name.trim(),
+        email: effectiveEmail,
+        phone: cleanPhone,
         password: formData.password,
         role: formData.role,
         adminSecretKey:
@@ -375,26 +383,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* EMAIL */}
-              <div className="register-form-group">
-                <label>Email Address *</label>
-                <div className="register-input">
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    autoComplete="new-password"
-                    placeholder={
-                      formData.role === "admin"
-                        ? "admin@medideliver.com"
-                        : "name@example.com"
-                    }
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
               {/* PHONE */}
               <div className="register-form-group">
                 <label>Mobile Number *</label>
@@ -404,9 +392,33 @@ const Register = () => {
                     name="phone"
                     required
                     autoComplete="off"
-                    placeholder="10 digit mobile number"
+                    placeholder="10-digit mobile number"
                     maxLength="10"
                     value={formData.phone}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              {/* EMAIL */}
+              <div className="register-form-group">
+                <label>
+                  {formData.role === "admin"
+                    ? "Admin Email Address *"
+                    : "Email Address (Optional)"}
+                </label>
+                <div className="register-input">
+                  <input
+                    type="email"
+                    name="email"
+                    required={formData.role === "admin"}
+                    autoComplete="new-password"
+                    placeholder={
+                      formData.role === "admin"
+                        ? "admin@medideliver.com"
+                        : "name@example.com (Optional)"
+                    }
+                    value={formData.email}
                     onChange={handleChange}
                   />
                 </div>

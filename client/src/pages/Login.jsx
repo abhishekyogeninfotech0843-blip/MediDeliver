@@ -8,7 +8,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ArrowLeft,
   ShieldCheck,
   Truck,
   AlertCircle,
@@ -123,13 +122,17 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password) {
-      setError("Please enter your email address and password.");
+    if (!formData.email?.trim() || !formData.password) {
+      setError(
+        loginRole === "admin"
+          ? "Please enter your admin email address and password."
+          : "Please enter your email or mobile number and password."
+      );
       return;
     }
 
-    if (!formData.email.includes("@")) {
-      setError("Please enter a valid email address.");
+    if (loginRole === "admin" && !formData.email.includes("@")) {
+      setError("Please enter a valid administrator email address.");
       return;
     }
 
@@ -140,13 +143,29 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const response = await api.post("/auth/login", {
-        email: formData.email,
-        password: formData.password,
-        role: loginRole,
-        adminSecretKey:
-          loginRole === "admin" ? formData.adminSecretKey.trim() : undefined,
-      });
+      const cleanInput = formData.email.trim();
+      let response;
+      try {
+        response = await api.post("/auth/login", {
+          email: cleanInput,
+          password: formData.password,
+          role: loginRole,
+          adminSecretKey:
+            loginRole === "admin" ? formData.adminSecretKey.trim() : undefined,
+        });
+      } catch (firstErr) {
+        // If first attempt failed and input is a 10-digit mobile number, try with fallback user identifier
+        const digits = cleanInput.replace(/\D/g, "");
+        if (loginRole === "user" && digits.length === 10) {
+          response = await api.post("/auth/login", {
+            email: `${digits}@medideliver.user`,
+            password: formData.password,
+            role: loginRole,
+          });
+        } else {
+          throw firstErr;
+        }
+      }
 
       if (response.data.success) {
         const user = response.data.user;
@@ -174,7 +193,7 @@ const Login = () => {
           navigate("/");
         }
       } else {
-        setError(response.data.message || "Invalid email or password.");
+        setError(response.data.message || "Invalid email/mobile number or password.");
       }
     } catch (err) {
       console.error("Login Error:", err);
@@ -182,7 +201,7 @@ const Login = () => {
         setError("Unable to connect to backend server. Please make sure the backend server (port 5001) is running.");
       } else {
         setError(
-          err.response?.data?.message || "Login failed. Please check your credentials."
+          err.response?.data?.message || "Invalid email/mobile number or password. Please try again."
         );
       }
     } finally {
@@ -214,28 +233,10 @@ const Login = () => {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button
-            type="button"
-            className="orders-back-btn"
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate("/");
-              }
-            }}
-            title="Go back"
-          >
-            <ArrowLeft className="back-ic" />
-            <span>Back</span>
-          </button>
-
-          <Link to={`/register?role=${loginRole}`} className="back-home">
-            <ArrowRight className="back-icon" />
-            <span>Create Account</span>
-          </Link>
-        </div>
+        <Link to={`/register?role=${loginRole}`} className="login-nav-create-btn">
+          <span>Create Account</span>
+          <ArrowRight className="nav-btn-icon" />
+        </Link>
       </header>
 
       {/* MAIN */}
@@ -346,22 +347,24 @@ const Login = () => {
                 style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
               />
 
-              {/* EMAIL */}
+              {/* EMAIL OR MOBILE NUMBER */}
               <div className="login-form-group">
                 <label htmlFor="email">
-                  {loginRole === "admin" ? "Admin Email Address" : "Customer Email Address"}
+                  {loginRole === "admin"
+                    ? "Admin Email Address"
+                    : "Email Address or Mobile Number"}
                 </label>
                 <div className="input-wrapper">
                   <input
                     id="email"
-                    type="email"
+                    type="text"
                     name="email"
                     required
                     autoComplete="new-password"
                     placeholder={
                       loginRole === "admin"
                         ? "admin@medideliver.com"
-                        : "customer@gmail.com"
+                        : "Enter email or 10-digit mobile number"
                     }
                     value={formData.email}
                     onChange={handleChange}

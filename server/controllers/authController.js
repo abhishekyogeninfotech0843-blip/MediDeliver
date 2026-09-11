@@ -14,27 +14,62 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, phone, address, role, adminSecretKey } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !password) {
       return res.status(400).json({
         success: false,
-        message: "Name, email and password are required",
+        message: "Name and password are required",
       });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    const existingUser = await User.findOne({ email: cleanEmail });
+    const cleanPhone = phone ? phone.toString().trim().replace(/\D/g, "") : "";
+    const cleanEmail = email ? email.toString().toLowerCase().trim() : "";
 
-    if (existingUser) {
+    // Must have at least email or 10-digit mobile number
+    if (!cleanEmail && !cleanPhone) {
       return res.status(400).json({
         success: false,
-        message: "User with this email already exists",
+        message: "Please provide either an email address or a 10-digit mobile number",
       });
+    }
+
+    // Check if user already exists by email
+    if (cleanEmail) {
+      const existingEmail = await User.findOne({ email: cleanEmail });
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "User with this email already exists",
+        });
+      }
+    }
+
+    // Check if user already exists by phone
+    if (cleanPhone) {
+      const existingPhone = await User.findOne({
+        $or: [
+          { phone: cleanPhone },
+          { phone: phone.toString().trim() },
+          { email: `${cleanPhone}@medideliver.user` },
+        ],
+      });
+      if (existingPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "User with this mobile number already exists. Please login.",
+        });
+      }
     }
 
     // STRICT ADMIN VERIFICATION:
     // Admin role is ONLY granted if explicitly requested AND the valid Admin Secret Key is provided!
     let determinedRole = "user";
     if (role === "admin") {
+      if (!cleanEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Email address is required for Administrator accounts",
+        });
+      }
       if (!adminSecretKey || adminSecretKey.trim() !== ADMIN_SECRET_KEY) {
         return res.status(403).json({
           success: false,
@@ -45,11 +80,14 @@ const registerUser = async (req, res) => {
       determinedRole = "admin";
     }
 
+    // Assign clean email or phone-based fallback email
+    const finalEmail = cleanEmail || `${cleanPhone}@medideliver.user`;
+
     const user = await User.create({
       name,
-      email: cleanEmail,
+      email: finalEmail,
       password,
-      phone: phone || "",
+      phone: cleanPhone || phone || "",
       address: address || "",
       role: determinedRole,
     });
@@ -57,12 +95,18 @@ const registerUser = async (req, res) => {
     // Auto-create Customer document for Admin Dashboard customer directory
     if (determinedRole === "user") {
       try {
-        const existingCust = await Customer.findOne({ email: cleanEmail });
+        const custPhone = cleanPhone || `98${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const existingCust = await Customer.findOne({
+          $or: [
+            { phone: custPhone },
+            ...(cleanEmail ? [{ email: cleanEmail }] : []),
+          ],
+        });
         if (!existingCust) {
           await Customer.create({
             name: user.name,
-            email: user.email,
-            phone: user.phone || `98${Math.floor(10000000 + Math.random() * 90000000)}`,
+            email: cleanEmail || `${custPhone}@medideliver.user`,
+            phone: custPhone,
             address: user.address || "Registered Customer",
           });
         }
@@ -73,9 +117,10 @@ const registerUser = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: determinedRole === "admin"
-        ? "Admin account created successfully with verified Secret Key"
-        : "User registered successfully",
+      message:
+        determinedRole === "admin"
+          ? "Admin account created successfully with verified Secret Key"
+          : "Account registered successfully",
       user: {
         id: user._id,
         name: user.name,
@@ -96,34 +141,60 @@ const registerUser = async (req, res) => {
 
 // ==========================================
 // LOGIN USER (Protected by Admin Secret Key)
+// Supports Email OR Mobile Number login
 // ==========================================
 const loginUser = async (req, res) => {
   try {
-    const { email, password, role, adminSecretKey } = req.body;
+    const { email, identifier: customIdentifier, password, role, adminSecretKey } = req.body;
+    const loginInput = (email || customIdentifier || "").toString().trim();
 
-    if (!email || !password) {
+    if (!loginInput || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Email or Mobile Number and password are required",
       });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanInput = loginInput.toLowerCase();
+    const phoneDigits = loginInput.replace(/\D/g, "");
 
     // 1. MASTER ADMIN SPECIAL CREDENTIALS CHECK
     const isMasterAdminEmail =
-      cleanEmail === "admin@medideliver.com" ||
-      cleanEmail === "admin@medi.com";
+      cleanInput === "admin@medideliver.com" ||
+      cleanInput === "admin@medi.com";
     const isMasterPassword =
       password === "admin@123" || password === "Admin@123" || password === "admin123";
 
-    let user = await User.findOne({ email: cleanEmail });
+    let user = null;
+    if (loginInput.includes("@")) {
+      user = await User.findOne({ email: cleanInput });
+    } else {
+      user = await User.findOne({
+        $or: [
+          { phone: loginInput },
+          { phone: phoneDigits },
+          { email: `${phoneDigits}@medideliver.user` },
+          { email: cleanInput },
+        ],
+      });
+    }
+
+    // Fallback search if not found yet
+    if (!user) {
+      user = await User.findOne({
+        $or: [
+          { email: cleanInput },
+          { phone: loginInput },
+          ...(phoneDigits ? [{ phone: phoneDigits }] : []),
+        ],
+      });
+    }
 
     // Auto-create master admin account if initial setup
     if (!user && isMasterAdminEmail && isMasterPassword) {
       user = await User.create({
         name: "MediDeliver Pharmacy Admin",
-        email: cleanEmail,
+        email: cleanInput,
         password: password,
         phone: "7088870224",
         role: "admin",
@@ -134,7 +205,7 @@ const loginUser = async (req, res) => {
     if (!user || (user.password !== password && !isMasterPassword)) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+        message: "Invalid email/mobile number or password",
       });
     }
 
@@ -200,22 +271,36 @@ const otpStore = new Map();
 
 const requestPasswordResetOtp = async (req, res) => {
   try {
-    const { email, role } = req.body;
+    const { email, identifier: customIdentifier, role } = req.body;
+    const input = (email || customIdentifier || "").toString().trim();
 
-    if (!email) {
+    if (!input) {
       return res.status(400).json({
         success: false,
-        message: "Please enter your registered email address.",
+        message: "Please enter your registered email address or mobile number.",
       });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: cleanEmail });
+    const cleanInput = input.toLowerCase();
+    const phoneDigits = input.replace(/\D/g, "");
+
+    let user = null;
+    if (input.includes("@")) {
+      user = await User.findOne({ email: cleanInput });
+    } else {
+      user = await User.findOne({
+        $or: [
+          { phone: input },
+          { phone: phoneDigits },
+          { email: `${phoneDigits}@medideliver.user` },
+        ],
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "No registered account found with this email address.",
+        message: "No registered account found with this email address or mobile number.",
       });
     }
 
@@ -224,14 +309,14 @@ const requestPasswordResetOtp = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          "This email belongs to a Customer account. Please switch to the Customer tab to reset your password.",
+          "This account belongs to a Customer. Please switch to the Customer tab to reset your password.",
       });
     }
     if (role === "user" && user.role === "admin") {
       return res.status(403).json({
         success: false,
         message:
-          "This email belongs to an Admin account. Please switch to the Pharmacy Admin tab.",
+          "This account belongs to an Admin. Please switch to the Pharmacy Admin tab.",
       });
     }
 
@@ -239,7 +324,8 @@ const requestPasswordResetOtp = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
 
-    otpStore.set(cleanEmail, {
+    const key = user.email.toLowerCase();
+    otpStore.set(key, {
       otp,
       expiresAt,
       role: user.role,
