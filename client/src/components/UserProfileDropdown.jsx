@@ -14,7 +14,9 @@ import {
   FileText,
   UserCheck,
   ShoppingCart,
-  HelpCircle
+  HelpCircle,
+  Truck,
+  Building2
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import "./UserProfileDropdown.css";
@@ -118,6 +120,15 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
                 >
                   <LayoutDashboard className="item-icon text-teal" />
                   <span>Admin Dashboard</span>
+                </Link>
+
+                <Link
+                  to="/suppliers"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Truck className="item-icon text-teal" />
+                  <span>Medicine Suppliers & Stock</span>
                 </Link>
 
                 <Link

@@ -19,6 +19,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Dashboard from "./pages/dashboard/Dashboard";
+import Suppliers from "./pages/Suppliers";
 import Returns from "./pages/Returns";
 import MyOrders from "./pages/MyOrders";
 import MyInvoices from "./pages/MyInvoices";
@@ -151,6 +152,22 @@ function App() {
             element={
               <AdminRoute>
                 <Dashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/suppliers"
+            element={
+              <AdminRoute>
+                <Suppliers />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/suppliers"
+            element={
+              <AdminRoute>
+                <Suppliers />
               </AdminRoute>
             }
           />

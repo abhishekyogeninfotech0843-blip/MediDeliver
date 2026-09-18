@@ -33,7 +33,8 @@ import {
   MessageCircle,
   HelpCircle,
   Sparkles,
-  Loader2
+  Loader2,
+  Truck
 } from "lucide-react";
 import "./Dashboard.css";
 
@@ -115,6 +116,7 @@ const Dashboard = () => {
   const [dashboard, setDashboard] = useState(getCachedDashboard);
   const [returns, setReturns] = useState([]);
   const [returnStats, setReturnStats] = useState(getCachedReturnStats);
+  const [returnFilterStatus, setReturnFilterStatus] = useState("ALL");
   const [contactMessages, setContactMessages] = useState([]);
   const [contactStats, setContactStats] = useState({ total: 0, new: 0, inProgress: 0, resolved: 0 });
   const [contactAdminNotes, setContactAdminNotes] = useState({});
@@ -905,6 +907,16 @@ const Dashboard = () => {
             <span>Back to Home</span>
           </Link>
 
+          <Link
+            to="/suppliers"
+            className="dash-home-btn"
+            style={{ background: "#f0fdfa", color: "#0d9488", borderColor: "#99f6e4", fontWeight: 700 }}
+            title="Manage Medicine Suppliers & Stock Inward"
+          >
+            <Truck className="dash-btn-icon" />
+            <span>Suppliers & Stock</span>
+          </Link>
+
           <button
             type="button"
             className="add-med-header-btn"
@@ -1101,37 +1113,92 @@ const Dashboard = () => {
           <h2>
             <RotateCcw className="sec-icon text-teal" /> Customer Medicine Returns & Fault Claims
           </h2>
-          <span className="count-pill">{returns.length} Total Requests</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            {returnFilterStatus !== "ALL" && (
+              <span className="active-filter-badge">
+                Filtering: <strong>{returnFilterStatus}</strong> ({returns.filter(r => (r.status || "").toUpperCase() === returnFilterStatus.toUpperCase()).length})
+                <button
+                  type="button"
+                  className="clear-filter-btn"
+                  onClick={() => setReturnFilterStatus("ALL")}
+                  title="Show all return claims"
+                >
+                  ✕ Show All
+                </button>
+              </span>
+            )}
+            <span className="count-pill">{returns.length} Total Requests</span>
+          </div>
         </div>
 
-        {/* Return Stats */}
+        {/* Return Stats Filter Cards */}
         <div className="status-grid return-stats-grid">
-          <div className="status-card placed">
+          <div
+            className={`status-card placed clickable-status-card ${returnFilterStatus === "PENDING" ? "active-filter" : ""}`}
+            onClick={() => setReturnFilterStatus((prev) => (prev === "PENDING" ? "ALL" : "PENDING"))}
+            role="button"
+            tabIndex={0}
+            title={returnFilterStatus === "PENDING" ? "Click to show all returns" : "Click to view Pending Review returns"}
+          >
             <div className="st-hdr">
               <Clock className="st-svg" /> Pending Review
             </div>
             <strong>{returnStats.pending || 0}</strong>
+            <div className="status-card-filter-hint">
+              <span>{returnFilterStatus === "PENDING" ? "● Active Filter" : "Click to filter"}</span>
+              <span>➔</span>
+            </div>
           </div>
 
-          <div className="status-card confirmed">
+          <div
+            className={`status-card confirmed clickable-status-card ${returnFilterStatus === "APPROVED" ? "active-filter" : ""}`}
+            onClick={() => setReturnFilterStatus((prev) => (prev === "APPROVED" ? "ALL" : "APPROVED"))}
+            role="button"
+            tabIndex={0}
+            title={returnFilterStatus === "APPROVED" ? "Click to show all returns" : "Click to view Approved returns"}
+          >
             <div className="st-hdr">
               <CheckCircle2 className="st-svg" /> Approved Returns
             </div>
             <strong>{returnStats.approved || 0}</strong>
+            <div className="status-card-filter-hint">
+              <span>{returnFilterStatus === "APPROVED" ? "● Active Filter" : "Click to filter"}</span>
+              <span>➔</span>
+            </div>
           </div>
 
-          <div className="status-card out_for_delivery">
+          <div
+            className={`status-card out_for_delivery clickable-status-card ${returnFilterStatus === "REFUNDED" ? "active-filter" : ""}`}
+            onClick={() => setReturnFilterStatus((prev) => (prev === "REFUNDED" ? "ALL" : "REFUNDED"))}
+            role="button"
+            tabIndex={0}
+            title={returnFilterStatus === "REFUNDED" ? "Click to show all returns" : "Click to view Refunded returns"}
+          >
             <div className="st-hdr">
               <RotateCcw className="st-svg" /> Refunded
             </div>
             <strong>{returnStats.refunded || 0}</strong>
+            <div className="status-card-filter-hint">
+              <span>{returnFilterStatus === "REFUNDED" ? "● Active Filter" : "Click to filter"}</span>
+              <span>➔</span>
+            </div>
           </div>
 
-          <div className="status-card cancelled">
+          <div
+            className={`status-card cancelled clickable-status-card ${returnFilterStatus === "REJECTED" ? "active-filter" : ""}`}
+            onClick={() => setReturnFilterStatus((prev) => (prev === "REJECTED" ? "ALL" : "REJECTED"))}
+            role="button"
+            tabIndex={0}
+            title={returnFilterStatus === "REJECTED" ? "Click to show all returns" : "Click to view Rejected returns"}
+          >
             <div className="st-hdr">
               <AlertTriangle className="st-svg" /> Rejected
             </div>
             <strong>{returnStats.rejected || 0}</strong>
+            <div className="status-card-filter-hint">
+              <span>{returnFilterStatus === "REJECTED" ? "● Active Filter" : "Click to filter"}</span>
+              <span>➔</span>
+            </div>
           </div>
         </div>
 
@@ -1141,6 +1208,19 @@ const Dashboard = () => {
             <CheckCircle2 className="empty-check-icon" />
             <h3>No pending medicine return requests</h3>
             <p>Customer return requests will appear here for review & refund processing.</p>
+          </div>
+        ) : (returns.filter((item) => returnFilterStatus === "ALL" || (item.status || "").toUpperCase() === returnFilterStatus.toUpperCase()).length === 0) ? (
+          <div className="empty-returns-box" style={{ padding: "30px 20px" }}>
+            <AlertTriangle className="empty-check-icon" style={{ color: "#f59e0b" }} />
+            <h3>No return requests with status "{returnFilterStatus}"</h3>
+            <p style={{ margin: "6px 0 14px", color: "#64748b" }}>There are currently no customer medicine return requests under this status.</p>
+            <button
+              type="button"
+              className="preset-btn active"
+              onClick={() => setReturnFilterStatus("ALL")}
+            >
+              View All Return Requests ({returns.length})
+            </button>
           </div>
         ) : (
           <div className="table-responsive">
@@ -1157,7 +1237,9 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {returns.map((item) => (
+                {returns
+                  .filter((item) => returnFilterStatus === "ALL" || (item.status || "").toUpperCase() === returnFilterStatus.toUpperCase())
+                  .map((item) => (
                   <tr key={item._id}>
                     <td>
                       <strong className="order-id">#{item.orderNumber || item.billNumber || item._id.slice(-6)}</strong>
