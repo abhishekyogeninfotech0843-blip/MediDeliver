@@ -23,8 +23,9 @@ import {
   ExternalLink,
   Info,
   ArrowLeft,
-  PhoneCall
+  User
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
 import "./Contact.css";
 
 const FAQ_ITEMS = [
@@ -165,7 +166,7 @@ const Contact = () => {
       <header className="contact-header">
         <div className="contact-header-container">
           <Link to="/" className="contact-logo">
-            <Pill className="contact-logo-icon" />
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             <span>Medi<span className="logo-accent">Deliver</span></span>
           </Link>
 
@@ -209,8 +210,8 @@ const Contact = () => {
       {/* ================= HERO SECTION ================= */}
       <section className="contact-hero">
         <div className="contact-hero-content">
-          <div className="hero-badge">
-            <Sparkles className="badge-icon" />
+          <div className="contact-hero-badge">
+            <Sparkles className="contact-badge-icon" />
             <span>24/7 CUSTOMER CARE & PHARMACY ASSISTANCE</span>
           </div>
           <h1>We are Here to <span>Support You</span></h1>
@@ -590,7 +591,7 @@ const Contact = () => {
         <div className="footer-container">
           <div className="footer-about">
             <Link to="/" className="footer-logo">
-              <Pill className="footer-logo-icon" />
+              <img src={logoSvg} alt="MediDeliver" className="footer-logo-img" />
               Medi<span>Deliver</span>
             </Link>
             <p>Your trusted 24/7 digital healthcare & medicine delivery partner.</p>

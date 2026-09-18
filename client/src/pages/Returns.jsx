@@ -37,6 +37,7 @@ import {
   Mail,
   User as UserIcon,
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
 import "./Returns.css";
 
 const REASON_OPTIONS = [
@@ -312,21 +313,24 @@ const Returns = () => {
       try {
         const u = JSON.parse(storedUser);
         const uEmail = (u.email || "").toLowerCase().trim();
-        const uName = (u.name || "").toLowerCase().trim();
-        const uPhone = (u.phone || "").trim();
+        const uPhone = (u.phone || "").replace(/\D/g, "");
+        const uId = (u._id || u.id || "").toString();
         return cached.filter((r) => {
           const rEmail = (r.customerEmail || "").toLowerCase().trim();
-          const rName = (r.customerName || "").toLowerCase().trim();
-          const rPhone = (r.customerPhone || "").trim();
+          const rPhone = (r.customerPhone || "").replace(/\D/g, "");
+          const rCustId = (r.customer || r.order?.customer || "").toString();
           return (
+            (uId && rCustId && rCustId === uId) ||
             (uEmail && rEmail === uEmail) ||
-            (uPhone && rPhone === uPhone) ||
-            (uName && rName === uName)
+            (uPhone &&
+              uPhone.length >= 10 &&
+              rPhone &&
+              (uPhone === rPhone || rPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(rPhone.slice(-10))))
           );
         });
       } catch (e) {}
     }
-    return cached.slice(0, 2);
+    return [];
   });
 
   // Admin Portal State (Instant 0ms Load from Memory Cache)
@@ -441,21 +445,21 @@ const Returns = () => {
 
         if (currentUser) {
           const uEmail = (currentUser.email || "").toLowerCase().trim();
-          const uName = (currentUser.name || "").toLowerCase().trim();
           const uPhone = (currentUser.phone || "").replace(/\D/g, "");
-          const uId = currentUser._id || currentUser.id;
+          const uId = (currentUser._id || currentUser.id || "").toString();
 
           const userSpecific = all.filter((r) => {
             const rEmail = (r.customerEmail || "").toLowerCase().trim();
-            const rName = (r.customerName || "").toLowerCase().trim();
             const rPhone = (r.customerPhone || "").replace(/\D/g, "");
-            const rCustId = r.customer || r.order?.customer;
+            const rCustId = (r.customer || r.order?.customer || "").toString();
 
             return (
-              (uId && rCustId && rCustId.toString() === uId.toString()) ||
+              (uId && rCustId && rCustId === uId) ||
               (uEmail && rEmail === uEmail) ||
-              (uPhone && rPhone && (uPhone === rPhone || (uPhone.length >= 10 && rPhone.endsWith(uPhone.slice(-10))))) ||
-              (uName && rName === uName)
+              (uPhone &&
+                uPhone.length >= 10 &&
+                rPhone &&
+                (uPhone === rPhone || rPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(rPhone.slice(-10))))
             );
           });
           setCustomerReturns(userSpecific);
@@ -470,29 +474,43 @@ const Returns = () => {
 
   const fetchOrders = async (currentUser) => {
     try {
+      const userParams = currentUser
+        ? {
+            email: currentUser.email || undefined,
+            phone: currentUser.phone || undefined,
+            userId: currentUser._id || currentUser.id || undefined,
+          }
+        : {};
       const response = await api
-        .get("/orders")
+        .get("/orders", { params: userParams })
         .catch(() => ({ data: { success: false, orders: [] } }));
       if (response.data?.success && Array.isArray(response.data.orders)) {
         let orders = response.data.orders;
 
         if (currentUser) {
-          const uName = (currentUser.name || "").toLowerCase().trim();
           const uEmail = (currentUser.email || "").toLowerCase().trim();
           const uPhone = (currentUser.phone || "").replace(/\D/g, "");
-          const uId = currentUser._id || currentUser.id;
+          const uId = (currentUser._id || currentUser.id || "").toString();
 
           orders = orders.filter((ord) => {
-            const custId = ord.customer?._id || ord.customer?.id || (typeof ord.customer === "string" ? ord.customer : null);
-            const custName = (ord.customerName || ord.customer?.name || "").toLowerCase().trim();
+            const custId = (
+              ord.customer?._id ||
+              ord.customer?.id ||
+              (typeof ord.customer === "string" ? ord.customer : "") ||
+              ord.user?._id ||
+              ord.user?.id ||
+              ""
+            ).toString();
             const custEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
             const custPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
 
             return (
-              (uId && custId && custId.toString() === uId.toString()) ||
+              (uId && custId && custId === uId) ||
               (uEmail && custEmail === uEmail) ||
-              (uPhone && custPhone && (uPhone === custPhone || (uPhone.length >= 10 && custPhone.endsWith(uPhone.slice(-10))))) ||
-              (uName && custName === uName)
+              (uPhone &&
+                uPhone.length >= 10 &&
+                custPhone &&
+                (uPhone === custPhone || custPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(custPhone.slice(-10))))
             );
           });
         }
@@ -929,9 +947,7 @@ const Returns = () => {
       <header className="returns-navbar">
         <div className="returns-nav-container">
           <Link to="/" className="returns-logo">
-            <div className="ret-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
           </Link>
 

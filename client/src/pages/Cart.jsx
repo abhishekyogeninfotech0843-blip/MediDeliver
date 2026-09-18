@@ -15,6 +15,7 @@ import {
   ShoppingBag
 } from "lucide-react";
 import "./Cart.css";
+import logoSvg from "../assets/logo.svg";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -53,9 +54,7 @@ const Cart = () => {
       <header className="cart-navbar">
         <div className="cart-nav-container">
           <Link to="/" className="cart-logo">
-            <div className="cart-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
           </Link>
 

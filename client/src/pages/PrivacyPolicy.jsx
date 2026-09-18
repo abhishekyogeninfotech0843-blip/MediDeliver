@@ -21,6 +21,7 @@ import {
   HeartHandshake,
   Building2
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
 import "./PrivacyPolicy.css";
 
 const PrivacyPolicy = () => {
@@ -54,7 +55,7 @@ const PrivacyPolicy = () => {
       <header className="privacy-header">
         <div className="privacy-header-container">
           <Link to="/" className="privacy-logo">
-            <Pill className="privacy-logo-icon" />
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             <span>Medi<span className="logo-accent">Deliver</span></span>
           </Link>
 
@@ -490,7 +491,7 @@ const PrivacyPolicy = () => {
         <div className="footer-container">
           <div className="footer-about">
             <Link to="/" className="footer-logo">
-              <Pill className="footer-logo-icon" />
+              <img src={logoSvg} alt="MediDeliver" className="footer-logo-img" />
               Medi<span>Deliver</span>
             </Link>
             <p>Your trusted 24/7 digital healthcare & medicine delivery partner.</p>

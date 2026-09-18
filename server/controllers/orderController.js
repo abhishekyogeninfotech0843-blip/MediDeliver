@@ -433,11 +433,35 @@ const defaultSeedOrders = [
 // ==========================================
 const getOrders = async (req, res) => {
   try {
-    const { email, phone, status, search } = req.query;
+    const { email, phone, status, search, userId, customer } = req.query;
 
     let query = {};
     if (status && status !== "ALL") {
       query.orderStatus = status;
+    }
+
+    const hasUserFilter = Boolean(email || phone || userId || customer);
+    const userFilters = [];
+
+    if (customer && mongoose.Types.ObjectId.isValid(customer)) {
+      userFilters.push({ customer: customer });
+    }
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      userFilters.push({ customer: userId });
+    }
+    if (email && email.trim()) {
+      const cleanEmail = email.trim().toLowerCase();
+      userFilters.push({ customerEmail: cleanEmail });
+    }
+    if (phone && phone.trim()) {
+      const cleanPhone = phone.replace(/\D/g, "");
+      if (cleanPhone) {
+        userFilters.push({ customerPhone: { $regex: cleanPhone.slice(-10) } });
+      }
+    }
+
+    if (userFilters.length > 0) {
+      query.$or = userFilters;
     }
 
     const duplicateTestIds = [
@@ -460,9 +484,10 @@ const getOrders = async (req, res) => {
         .catch(() => []);
     }
 
-    orders = orders.filter((o) => !duplicateTestIds.includes(o._id?.toString()));
+    orders = (orders || []).filter((o) => !duplicateTestIds.includes(o._id?.toString()));
 
-    if (!orders || orders.length === 0) {
+    // Only fallback to seed orders for demo if NO user filter is specified and DB has no orders
+    if (!hasUserFilter && (!orders || orders.length === 0)) {
       orders = defaultSeedOrders;
     }
 
@@ -477,8 +502,8 @@ const getOrders = async (req, res) => {
     console.error("Get Orders Error:", error);
     return res.status(200).json({
       success: true,
-      count: defaultSeedOrders.length,
-      orders: defaultSeedOrders.map(enrichOrderData),
+      count: 0,
+      orders: [],
     });
   }
 };

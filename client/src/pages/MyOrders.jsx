@@ -31,32 +31,46 @@ import {
   Navigation,
   User,
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
 import "./MyOrders.css";
 
 const isOrderBelongingToUser = (ord, currentUser) => {
   if (!currentUser || !ord) return false;
-  const uId = currentUser._id || currentUser.id;
+  const uId = (currentUser._id || currentUser.id || "").toString();
   const uEmail = (currentUser.email || "").toLowerCase().trim();
   const uPhone = (currentUser.phone || "").replace(/\D/g, "");
-  const uName = (currentUser.name || "").toLowerCase().trim();
 
-  const cId = ord.customer?._id || ord.customer?.id || (typeof ord.customer === "string" ? ord.customer : null);
+  const cId = (
+    ord.customer?._id ||
+    ord.customer?.id ||
+    (typeof ord.customer === "string" ? ord.customer : "") ||
+    ord.user?._id ||
+    ord.user?.id ||
+    (typeof ord.user === "string" ? ord.user : "") ||
+    ord.userId ||
+    ""
+  ).toString();
+
   const cEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
   const cPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
-  const cName = (ord.customerName || ord.customer?.name || "").toLowerCase().trim();
 
-  // 1. Direct User ID match
-  if (uId && cId && cId.toString() === uId.toString()) return true;
+  // 1. Direct User ID or Customer ID match
+  if (uId && cId && cId === uId) return true;
 
-  // 2. Exact Email match
+  // 2. Exact Email match (both non-empty)
   if (uEmail && cEmail && cEmail === uEmail) return true;
 
-  // 3. Exact Phone match (10 digits)
-  if (uPhone && cPhone && (uPhone === cPhone || (uPhone.length >= 10 && cPhone.endsWith(uPhone.slice(-10))))) return true;
+  // 3. Exact Phone match (at least 10 digits, matching last 10 digits)
+  if (
+    uPhone &&
+    uPhone.length >= 10 &&
+    cPhone &&
+    (uPhone === cPhone || cPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(cPhone.slice(-10)))
+  ) {
+    return true;
+  }
 
-  // 4. Exact Full Name match (not partial substring)
-  if (uName && cName && cName === uName) return true;
-
+  // Strictly NO name-based matching to prevent same-name users from seeing each other's orders
   return false;
 };
 
@@ -263,9 +277,17 @@ const MyOrders = () => {
     try {
       if (!silent) setIsSyncing(true);
 
+      const userParams = currentUser
+        ? {
+            email: currentUser.email || undefined,
+            phone: currentUser.phone || undefined,
+            userId: currentUser._id || currentUser.id || undefined,
+          }
+        : {};
+
       const [ordersRes, returnsRes] = await Promise.all([
-        api.get("/orders").catch(() => ({ data: { success: true, orders: [] } })),
-        api.get("/returns").catch(() => ({ data: { success: true, returns: [] } })),
+        api.get("/orders", { params: userParams }).catch(() => ({ data: { success: true, orders: [] } })),
+        api.get("/returns", { params: userParams }).catch(() => ({ data: { success: true, returns: [] } })),
       ]);
 
       let fetchedOrders = ordersRes.data?.orders || [];
@@ -548,9 +570,7 @@ const MyOrders = () => {
       <header className="orders-navbar">
         <div className="orders-nav-container">
           <Link to="/" className="orders-logo">
-            <div className="orders-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
           </Link>
 

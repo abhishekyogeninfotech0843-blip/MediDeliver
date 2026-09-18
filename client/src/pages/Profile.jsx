@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   LogOut
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
 import "./Profile.css";
 
 const Profile = () => {
@@ -41,11 +42,16 @@ const Profile = () => {
   const fetchUserOrderCount = async (currentUser) => {
     if (!currentUser) return;
     try {
-      const response = await api.get("/orders").catch(() => null);
+      const userParams = {
+        email: currentUser.email || undefined,
+        phone: currentUser.phone || undefined,
+        userId: currentUser._id || currentUser.id || undefined,
+      };
+      const response = await api.get("/orders", { params: userParams }).catch(() => null);
       if (response?.data?.success && Array.isArray(response.data.orders)) {
         const userEmailLower = (currentUser.email || "").toLowerCase().trim();
-        const userNameLower = (currentUser.name || "").toLowerCase().trim();
-        const uId = currentUser._id || currentUser.id;
+        const userPhoneClean = (currentUser.phone || "").replace(/\D/g, "");
+        const uId = (currentUser._id || currentUser.id || "").toString();
 
         const duplicateTestIds = new Set([
           "6a9e5b050d2e1fc7c7364d1b",
@@ -56,13 +62,31 @@ const Profile = () => {
         const myOrders = response.data.orders.filter((ord) => {
           if (duplicateTestIds.has(ord._id)) return false;
 
-          const custName = (ord.customerName || ord.customer?.name || "").toLowerCase().trim();
           const custEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
-          const cId = ord.customer?._id || ord.customer?.id || (typeof ord.customer === "string" ? ord.customer : null);
+          const custPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
+          const cId = (
+            ord.customer?._id ||
+            ord.customer?.id ||
+            (typeof ord.customer === "string" ? ord.customer : "") ||
+            ord.user?._id ||
+            ord.user?.id ||
+            (typeof ord.user === "string" ? ord.user : "") ||
+            ord.userId ||
+            ""
+          ).toString();
 
-          if (uId && cId && cId.toString() === uId.toString()) return true;
-          if (userEmailLower && custEmail === userEmailLower) return true;
-          if (userNameLower && custName === userNameLower) return true;
+          if (uId && cId && cId === uId) return true;
+          if (userEmailLower && custEmail && custEmail === userEmailLower) return true;
+          if (
+            userPhoneClean &&
+            userPhoneClean.length >= 10 &&
+            custPhone &&
+            (userPhoneClean === custPhone ||
+              custPhone.endsWith(userPhoneClean.slice(-10)) ||
+              userPhoneClean.endsWith(custPhone.slice(-10)))
+          ) {
+            return true;
+          }
           return false;
         });
 
@@ -176,9 +200,7 @@ const Profile = () => {
       <header className="profile-navbar">
         <div className="profile-nav-container">
           <Link to="/" className="profile-logo">
-            <div className="profile-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
           </Link>
 

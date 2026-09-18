@@ -5,10 +5,15 @@
       <stop offset="40%" stop-color="#10b981" />
       <stop offset="100%" stop-color="#059669" />
     </linearGradient>
+    <filter id="softGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#047857" flood-opacity="0.3" />
+    </filter>
   </defs>
 
+  <!-- Squircle Background -->
   <rect width="512" height="512" rx="135" ry="135" fill="url(#mediDeliverGreenGrad)" />
 
+  <!-- Inner Rounded Stroke Box -->
   <rect
     x="136"
     y="136"
@@ -22,6 +27,7 @@
     stroke-linejoin="round"
   />
 
+  <!-- Medical Cross (+) in Center with Rounded Ends -->
   <path
     d="M256 202 C263.7 202 270 208.3 270 216 L270 242 L296 242 C303.7 242 310 248.3 310 256 C310 263.7 303.7 270 296 270 L270 270 L270 296 C270 303.7 263.7 310 256 310 C248.3 310 242 303.7 242 296 L242 270 L216 270 C208.3 270 202 263.7 202 256 C202 248.3 208.3 242 216 242 L242 242 L242 216 C242 208.3 248.3 202 256 202 Z"
     fill="#ffffff"

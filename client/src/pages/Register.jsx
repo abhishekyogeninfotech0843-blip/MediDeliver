@@ -18,6 +18,8 @@ import {
   Building2,
   Clock
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
+import authBadgeSvg from "../assets/auth-badge-logo.svg";
 import "./Register.css";
 
 const Register = () => {
@@ -204,9 +206,7 @@ const Register = () => {
         <div className="register-nav-container">
           <div className="register-brand-col">
             <Link to={`/login?role=${formData.role}`} className="register-logo">
-              <div className="register-logo-icon">
-                <Pill className="nav-pill-icon" />
-              </div>
+              <img src={logoSvg} alt="MediDeliver" className="logo-img" />
               Medi<span>Deliver</span>
             </Link>
 
@@ -251,9 +251,11 @@ const Register = () => {
         <div className="register-wrapper">
           {/* LEFT SIDE */}
           <div className="register-info">
-            <div className="register-medical-icon">
-              <Pill className="reg-pill-svg" />
-            </div>
+            <img
+              src={authBadgeSvg}
+              alt="MediDeliver Healthcare"
+              className="auth-badge-symbol-img"
+            />
 
             <span className="register-label">MEDIDELIVER ACCOUNT</span>
 

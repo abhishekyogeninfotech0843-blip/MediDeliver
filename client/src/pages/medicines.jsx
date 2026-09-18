@@ -41,6 +41,7 @@ import DeleteAllMedicinesModal from "../components/DeleteAllMedicinesModal";
 import UploadPrescriptionModal from "../components/UploadPrescriptionModal";
 import { getMedicineImage } from "../utils/medicineImages";
 import { getDeliveryEstimate } from "../utils/deliveryZone";
+import logoSvg from "../assets/logo.svg";
 import "./medicines.css";
 
 const Medicines = () => {
@@ -499,9 +500,7 @@ const Medicines = () => {
         <div className="medicines-nav-container">
           <div className="medicines-nav-left">
             <Link to="/" className="medicines-logo">
-              <div className="med-logo-icon">
-                <Pill className="nav-pill-icon" />
-              </div>
+              <img src={logoSvg} alt="MediDeliver" className="logo-img" />
               Medi<span>Deliver</span>
             </Link>
 

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="authCrossGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="42%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Gradient Squircle -->
+  <rect width="512" height="512" rx="135" ry="135" fill="url(#authCrossGradient)" />
+
+  <!-- Solid White Cross (+) with Rounded Ends -->
+  <path
+    d="M256 142 C271.46 142 284 154.54 284 170 L284 228 L342 228 C357.46 228 370 240.54 370 256 C370 271.46 357.46 284 342 284 L284 284 L284 342 C284 357.46 271.46 370 256 370 C240.54 370 228 357.46 228 342 L228 284 L170 284 C154.54 284 142 271.46 142 256 C142 240.54 154.54 228 170 228 L228 228 L228 170 C228 154.54 240.54 142 256 142 Z"
+    fill="#ffffff"
+  />
+</svg>

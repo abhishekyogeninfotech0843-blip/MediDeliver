@@ -32,6 +32,7 @@ import LocationModal from "../components/LocationModal";
 import UserProfileDropdown from "../components/UserProfileDropdown";
 import UploadPrescriptionModal from "../components/UploadPrescriptionModal";
 import { getDeliveryEstimate } from "../utils/deliveryZone";
+import logoSvg from "../assets/logo.svg";
 import "./home.css";
 
 const Home = () => {
@@ -281,9 +282,7 @@ const Home = () => {
         <div className="nav-container">
           <div className="nav-left-group">
             <Link to="/" className="logo">
-              <div className="logo-badge">
-                <Pill className="logo-icon" />
-              </div>
+              <img src={logoSvg} alt="MediDeliver Logo" className="logo-img" />
               Medi<span className="logo-accent">Deliver</span>
             </Link>
 
@@ -780,7 +779,7 @@ const Home = () => {
         <div className="footer-container">
           <div className="footer-about">
             <Link to="/" className="footer-logo">
-              <Pill className="footer-logo-icon" />
+              <img src={logoSvg} alt="MediDeliver Logo" className="footer-logo-img" />
               Medi<span>Deliver</span>
             </Link>
             <p>Your trusted 24/7 digital healthcare & medicine delivery partner.</p>

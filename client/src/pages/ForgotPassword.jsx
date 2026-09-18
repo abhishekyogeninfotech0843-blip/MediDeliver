@@ -20,6 +20,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
 import "./ForgotPassword.css";
 
 const ForgotPassword = () => {
@@ -243,9 +244,7 @@ const ForgotPassword = () => {
       <header className="forgot-navbar">
         <div className="forgot-brand-col">
           <Link to="/" className="forgot-logo">
-            <div className="forgot-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
           </Link>
 

@@ -223,6 +223,21 @@ input:-webkit-autofill:active {
   text-align: left;
 }
 
+.auth-badge-symbol-img {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  object-fit: contain;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.28), 0 4px 12px rgba(139, 92, 246, 0.22);
+  display: block;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-badge-symbol-img:hover {
+  transform: scale(1.08) rotate(1deg);
+}
+
 .register-medical-icon {
   width: 56px;
   height: 56px;

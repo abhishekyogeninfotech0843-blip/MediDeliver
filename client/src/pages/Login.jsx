@@ -15,6 +15,8 @@ import {
   UserCheck,
   Clock
 } from "lucide-react";
+import logoSvg from "../assets/logo.svg";
+import authBadgeSvg from "../assets/auth-badge-logo.svg";
 import "./Login.css";
 
 const Login = () => {
@@ -214,12 +216,10 @@ const Login = () => {
       {/* NAVBAR */}
       <header className="login-navbar">
         <div className="login-brand-col">
-          <div className="login-logo">
-            <div className="login-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+          <Link to="/" className="login-logo">
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
-          </div>
+          </Link>
 
           {/* LIVE DIGITAL WATCH UNDER MEDIDELIVER */}
           <div className="login-live-clock">
@@ -244,9 +244,11 @@ const Login = () => {
         <div className="login-container">
           {/* LEFT SIDE */}
           <div className="login-info">
-            <div className="medical-symbol-box">
-              <Pill className="symbol-pill" />
-            </div>
+            <img
+              src={authBadgeSvg}
+              alt="MediDeliver Healthcare"
+              className="auth-badge-symbol-img"
+            />
 
             <span className="login-label">MEDIDELIVER AUTH</span>
 

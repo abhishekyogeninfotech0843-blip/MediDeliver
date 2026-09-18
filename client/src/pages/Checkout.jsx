@@ -33,6 +33,7 @@ import {
   getDeliveryEstimate,
   detectAligarhCustomLocation
 } from "../utils/deliveryZone";
+import logoSvg from "../assets/logo.svg";
 import "./Checkout.css";
 
 const Checkout = () => {
@@ -260,8 +261,8 @@ const Checkout = () => {
       const response = await api.post("/orders", {
         customerName: address.name || user?.name || "Customer",
         customerPhone: address.phone || user?.phone || "",
-        customerEmail: user?.email || "",
-        customer: user?._id || user?.id || "6a856810a35113391007d0cb",
+        customerEmail: user?.email || address.email || "",
+        customer: user?._id || user?.id || null,
         items: orderItems,
         deliveryAddress,
         paymentMethod,
@@ -422,9 +423,7 @@ const Checkout = () => {
         <header className="checkout-navbar">
           <div className="checkout-nav-container">
             <Link to="/" className="checkout-logo">
-              <div className="checkout-logo-icon">
-                <Pill className="nav-pill-icon" />
-              </div>
+              <img src={logoSvg} alt="MediDeliver" className="logo-img" />
               Medi<span>Deliver</span>
             </Link>
           </div>
@@ -447,9 +446,7 @@ const Checkout = () => {
       <header className="checkout-navbar">
         <div className="checkout-nav-container">
           <Link to="/" className="checkout-logo">
-            <div className="checkout-logo-icon">
-              <Pill className="nav-pill-icon" />
-            </div>
+            <img src={logoSvg} alt="MediDeliver" className="logo-img" />
             Medi<span>Deliver</span>
           </Link>
 
