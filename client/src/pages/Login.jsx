@@ -9,11 +9,13 @@ import {
   EyeOff,
   ArrowRight,
   ShieldCheck,
+  CheckCircle2,
+  X,
   Truck,
   AlertCircle,
   User,
   UserCheck,
-  Clock
+  Clock,
 } from "lucide-react";
 import logoSvg from "../assets/logo.svg";
 import authBadgeSvg from "../assets/auth-badge-logo.svg";
@@ -31,6 +33,8 @@ const Login = () => {
   const [showAdminSecret, setShowAdminSecret] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showAdminWelcome, setShowAdminWelcome] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -113,6 +117,7 @@ const Login = () => {
   const handleRoleChange = (selectedRole) => {
     setLoginRole(selectedRole);
     setError("");
+    setRememberMe(false);
     setFormData({
       email: "",
       password: "",
@@ -124,11 +129,16 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
+    if (!rememberMe) {
+      setError("Please tick 'Remember me on this device' to continue.");
+      return;
+    }
+
     if (!formData.email?.trim() || !formData.password) {
       setError(
         loginRole === "admin"
           ? "Please enter your admin email address and password."
-          : "Please enter your email or mobile number and password."
+          : "Please enter your email or mobile number and password.",
       );
       return;
     }
@@ -177,33 +187,41 @@ const Login = () => {
 
         // Strict role validation
         if (loginRole === "user" && isUserAdmin) {
-          setError("Admin accounts cannot log in through Customer Login. Please switch to the Admin Portal tab.");
+          setError(
+            "Admin accounts cannot log in through Customer Login. Please switch to the Admin Portal tab.",
+          );
           return;
         }
 
         if (loginRole === "admin" && !isUserAdmin) {
-          setError("Access Denied: Only administrators can log in through the Admin Portal. Please switch to Customer Login.");
+          setError(
+            "Access Denied: Only administrators can log in through the Admin Portal. Please switch to Customer Login.",
+          );
           return;
         }
 
         localStorage.setItem("user", JSON.stringify(user));
 
         if (isUserAdmin) {
-          alert("✅ Welcome Admin! Opening Admin Dashboard...");
-          navigate("/dashboard");
+          setShowAdminWelcome(true);
         } else {
           navigate("/");
         }
       } else {
-        setError(response.data.message || "Invalid email/mobile number or password.");
+        setError(
+          response.data.message || "Invalid email/mobile number or password.",
+        );
       }
     } catch (err) {
       console.error("Login Error:", err);
       if (!err.response) {
-        setError("Unable to connect to backend server. Please make sure the backend server (port 5001) is running.");
+        setError(
+          "Unable to connect to backend server. Please make sure the backend server (port 5001) is running.",
+        );
       } else {
         setError(
-          err.response?.data?.message || "Invalid email/mobile number or password. Please try again."
+          err.response?.data?.message ||
+            "Invalid email/mobile number or password. Please try again.",
         );
       }
     } finally {
@@ -233,7 +251,10 @@ const Login = () => {
           </div>
         </div>
 
-        <Link to={`/register?role=${loginRole}`} className="login-nav-create-btn">
+        <Link
+          to={`/register?role=${loginRole}`}
+          className="login-nav-create-btn"
+        >
           <span>Create Account</span>
           <ArrowRight className="nav-btn-icon" />
         </Link>
@@ -258,7 +279,8 @@ const Login = () => {
             </h1>
 
             <p>
-              Log in to your MediDeliver account to track orders, upload prescriptions, and manage health essentials seamlessly.
+              Log in to your MediDeliver account to track orders, upload
+              prescriptions, and manage health essentials seamlessly.
             </p>
 
             <div className="login-benefits">
@@ -268,7 +290,9 @@ const Login = () => {
                 </div>
                 <div>
                   <strong>Easy Medicine Ordering</strong>
-                  <small>Order authentic medicines anytime with 1-click checkout.</small>
+                  <small>
+                    Order authentic medicines anytime with 1-click checkout.
+                  </small>
                 </div>
               </div>
 
@@ -278,7 +302,9 @@ const Login = () => {
                 </div>
                 <div>
                   <strong>Real-Time Delivery Tracking</strong>
-                  <small>Stay updated as your order travels to your doorstep.</small>
+                  <small>
+                    Stay updated as your order travels to your doorstep.
+                  </small>
                 </div>
               </div>
 
@@ -288,7 +314,10 @@ const Login = () => {
                 </div>
                 <div>
                   <strong>Secure & Private Portal</strong>
-                  <small>Protected with 256-bit SSL encryption & role-based access control.</small>
+                  <small>
+                    Protected with 256-bit SSL encryption & role-based access
+                    control.
+                  </small>
                 </div>
               </div>
             </div>
@@ -316,7 +345,9 @@ const Login = () => {
 
             <div className="login-card-header">
               <h2>
-                {loginRole === "admin" ? "Admin Portal Access 🛡️" : "Customer Sign In 🛒"}
+                {loginRole === "admin"
+                  ? "Admin Portal Access 🛡️"
+                  : "Customer Sign In 🛒"}
               </h2>
               <p>
                 {loginRole === "admin"
@@ -339,14 +370,26 @@ const Login = () => {
                 name="prevent_autofill_email"
                 tabIndex="-1"
                 autoComplete="off"
-                style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
+                style={{
+                  position: "absolute",
+                  opacity: 0,
+                  height: 0,
+                  width: 0,
+                  pointerEvents: "none",
+                }}
               />
               <input
                 type="password"
                 name="prevent_autofill_pwd"
                 tabIndex="-1"
                 autoComplete="off"
-                style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
+                style={{
+                  position: "absolute",
+                  opacity: 0,
+                  height: 0,
+                  width: 0,
+                  pointerEvents: "none",
+                }}
               />
 
               {/* EMAIL OR MOBILE NUMBER */}
@@ -403,7 +446,11 @@ const Login = () => {
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="eye-svg" /> : <Eye className="eye-svg" />}
+                    {showPassword ? (
+                      <EyeOff className="eye-svg" />
+                    ) : (
+                      <Eye className="eye-svg" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -412,7 +459,9 @@ const Login = () => {
               {loginRole === "admin" && (
                 <div className="login-form-group admin-secret-group">
                   <div className="password-label-row">
-                    <label htmlFor="adminSecretKey">Admin Secret Passkey *</label>
+                    <label htmlFor="adminSecretKey">
+                      Admin Secret Passkey *
+                    </label>
                     <span className="secret-badge-tag">🔒 Master Auth</span>
                   </div>
 
@@ -432,7 +481,9 @@ const Login = () => {
                       type="button"
                       className="password-toggle"
                       onClick={() => setShowAdminSecret(!showAdminSecret)}
-                      title={showAdminSecret ? "Hide Secret Key" : "Show Secret Key"}
+                      title={
+                        showAdminSecret ? "Hide Secret Key" : "Show Secret Key"
+                      }
                     >
                       {showAdminSecret ? (
                         <EyeOff className="eye-svg" />
@@ -442,14 +493,23 @@ const Login = () => {
                     </button>
                   </div>
                   <small className="admin-secret-tip">
-                    🔒 Only authorized administrators with the master passkey can log in.
+                    🔒 Only authorized administrators with the master passkey
+                    can log in.
                   </small>
                 </div>
               )}
 
               <div className="remember-row">
                 <label className="checkbox-label">
-                  <input type="checkbox" />
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => {
+                      setRememberMe(e.target.checked);
+                      if (e.target.checked) setError("");
+                    }}
+                    required
+                  />
                   <span>Remember me on this device</span>
                 </label>
               </div>
@@ -463,8 +523,8 @@ const Login = () => {
                   {loading
                     ? "Authenticating..."
                     : loginRole === "admin"
-                    ? "Verify & Open Admin Dashboard ➔"
-                    : "Login to Account ➔"}
+                      ? "Verify & Open Admin Dashboard ➔"
+                      : "Login to Account ➔"}
                 </span>
                 <ArrowRight className="btn-icon" />
               </button>
@@ -481,7 +541,9 @@ const Login = () => {
                   : "Don't have a Customer Account?"}
               </p>
               <Link to={`/register?role=${loginRole}`}>
-                {loginRole === "admin" ? "Register as Pharmacy Admin" : "Create New Customer Account"}
+                {loginRole === "admin"
+                  ? "Register as Pharmacy Admin"
+                  : "Create New Customer Account"}
               </Link>
             </div>
 
@@ -492,6 +554,58 @@ const Login = () => {
           </div>
         </div>
       </main>
+
+      {showAdminWelcome && (
+        <div
+          className="admin-welcome-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowAdminWelcome(false);
+            }
+          }}
+        >
+          <div
+            className="admin-welcome-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-welcome-title"
+          >
+            <button
+              type="button"
+              className="admin-welcome-close"
+              aria-label="Close welcome dialog"
+              onClick={() => setShowAdminWelcome(false)}
+            >
+              <X />
+            </button>
+
+            <div className="admin-welcome-icon">
+              <CheckCircle2 />
+            </div>
+            <span className="admin-welcome-kicker">SECURE ACCESS VERIFIED</span>
+            <h2 id="admin-welcome-title">Welcome back, Admin</h2>
+            <p>
+              Your credentials are verified. The pharmacy control center is
+              ready for you.
+            </p>
+
+            <div className="admin-welcome-status">
+              <ShieldCheck />
+              <span>Encrypted admin session active</span>
+            </div>
+
+            <button
+              type="button"
+              className="admin-welcome-action"
+              onClick={() => navigate("/dashboard")}
+            >
+              Open Admin Dashboard
+              <ArrowRight />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="login-footer">

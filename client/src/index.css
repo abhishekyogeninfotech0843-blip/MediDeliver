@@ -103,6 +103,83 @@ button {
   background: none;
 }
 
+.global-route-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  background: rgba(248, 250, 252, 0.78);
+  backdrop-filter: blur(5px);
+}
+
+.global-route-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(340px, calc(100% - 40px));
+  padding: 28px 24px 24px;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.14);
+}
+
+.global-route-loader-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 14px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #059669, #0d9488);
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.25);
+  animation: globalLoaderFloat 1.2s ease-in-out infinite alternate;
+}
+
+.global-route-loader-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.global-route-loader-card strong {
+  font-size: 16px;
+}
+
+.global-route-loader-card span {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.global-route-loader-track {
+  width: 100%;
+  height: 4px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: #ccfbf1;
+  border-radius: 999px;
+}
+
+.global-route-loader-progress {
+  width: 42%;
+  height: 100%;
+  background: linear-gradient(90deg, #059669, #0284c7);
+  border-radius: inherit;
+  animation: globalLoaderProgress 0.9s ease-in-out infinite;
+}
+
+@keyframes globalLoaderFloat {
+  to { transform: translateY(-4px); }
+}
+
+@keyframes globalLoaderProgress {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(270%); }
+}
+
 /* Responsive Table Wrapper Utility */
 .table-responsive {
   width: 100%;
@@ -133,4 +210,54 @@ button {
 .returns-logo:hover .logo-img {
   transform: scale(1.05);
 }
+
+/* =========================================================
+   GLOBAL MODAL SCROLL LOCK & OVERSCROLL CONTAINMENT
+   Prevents background page from scrolling when any modal is open
+   ========================================================= */
+body.modal-open-scroll-locked {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none;
+}
+
+/* All modal backdrops and overlays */
+.modal-overlay,
+.modal-backdrop,
+.location-modal-overlay,
+.upload-modal-overlay,
+.edit-med-modal-overlay,
+.add-med-modal-overlay,
+.delete-modal-overlay,
+.invoice-modal-overlay,
+.supplier-modal-overlay,
+.proof-modal-overlay,
+.checkout-map-modal-backdrop {
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* All modal boxes, cards, dialogs and inner scrollable bodies */
+.modal-container,
+.modal-box,
+.modal-card,
+.modal-body,
+.modal-content,
+.location-modal-card,
+.location-modal-body,
+.upload-modal-container,
+.upload-modal-card,
+.edit-med-modal-container,
+.add-med-modal-container,
+.delete-modal-container,
+.invoice-modal-container,
+.supplier-modal-box,
+.supplier-modal-body,
+.tracking-modal-card,
+.proof-modal-content,
+.detail-modal-card,
+.checkout-map-modal-container {
+  overscroll-behavior: contain !important;
+}
+
 

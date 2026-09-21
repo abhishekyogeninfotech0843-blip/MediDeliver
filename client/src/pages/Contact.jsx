@@ -5,6 +5,7 @@ import UserProfileDropdown from "../components/UserProfileDropdown";
 import {
   Pill,
   Phone,
+  PhoneCall,
   Mail,
   MapPin,
   Clock,
@@ -23,7 +24,7 @@ import {
   ExternalLink,
   Info,
   ArrowLeft,
-  User
+  User,
 } from "lucide-react";
 import logoSvg from "../assets/logo.svg";
 import "./Contact.css";
@@ -31,28 +32,28 @@ import "./Contact.css";
 const FAQ_ITEMS = [
   {
     q: "How fast will my medicines be delivered?",
-    a: "MediDeliver offers express delivery typically within 15 to 45 minutes depending on your delivery location and pharmacy proximity. Real-time live tracking is available on your My Orders page."
+    a: "MediDeliver offers express delivery typically within 15 to 45 minutes depending on your delivery location and pharmacy proximity. Real-time live tracking is available on your My Orders page.",
   },
   {
     q: "Do I need a prescription to order medicines?",
-    a: "Prescription-only (Rx) medicines require a valid doctor prescription. You can easily upload your prescription during checkout or using the Upload Prescription tool on our platform. Our certified pharmacists verify all prescriptions before dispatch."
+    a: "Prescription-only (Rx) medicines require a valid doctor prescription. You can easily upload your prescription during checkout or using the Upload Prescription tool on our platform. Our certified pharmacists verify all prescriptions before dispatch.",
   },
   {
     q: "How do I request a return or refund for medicines?",
-    a: "You can initiate a return within 48 hours of delivery if you received the wrong medicine, damaged goods, or tampered packaging. Navigate to 'Support & Return' -> 'Return Policy & Claims' to submit your bill number and photo evidence."
+    a: "You can initiate a return within 48 hours of delivery if you received the wrong medicine, damaged goods, or tampered packaging. Navigate to 'Support & Return' -> 'Return Policy & Claims' to submit your bill number and photo evidence.",
   },
   {
     q: "Are the medicines sold on MediDeliver genuine and safe?",
-    a: "Yes, 100%. We source medicines directly from authorized pharmaceutical manufacturers and certified retail pharmacies. All products undergo strict temperature-controlled storage and batch expiry checks."
+    a: "Yes, 100%. We source medicines directly from authorized pharmaceutical manufacturers and certified retail pharmacies. All products undergo strict temperature-controlled storage and batch expiry checks.",
   },
   {
     q: "What payment options are supported?",
-    a: "We support instant online payments via Razorpay (UPI, Google Pay, PhonePe, Paytm, Credit/Debit Cards, Net Banking) as well as Cash on Delivery (COD) for eligible locations."
+    a: "We support instant online payments via Razorpay (UPI, Google Pay, PhonePe, Paytm, Credit/Debit Cards, Net Banking) as well as Cash on Delivery (COD) for eligible locations.",
   },
   {
     q: "How can I contact customer support for urgent medicine orders?",
-    a: "For urgent delivery or prescription assistance, call our 24/7 Helpline at +91 81719 15305 / +91 94571 55186 or click the WhatsApp Support button for instant response from our care team."
-  }
+    a: "For urgent delivery or prescription assistance, call our 24/7 Helpline at +91 81719 15305 / +91 94571 55186 or click the WhatsApp Support button for instant response from our care team.",
+  },
 ];
 
 const Contact = () => {
@@ -67,7 +68,7 @@ const Contact = () => {
     phone: "",
     category: "Order Support",
     subject: "",
-    message: ""
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState(null);
@@ -84,7 +85,7 @@ const Contact = () => {
           ...prev,
           name: parsed.name || "",
           email: parsed.email || "",
-          phone: parsed.phone || ""
+          phone: parsed.phone || "",
         }));
       } catch (e) {
         setUser(null);
@@ -100,8 +101,14 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      setFormError("Please fill in all required fields (Name, Email, and Message).");
+    if (
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.message.trim()
+    ) {
+      setFormError(
+        "Please fill in all required fields (Name, Email, and Message).",
+      );
       return;
     }
 
@@ -114,7 +121,9 @@ const Contact = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         category: formData.category,
-        subject: formData.subject ? formData.subject.trim() : "Healthcare Support Inquiry",
+        subject: formData.subject
+          ? formData.subject.trim()
+          : "Healthcare Support Inquiry",
         message: formData.message.trim(),
       });
 
@@ -129,7 +138,10 @@ const Contact = () => {
           date: new Date(savedTicket.createdAt).toLocaleString("en-IN"),
         });
       } else {
-        setFormError(response.data?.message || "Failed to submit message. Please try again.");
+        setFormError(
+          response.data?.message ||
+            "Failed to submit message. Please try again.",
+        );
       }
     } catch (err) {
       console.error("Submit contact error:", err);
@@ -156,7 +168,7 @@ const Contact = () => {
       phone: user?.phone || "",
       category: "Order Support",
       subject: "",
-      message: ""
+      message: "",
     });
   };
 
@@ -167,15 +179,27 @@ const Contact = () => {
         <div className="contact-header-container">
           <Link to="/" className="contact-logo">
             <img src={logoSvg} alt="MediDeliver" className="logo-img" />
-            <span>Medi<span className="logo-accent">Deliver</span></span>
+            <span>
+              Medi<span className="logo-accent">Deliver</span>
+            </span>
           </Link>
 
           <nav className="contact-nav-links">
-            <Link to="/" className="nav-item">Home</Link>
-            <Link to="/medicines" className="nav-item">Shop Medicines</Link>
-            <Link to="/returns" className="nav-item">Return Medicine</Link>
-            <Link to="/contact" className="nav-item active">Contact Us</Link>
-            <Link to="/privacy-policy" className="nav-item">Privacy Policy</Link>
+            <Link to="/" className="nav-item">
+              Home
+            </Link>
+            <Link to="/medicines" className="nav-item">
+              Shop Medicines
+            </Link>
+            <Link to="/returns" className="nav-item">
+              Return Medicine
+            </Link>
+            <Link to="/contact" className="nav-item active">
+              Contact Us
+            </Link>
+            <Link to="/privacy-policy" className="nav-item">
+              Privacy Policy
+            </Link>
           </nav>
 
           <div className="contact-header-actions">
@@ -199,8 +223,12 @@ const Contact = () => {
               <UserProfileDropdown user={user} />
             ) : (
               <div className="auth-btns">
-                <Link to="/login" className="btn-login-outline">Login</Link>
-                <Link to="/register" className="btn-register-fill">Register</Link>
+                <Link to="/login" className="btn-login-outline">
+                  Login
+                </Link>
+                <Link to="/register" className="btn-register-fill">
+                  Register
+                </Link>
               </div>
             )}
           </div>
@@ -214,10 +242,13 @@ const Contact = () => {
             <Sparkles className="contact-badge-icon" />
             <span>24/7 CUSTOMER CARE & PHARMACY ASSISTANCE</span>
           </div>
-          <h1>We are Here to <span>Support You</span></h1>
+          <h1>
+            We are Here to <span>Support You</span>
+          </h1>
           <p>
-            Have a question about your medicines, prescription verification, order tracking, or return requests?
-            Our dedicated team of healthcare specialists and pharmacists is ready to assist you.
+            Have a question about your medicines, prescription verification,
+            order tracking, or return requests? Our dedicated team of healthcare
+            specialists and pharmacists is ready to assist you.
           </p>
         </div>
       </section>
@@ -231,7 +262,10 @@ const Contact = () => {
           <div className="alert-text">
             <strong>Immediate Medical Emergency Notice</strong>
             <p>
-              MediDeliver provides doorstep delivery of authentic medicines. If you or someone you know is experiencing a life-threatening medical emergency, please call <strong>112 / 108</strong> or visit your nearest hospital emergency room immediately.
+              MediDeliver provides doorstep delivery of authentic medicines. If
+              you or someone you know is experiencing a life-threatening medical
+              emergency, please call <strong>112 / 108</strong> or visit your
+              nearest hospital emergency room immediately.
             </p>
           </div>
         </div>
@@ -246,12 +280,27 @@ const Contact = () => {
               </div>
               <div className="channel-body">
                 <h3>24/7 Customer Care</h3>
-                <p>Call our dedicated pharmacy helpline for express order assistance.</p>
+                <p>
+                  Call our dedicated pharmacy helpline for express order
+                  assistance.
+                </p>
                 <div className="contact-numbers">
-                  <a href="tel:+918171915305" className="contact-highlight-link">
+                  <a
+                    href="tel:+918171915305"
+                    className="contact-highlight-link"
+                  >
                     +91 81719 15305
                   </a>
-                  <a href="tel:+919457155186" className="contact-alt-no-link" style={{ fontSize: "13px", fontWeight: "600", color: "#475569", textDecoration: "none" }}>
+                  <a
+                    href="tel:+919457155186"
+                    className="contact-alt-no-link"
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      color: "#475569",
+                      textDecoration: "none",
+                    }}
+                  >
                     Alt: +91 94571 55186
                   </a>
                 </div>
@@ -268,7 +317,9 @@ const Contact = () => {
               </div>
               <div className="channel-body">
                 <h3>WhatsApp Support</h3>
-                <p>Instant chat for prescription consultation & order tracking.</p>
+                <p>
+                  Instant chat for prescription consultation & order tracking.
+                </p>
                 <a
                   href="https://wa.me/918171915305?text=Hello%20MediDeliver%20Support,%20I%20need%20help%20with%20my%20medicine%20order"
                   target="_blank"
@@ -291,9 +342,15 @@ const Contact = () => {
               </div>
               <div className="channel-body">
                 <h3>Email Support</h3>
-                <p>Write to our customer support or medical advisory team anytime.</p>
+                <p>
+                  Write to our customer support or medical advisory team
+                  anytime.
+                </p>
                 <div className="contact-numbers">
-                  <a href="mailto:support@medideliver.in" className="contact-highlight-link">
+                  <a
+                    href="mailto:support@medideliver.in"
+                    className="contact-highlight-link"
+                  >
                     support@medideliver.in
                   </a>
                   <span className="contact-alt-no">care@medideliver.in</span>
@@ -313,7 +370,8 @@ const Contact = () => {
                 <h3>Healthcare Center</h3>
                 <p>MediDeliver Central Fulfillment Hub & Pharmacy Office.</p>
                 <address className="office-address">
-                  Ramghat Road, Centre Point Area,<br />
+                  Ramghat Road, Centre Point Area,
+                  <br />
                   Aligarh, Uttar Pradesh - 202001, India
                 </address>
                 <div className="availability-pill">
@@ -330,9 +388,14 @@ const Contact = () => {
           <div className="project-info-panel">
             <div className="panel-header">
               <div className="panel-badge">ABOUT MEDIDELIVER</div>
-              <h2>Fast, Safe & Reliable <span>Digital Healthcare</span></h2>
+              <h2>
+                Fast, Safe & Reliable <span>Digital Healthcare</span>
+              </h2>
               <p>
-                MediDeliver is your trustworthy digital pharmacy platform committed to delivering 100% genuine medicines, healthcare wellness essentials, and medical supplies directly to your doorstep with guaranteed care and speed.
+                MediDeliver is your trustworthy digital pharmacy platform
+                committed to delivering 100% genuine medicines, healthcare
+                wellness essentials, and medical supplies directly to your
+                doorstep with guaranteed care and speed.
               </p>
             </div>
 
@@ -343,7 +406,10 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4>100% Certified Genuine Medicines</h4>
-                  <p>Sourced exclusively from certified pharmaceutical distributors with strict batch and expiry checks.</p>
+                  <p>
+                    Sourced exclusively from certified pharmaceutical
+                    distributors with strict batch and expiry checks.
+                  </p>
                 </div>
               </div>
 
@@ -353,7 +419,10 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4>Express Doorstep Delivery</h4>
-                  <p>Smart localized dispatch network ensures urgent medicines reach you within 15-45 minutes.</p>
+                  <p>
+                    Smart localized dispatch network ensures urgent medicines
+                    reach you within 15-45 minutes.
+                  </p>
                 </div>
               </div>
 
@@ -363,7 +432,10 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4>Hassle-free Returns & Fast Refunds</h4>
-                  <p>Transparent 48-hour return policy for wrong or damaged items with instant refund processing.</p>
+                  <p>
+                    Transparent 48-hour return policy for wrong or damaged items
+                    with instant refund processing.
+                  </p>
                 </div>
               </div>
 
@@ -373,7 +445,10 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4>Pharmacist Verified Prescriptions</h4>
-                  <p>Registered pharmacists review every prescription before medicine dispatch for total safety.</p>
+                  <p>
+                    Registered pharmacists review every prescription before
+                    medicine dispatch for total safety.
+                  </p>
                 </div>
               </div>
             </div>
@@ -402,7 +477,9 @@ const Contact = () => {
                 </div>
                 <h3>Message Received Successfully!</h3>
                 <p>
-                  Thank you, <strong>{submittedTicket.name}</strong>. Your support ticket has been created and assigned to our healthcare team.
+                  Thank you, <strong>{submittedTicket.name}</strong>. Your
+                  support ticket has been created and assigned to our healthcare
+                  team.
                 </p>
 
                 <div className="ticket-details-box">
@@ -427,11 +504,16 @@ const Contact = () => {
                 <div className="ticket-next-steps">
                   <Info className="info-ico" />
                   <p>
-                    Our care executive will reach out to you via email or phone within <strong>15 to 30 minutes</strong>.
+                    Our care executive will reach out to you via email or phone
+                    within <strong>15 to 30 minutes</strong>.
                   </p>
                 </div>
 
-                <button type="button" className="btn-send-another" onClick={resetForm}>
+                <button
+                  type="button"
+                  className="btn-send-another"
+                  onClick={resetForm}
+                >
                   Send Another Message
                 </button>
               </div>
@@ -439,7 +521,10 @@ const Contact = () => {
               <form className="support-form" onSubmit={handleSubmit}>
                 <div className="form-heading">
                   <h3>Send Us a Message</h3>
-                  <p>Fill out the form below and we will get back to you promptly.</p>
+                  <p>
+                    Fill out the form below and we will get back to you
+                    promptly.
+                  </p>
                 </div>
 
                 {formError && (
@@ -451,7 +536,9 @@ const Contact = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Your Full Name <span className="req">*</span></label>
+                    <label>
+                      Your Full Name <span className="req">*</span>
+                    </label>
                     <input
                       type="text"
                       name="name"
@@ -462,7 +549,9 @@ const Contact = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Email Address <span className="req">*</span></label>
+                    <label>
+                      Email Address <span className="req">*</span>
+                    </label>
                     <input
                       type="email"
                       name="email"
@@ -486,18 +575,32 @@ const Contact = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Inquiry Category <span className="req">*</span></label>
+                    <label>
+                      Inquiry Category <span className="req">*</span>
+                    </label>
                     <select
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
                     >
-                      <option value="Order Support">Order Tracking & Delivery</option>
-                      <option value="Prescription Query">Prescription Verification</option>
-                      <option value="Medicine Availability">Medicine Availability / Request</option>
-                      <option value="Return & Refund">Return Medicine & Refund Status</option>
-                      <option value="Payment & Billing">Payment / Razorpay Billing Issue</option>
-                      <option value="General Feedback">General Inquiry & Feedback</option>
+                      <option value="Order Support">
+                        Order Tracking & Delivery
+                      </option>
+                      <option value="Prescription Query">
+                        Prescription Verification
+                      </option>
+                      <option value="Medicine Availability">
+                        Medicine Availability / Request
+                      </option>
+                      <option value="Return & Refund">
+                        Return Medicine & Refund Status
+                      </option>
+                      <option value="Payment & Billing">
+                        Payment / Razorpay Billing Issue
+                      </option>
+                      <option value="General Feedback">
+                        General Inquiry & Feedback
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -514,7 +617,9 @@ const Contact = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Your Message / Details <span className="req">*</span></label>
+                  <label>
+                    Your Message / Details <span className="req">*</span>
+                  </label>
                   <textarea
                     name="message"
                     rows="4"
@@ -552,7 +657,10 @@ const Contact = () => {
           <div className="faq-section-header">
             <span className="faq-sub-label">COMMON QUESTIONS</span>
             <h2>Frequently Asked Questions</h2>
-            <p>Quick answers to common questions regarding orders, deliveries, and healthcare policies.</p>
+            <p>
+              Quick answers to common questions regarding orders, deliveries,
+              and healthcare policies.
+            </p>
           </div>
 
           <div className="faq-accordion-list">
@@ -591,10 +699,16 @@ const Contact = () => {
         <div className="footer-container">
           <div className="footer-about">
             <Link to="/" className="footer-logo">
-              <img src={logoSvg} alt="MediDeliver" className="footer-logo-img" />
+              <img
+                src={logoSvg}
+                alt="MediDeliver"
+                className="footer-logo-img"
+              />
               Medi<span>Deliver</span>
             </Link>
-            <p>Your trusted 24/7 digital healthcare & medicine delivery partner.</p>
+            <p>
+              Your trusted 24/7 digital healthcare & medicine delivery partner.
+            </p>
           </div>
 
           <div className="footer-column">
@@ -602,7 +716,8 @@ const Contact = () => {
             <Link to="/medicines">Medicines</Link>
             <Link to="/cart">Cart</Link>
             <Link to="/returns">Return Medicine</Link>
-            {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+            {(user?.role === "admin" ||
+              user?.email?.toLowerCase().includes("admin")) && (
               <Link to="/dashboard">Dashboard</Link>
             )}
             <Link to="/login">Login</Link>
@@ -626,7 +741,8 @@ const Contact = () => {
         </div>
 
         <div className="footer-bottom">
-          © 2026 MediDeliver. All rights reserved. Built for fast & reliable healthcare.
+          © 2026 MediDeliver. All rights reserved. Built for fast & reliable
+          healthcare.
         </div>
       </footer>
     </div>

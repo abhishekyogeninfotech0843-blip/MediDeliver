@@ -23,6 +23,7 @@ import {
   calculateDistanceKm,
   detectAligarhCustomLocation
 } from "../utils/deliveryZone";
+import { useBodyScrollLock } from "../utils/useBodyScrollLock";
 import "./LocationModal.css";
 
 const DEFAULT_ALIGARH_LOCATION = {
@@ -38,6 +39,7 @@ const DEFAULT_ALIGARH_LOCATION = {
 };
 
 const LocationModal = ({ isOpen, onClose, onSaveLocation, currentLocation }) => {
+  useBodyScrollLock(isOpen);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);

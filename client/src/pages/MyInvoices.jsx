@@ -21,7 +21,7 @@ import {
   Clock,
   RotateCcw,
   ShieldCheck,
-  Package
+  Package,
 } from "lucide-react";
 import logoSvg from "../assets/logo.svg";
 import "./MyInvoices.css";
@@ -43,8 +43,13 @@ const isOrderBelongingToUser = (ord, currentUser) => {
     ""
   ).toString();
 
-  const cEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
-  const cPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
+  const cEmail = (ord.customerEmail || ord.customer?.email || "")
+    .toLowerCase()
+    .trim();
+  const cPhone = (ord.customerPhone || ord.customer?.phone || "").replace(
+    /\D/g,
+    "",
+  );
 
   // 1. Direct User ID or Customer ID match
   if (uId && cId && cId === uId) return true;
@@ -57,7 +62,9 @@ const isOrderBelongingToUser = (ord, currentUser) => {
     uPhone &&
     uPhone.length >= 10 &&
     cPhone &&
-    (uPhone === cPhone || cPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(cPhone.slice(-10)))
+    (uPhone === cPhone ||
+      cPhone.endsWith(uPhone.slice(-10)) ||
+      uPhone.endsWith(cPhone.slice(-10)))
   ) {
     return true;
   }
@@ -100,9 +107,13 @@ const MyInvoices = () => {
         fetched = res.data.data;
       }
 
-      const filtered = fetched.filter((ord) => isOrderBelongingToUser(ord, currentUser));
+      const filtered = fetched.filter((ord) =>
+        isOrderBelongingToUser(ord, currentUser),
+      );
       // Sort newest first
-      filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      filtered.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
       setOrders(filtered);
     } catch (err) {
       console.error("Error fetching orders for invoices:", err);
@@ -129,7 +140,11 @@ const MyInvoices = () => {
     const shortId = (ord._id || "").slice(-6).toLowerCase();
     const invNo = `inv-md-${shortId}`;
     const trackingId = (ord.trackingId || "").toLowerCase();
-    const customer = (ord.customerName || ord.customer?.name || "").toLowerCase();
+    const customer = (
+      ord.customerName ||
+      ord.customer?.name ||
+      ""
+    ).toLowerCase();
     const address = (ord.deliveryAddress || "").toLowerCase();
 
     const itemsMatch = (ord.items || []).some((it) => {
@@ -153,7 +168,10 @@ const MyInvoices = () => {
       return ord.paymentStatus === "PAID" || ord.paymentMethod === "ONLINE";
     }
     if (statusFilter === "PENDING") {
-      return ord.paymentStatus === "PENDING" || ord.paymentMethod === "COD";
+      return (
+        String(ord.paymentMethod || "").toUpperCase() === "COD" &&
+        String(ord.paymentStatus || "").toUpperCase() !== "PAID"
+      );
     }
     if (statusFilter === "ONLINE") {
       return ord.paymentMethod === "ONLINE";
@@ -170,14 +188,22 @@ const MyInvoices = () => {
   }, [searchTerm, statusFilter]);
 
   // Pagination calculations
-  const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / invoicesPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInvoices.length / invoicesPerPage),
+  );
   const indexOfLast = currentPage * invoicesPerPage;
   const indexOfFirst = indexOfLast - invoicesPerPage;
   const currentInvoices = filteredInvoices.slice(indexOfFirst, indexOfLast);
 
   // Summary Metrics
-  const totalInvoicedAmount = orders.reduce((sum, ord) => sum + Number(ord.totalAmount || 0), 0);
-  const paidOrdersCount = orders.filter((o) => o.paymentStatus === "PAID" || o.paymentMethod === "ONLINE").length;
+  const totalInvoicedAmount = orders.reduce(
+    (sum, ord) => sum + Number(ord.totalAmount || 0),
+    0,
+  );
+  const paidOrdersCount = orders.filter(
+    (o) => o.paymentStatus === "PAID" || o.paymentMethod === "ONLINE",
+  ).length;
 
   return (
     <div className="my-invoices-page">
@@ -215,7 +241,9 @@ const MyInvoices = () => {
               }}
               title="Refresh Invoices"
             >
-              <RefreshCw className={`btn-refresh-ic ${isSyncing ? "spinning" : ""}`} />
+              <RefreshCw
+                className={`btn-refresh-ic ${isSyncing ? "spinning" : ""}`}
+              />
               <span>{isSyncing ? "Syncing..." : "Refresh"}</span>
             </button>
 
@@ -238,12 +266,11 @@ const MyInvoices = () => {
         <div className="invoices-header-row">
           <div>
             <h1>My Medicine Invoices & GST Bills 📄</h1>
-            <p>View, preview, and download official computer-generated tax invoices for all your pharmacy orders</p>
+            <p>
+              View, preview, and download official computer-generated tax
+              invoices for all your pharmacy orders
+            </p>
           </div>
-
-          <Link to="/my-orders" className="view-orders-btn">
-            <Package className="vo-ic" /> Track Active Orders
-          </Link>
         </div>
 
         {/* SUMMARY STATS STRIP */}
@@ -256,19 +283,25 @@ const MyInvoices = () => {
           <div className="iss-divider" />
           <div className="iss-card">
             <span className="iss-label">Total Amount Invoiced</span>
-            <strong className="iss-value text-teal">₹{totalInvoicedAmount.toFixed(2)}</strong>
+            <strong className="iss-value text-teal">
+              ₹{totalInvoicedAmount.toFixed(2)}
+            </strong>
             <small>Prescriptions & Healthcare</small>
           </div>
           <div className="iss-divider" />
           <div className="iss-card">
             <span className="iss-label">Prepaid (Online)</span>
-            <strong className="iss-value text-emerald">{paidOrdersCount}</strong>
+            <strong className="iss-value text-emerald">
+              {paidOrdersCount}
+            </strong>
             <small>Verified Online Receipts</small>
           </div>
           <div className="iss-divider" />
           <div className="iss-card">
             <span className="iss-label">Cash on Delivery</span>
-            <strong className="iss-value text-purple">{orders.length - paidOrdersCount}</strong>
+            <strong className="iss-value text-purple">
+              {orders.length - paidOrdersCount}
+            </strong>
             <small>Pay on Delivery Invoices</small>
           </div>
         </div>
@@ -310,7 +343,10 @@ const MyInvoices = () => {
           <div className="no-invoices-box">
             <FileText className="no-inv-ic" />
             <h3>No Invoices Found</h3>
-            <p>You haven't placed any orders matching the search or filter criteria.</p>
+            <p>
+              You haven't placed any orders matching the search or filter
+              criteria.
+            </p>
             <Link to="/medicines" className="browse-meds-btn">
               Order Medicines Now <ChevronRight className="arr-ic" />
             </Link>
@@ -334,8 +370,13 @@ const MyInvoices = () => {
                   {currentInvoices.map((ord) => {
                     const orderIdShort = ord._id.slice(-6).toUpperCase();
                     const invoiceNo = `INV-MD-${new Date(ord.createdAt || Date.now()).getFullYear()}-${orderIdShort}`;
-                    const itemsCount = (ord.items || []).reduce((acc, it) => acc + (it.quantity || 1), 0);
-                    const isPaid = ord.paymentStatus === "PAID" || ord.paymentMethod === "ONLINE";
+                    const itemsCount = (ord.items || []).reduce(
+                      (acc, it) => acc + (it.quantity || 1),
+                      0,
+                    );
+                    const isPaid =
+                      ord.paymentStatus === "PAID" ||
+                      ord.paymentMethod === "ONLINE";
 
                     return (
                       <tr key={ord._id} className="invoice-row">
@@ -343,8 +384,12 @@ const MyInvoices = () => {
                           <div className="inv-cell-primary">
                             <FileText className="row-file-ic" />
                             <div>
-                              <strong className="inv-no-text">{invoiceNo}</strong>
-                              <small className="inv-order-ref">Order #{orderIdShort}</small>
+                              <strong className="inv-no-text">
+                                {invoiceNo}
+                              </strong>
+                              <small className="inv-order-ref">
+                                Order #{orderIdShort}
+                              </small>
                             </div>
                           </div>
                         </td>
@@ -352,23 +397,34 @@ const MyInvoices = () => {
                           <div className="inv-date-cell">
                             <span>
                               <Calendar className="row-mini-ic" />{" "}
-                              {new Date(ord.createdAt).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}
+                              {new Date(ord.createdAt).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
                             </span>
                             <small>
-                              {new Date(ord.createdAt).toLocaleTimeString("en-IN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                              {new Date(ord.createdAt).toLocaleTimeString(
+                                "en-IN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
                             </small>
                           </div>
                         </td>
                         <td>
                           <div className="inv-items-cell">
-                            <strong>{itemsCount} {itemsCount === 1 ? "Medicine Item" : "Medicine Items"}</strong>
+                            <strong>
+                              {itemsCount}{" "}
+                              {itemsCount === 1
+                                ? "Medicine Item"
+                                : "Medicine Items"}
+                            </strong>
                             <small className="items-names-snippet">
                               {(ord.items || [])
                                 .map((it) => it.medicine?.name || it.name)
@@ -383,7 +439,9 @@ const MyInvoices = () => {
                           <div className="inv-pay-mode-cell">
                             <span>
                               <CreditCard className="row-mini-ic" />{" "}
-                              {ord.paymentMethod === "ONLINE" ? "Razorpay Online" : "Cash on Delivery"}
+                              {ord.paymentMethod === "ONLINE"
+                                ? "Razorpay Online"
+                                : "Cash on Delivery"}
                             </span>
                           </div>
                         </td>
@@ -393,7 +451,9 @@ const MyInvoices = () => {
                           </strong>
                         </td>
                         <td>
-                          <span className={`inv-status-pill ${isPaid ? "paid" : "pending"}`}>
+                          <span
+                            className={`inv-status-pill ${isPaid ? "paid" : "pending"}`}
+                          >
                             {isPaid ? "✓ PAID" : "PENDING (COD)"}
                           </span>
                         </td>
@@ -430,7 +490,11 @@ const MyInvoices = () => {
             {filteredInvoices.length > invoicesPerPage && (
               <div className="invoices-pagination">
                 <div className="invoices-pagination-info">
-                  Showing <strong>{indexOfFirst + 1}</strong> - <strong>{Math.min(indexOfLast, filteredInvoices.length)}</strong> of <strong>{filteredInvoices.length}</strong> invoices
+                  Showing <strong>{indexOfFirst + 1}</strong> -{" "}
+                  <strong>
+                    {Math.min(indexOfLast, filteredInvoices.length)}
+                  </strong>{" "}
+                  of <strong>{filteredInvoices.length}</strong> invoices
                 </div>
                 <div className="invoices-pagination-controls">
                   <button
@@ -443,23 +507,27 @@ const MyInvoices = () => {
                   </button>
 
                   <div className="inv-page-numbers">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        className={`inv-page-num ${currentPage === p ? "active" : ""}`}
-                        onClick={() => setCurrentPage(p)}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          className={`inv-page-num ${currentPage === p ? "active" : ""}`}
+                          onClick={() => setCurrentPage(p)}
+                        >
+                          {p}
+                        </button>
+                      ),
+                    )}
                   </div>
 
                   <button
                     type="button"
                     className="inv-page-btn"
                     disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                   >
                     Next <ChevronRight className="page-arr-ic" />
                   </button>

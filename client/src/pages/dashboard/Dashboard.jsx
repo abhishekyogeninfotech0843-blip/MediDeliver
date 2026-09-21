@@ -18,7 +18,6 @@ import {
   Calendar,
   Search,
   Filter,
-  DollarSign,
   PackageCheck,
   Building2,
   FileSpreadsheet,
@@ -34,7 +33,7 @@ import {
   HelpCircle,
   Sparkles,
   Loader2,
-  Truck
+  Truck,
 } from "lucide-react";
 import "./Dashboard.css";
 
@@ -118,7 +117,12 @@ const Dashboard = () => {
   const [returnStats, setReturnStats] = useState(getCachedReturnStats);
   const [returnFilterStatus, setReturnFilterStatus] = useState("ALL");
   const [contactMessages, setContactMessages] = useState([]);
-  const [contactStats, setContactStats] = useState({ total: 0, new: 0, inProgress: 0, resolved: 0 });
+  const [contactStats, setContactStats] = useState({
+    total: 0,
+    new: 0,
+    inProgress: 0,
+    resolved: 0,
+  });
   const [contactAdminNotes, setContactAdminNotes] = useState({});
   const [updatingContactId, setUpdatingContactId] = useState(null);
   const [contactStatusFilter, setContactStatusFilter] = useState("ALL");
@@ -144,11 +148,11 @@ const Dashboard = () => {
   });
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
 
-  // Refund Processing Modal State
-  const [refundModalItem, setRefundModalItem] = useState(null);
-  const [refundTxnInput, setRefundTxnInput] = useState("");
-  const [refundAmountInput, setRefundAmountInput] = useState("");
-  const [isProcessingRefund, setIsProcessingRefund] = useState(false);
+  const [returnStartDate, setReturnStartDate] = useState("");
+  const [returnEndDate, setReturnEndDate] = useState("");
+  const [returnCustomerFilter, setReturnCustomerFilter] = useState("ALL");
+  const [returnPage, setReturnPage] = useState(1);
+  const returnsPerPage = 5;
 
   const handleEditCustomer = (cust) => {
     setEditingCustomer(cust);
@@ -172,9 +176,9 @@ const Dashboard = () => {
         setDetailsData((prev) => ({
           ...prev,
           customers: (prev.customers || []).map((c) =>
-            (c.id === custId || c._id === custId)
+            c.id === custId || c._id === custId
               ? { ...c, ...editCustomerForm }
-              : c
+              : c,
           ),
         }));
         setEditingCustomer(null);
@@ -192,7 +196,11 @@ const Dashboard = () => {
   const handleDeleteCustomer = async (cust) => {
     const custId = cust.id || cust._id;
     const custName = cust.name || "this customer";
-    if (!window.confirm(`Are you sure you want to delete customer "${custName}"? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete customer "${custName}"? This action cannot be undone.`,
+      )
+    ) {
       return;
     }
 
@@ -201,20 +209,29 @@ const Dashboard = () => {
       if (res.data?.success) {
         alert(`Customer "${custName}" deleted successfully! 🗑️`);
         setDetailsData((prev) => {
-          const updated = (prev.customers || []).filter((c) => c.id !== custId && c._id !== custId);
+          const updated = (prev.customers || []).filter(
+            (c) => c.id !== custId && c._id !== custId,
+          );
           return {
             ...prev,
             customers: updated,
             counts: {
               ...prev.counts,
-              totalCustomers: Math.max(0, (prev.counts?.totalCustomers || updated.length + 1) - 1),
+              totalCustomers: Math.max(
+                0,
+                (prev.counts?.totalCustomers || updated.length + 1) - 1,
+              ),
             },
           };
         });
-        setDashboard((prev) => prev ? {
-          ...prev,
-          totalCustomers: Math.max(0, (prev.totalCustomers || 1) - 1),
-        } : prev);
+        setDashboard((prev) =>
+          prev
+            ? {
+                ...prev,
+                totalCustomers: Math.max(0, (prev.totalCustomers || 1) - 1),
+              }
+            : prev,
+        );
       } else {
         alert(res.data?.message || "Failed to delete customer");
       }
@@ -278,7 +295,9 @@ const Dashboard = () => {
         category: medicineForm.category,
         batchNumber: finalBatch,
         expiryDate: medicineForm.expiryDate || "2028-12-31",
-        purchasePrice: Number(medicineForm.purchasePrice) || Math.round(Number(medicineForm.sellingPrice) * 0.5),
+        purchasePrice:
+          Number(medicineForm.purchasePrice) ||
+          Math.round(Number(medicineForm.sellingPrice) * 0.5),
         sellingPrice: Number(medicineForm.sellingPrice),
         stock: Number(medicineForm.stock) || 50,
         minimumStock: Number(medicineForm.minimumStock) || 10,
@@ -314,7 +333,10 @@ const Dashboard = () => {
   };
 
   // Fetch Dashboard & All Details with Date Filter
-  const fetchDashboardData = async (start = dateFilter.startDate, end = dateFilter.endDate) => {
+  const fetchDashboardData = async (
+    start = dateFilter.startDate,
+    end = dateFilter.endDate,
+  ) => {
     try {
       setIsRefreshing(true);
       let queryStr = "";
@@ -322,37 +344,71 @@ const Dashboard = () => {
       if (end) queryStr += `&endDate=${end}`;
       if (queryStr) queryStr = "?" + queryStr.slice(1);
 
-      const [dashRes, returnRes, detailsRes, medicinesRes, contactRes] = await Promise.all([
-        api.get(`/dashboard${queryStr}`).catch(() => ({ data: { success: false } })),
-        api.get("/returns").catch(() => ({ data: { success: false, returns: [], stats: {} } })),
-        api.get(`/dashboard/all-details${queryStr}`).catch(() => ({ data: { success: false } })),
-        api.get("/medicines").catch(() => ({ data: { success: false, medicines: [] } })),
-        api.get(`/contact${queryStr}`).catch(() => ({ data: { success: false, messages: [], stats: {} } })),
-      ]);
+      const [dashRes, returnRes, detailsRes, medicinesRes, contactRes] =
+        await Promise.all([
+          api
+            .get(`/dashboard${queryStr}`)
+            .catch(() => ({ data: { success: false } })),
+          api.get("/returns").catch(() => ({
+            data: { success: false, returns: [], stats: {} },
+          })),
+          api
+            .get(`/dashboard/all-details${queryStr}`)
+            .catch(() => ({ data: { success: false } })),
+          api
+            .get("/medicines")
+            .catch(() => ({ data: { success: false, medicines: [] } })),
+          api.get(`/contact${queryStr}`).catch(() => ({
+            data: { success: false, messages: [], stats: {} },
+          })),
+        ]);
 
       if (dashRes.data?.success && dashRes.data?.dashboard) {
         setDashboard(dashRes.data.dashboard);
         memoryDashboardCache = dashRes.data.dashboard;
         try {
-          localStorage.setItem("medideliver_admin_dashboard_cache", JSON.stringify(dashRes.data.dashboard));
+          localStorage.setItem(
+            "medideliver_admin_dashboard_cache",
+            JSON.stringify(dashRes.data.dashboard),
+          );
         } catch (e) {}
       }
 
       if (returnRes.data?.success) {
         setReturns(returnRes.data.returns || []);
-        const freshReturnStats = returnRes.data.stats || { total: 0, pending: 0, approved: 0, rejected: 0, refunded: 0 };
+        const freshReturnStats = returnRes.data.stats || {
+          total: 0,
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          refunded: 0,
+        };
         setReturnStats(freshReturnStats);
         try {
-          localStorage.setItem("medideliver_admin_returns_stats", JSON.stringify(freshReturnStats));
+          localStorage.setItem(
+            "medideliver_admin_returns_stats",
+            JSON.stringify(freshReturnStats),
+          );
         } catch (e) {}
       }
 
       if (contactRes.data?.success) {
         setContactMessages(contactRes.data.messages || []);
-        setContactStats(contactRes.data.stats || { total: 0, new: 0, inProgress: 0, resolved: 0 });
+        setContactStats(
+          contactRes.data.stats || {
+            total: 0,
+            new: 0,
+            inProgress: 0,
+            resolved: 0,
+          },
+        );
       }
 
-      const medicinesList = medicinesRes.data?.medicines || medicinesRes.data || detailsRes.data?.medicines || [];
+      const medicinesList =
+        medicinesRes.data?.medicines ||
+        medicinesRes.data ||
+        detailsRes.data?.medicines ||
+        [];
 
       const freshDetailsData = {
         medicines: medicinesList,
@@ -361,14 +417,20 @@ const Dashboard = () => {
         payments: detailsRes.data?.payments || [],
         counts: {
           ...detailsRes.data?.counts,
-          totalMedicines: medicinesList.length || dashRes.data?.dashboard?.totalMedicines || 22,
+          totalMedicines:
+            medicinesList.length ||
+            dashRes.data?.dashboard?.totalMedicines ||
+            22,
         },
       };
 
       setDetailsData(freshDetailsData);
       memoryDetailsCache = freshDetailsData;
       try {
-        localStorage.setItem("medideliver_admin_all_details_cache", JSON.stringify(freshDetailsData));
+        localStorage.setItem(
+          "medideliver_admin_all_details_cache",
+          JSON.stringify(freshDetailsData),
+        );
       } catch (e) {}
     } catch (error) {
       console.error("Dashboard Error:", error);
@@ -488,41 +550,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleOpenRefundModal = (item) => {
-    setRefundModalItem(item);
-    setRefundAmountInput(item.refundAmount || item.orderTotal || 0);
-    const autoRefId =
-      item.orderPaymentMethod === "ONLINE"
-        ? `RFND-RZP-${Math.floor(10000000 + Math.random() * 90000000)}`
-        : `RFND-BANK-${Math.floor(10000000 + Math.random() * 90000000)}`;
-    setRefundTxnInput(item.refundTransactionId || autoRefId);
-  };
-
-  const handleConfirmRefund = async () => {
-    if (!refundModalItem) return;
-    try {
-      setIsProcessingRefund(true);
-      const note = adminNotes[refundModalItem._id] || "Refund processed and credited to customer.";
-      const response = await api.put(`/returns/${refundModalItem._id}/status`, {
-        status: "REFUNDED",
-        adminNotes: note,
-        refundTransactionId: refundTxnInput,
-        refundAmount: Number(refundAmountInput),
-      });
-
-      if (response.data.success) {
-        alert(`✅ Refund of ₹${Number(refundAmountInput).toFixed(2)} processed successfully!\nTransaction ID: ${refundTxnInput}`);
-        setRefundModalItem(null);
-        fetchDashboardData();
-      }
-    } catch (err) {
-      console.error("Refund processing error:", err);
-      alert(err.response?.data?.message || "Failed to process refund");
-    } finally {
-      setIsProcessingRefund(false);
-    }
-  };
-
   const handleUpdateReturnStatus = async (id, status) => {
     try {
       setUpdatingId(id);
@@ -546,13 +573,17 @@ const Dashboard = () => {
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await api.put(`/orders/${orderId}/status`, { orderStatus: newStatus });
+      const response = await api.put(`/orders/${orderId}/status`, {
+        orderStatus: newStatus,
+      });
       if (response.data?.success) {
         alert(`✅ Order status updated to "${newStatus}"!`);
         // Update local state instantly
         setDetailsData((prev) => ({
           ...prev,
-          orders: prev.orders.map((o) => (o._id === orderId ? { ...o, orderStatus: newStatus } : o)),
+          orders: prev.orders.map((o) =>
+            o._id === orderId ? { ...o, orderStatus: newStatus } : o,
+          ),
         }));
         fetchDashboardData();
       }
@@ -564,7 +595,9 @@ const Dashboard = () => {
 
   const handleUpdatePaymentStatus = async (paymentId, newStatus) => {
     try {
-      const response = await api.put(`/payments/${paymentId}/status`, { paymentStatus: newStatus });
+      const response = await api.put(`/payments/${paymentId}/status`, {
+        paymentStatus: newStatus,
+      });
       if (response.data?.success) {
         alert(`✅ Payment status updated to "${newStatus}"!`);
         fetchDashboardData();
@@ -597,7 +630,11 @@ const Dashboard = () => {
   };
 
   const handleDeleteContactMessage = async (id, ticketId) => {
-    if (!window.confirm(`Are you sure you want to delete inquiry ticket #${ticketId || id}? This cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete inquiry ticket #${ticketId || id}? This cannot be undone.`,
+      )
+    ) {
       return;
     }
     try {
@@ -684,11 +721,16 @@ const Dashboard = () => {
   const defaultFallbackOrders = [
     {
       _id: "66f201010101010101015909",
-      customer: { name: "Sunita chauhan", email: "sunita@gmail.com", phone: "8171915305" },
+      customer: {
+        name: "Sunita chauhan",
+        email: "sunita@gmail.com",
+        phone: "8171915305",
+      },
       customerName: "Sunita chauhan",
       customerPhone: "8171915305",
       customerEmail: "sunita@gmail.com",
-      deliveryAddress: "Sunita chauhan, Harigarh, Aligarh, Uttar Pradesh - 202001",
+      deliveryAddress:
+        "Sunita chauhan, Harigarh, Aligarh, Uttar Pradesh - 202001",
       items: [{ medicine: { name: "Betnovate C" }, quantity: 10, price: 65 }],
       totalAmount: 650,
       paymentMethod: "ONLINE",
@@ -698,8 +740,18 @@ const Dashboard = () => {
     },
     {
       _id: "66f201010101010101010181",
-      customer: { name: "Nikhil Chauhan", email: "nikhil@gmail.com", phone: "9457155186" },
-      items: [{ medicine: { name: "Paracetamol 650mg (Dolo)" }, quantity: 2, price: 30 }],
+      customer: {
+        name: "Nikhil Chauhan",
+        email: "nikhil@gmail.com",
+        phone: "9457155186",
+      },
+      items: [
+        {
+          medicine: { name: "Paracetamol 650mg (Dolo)" },
+          quantity: 2,
+          price: 30,
+        },
+      ],
       totalAmount: 60,
       paymentMethod: "COD",
       paymentStatus: "PAID",
@@ -708,8 +760,18 @@ const Dashboard = () => {
     },
     {
       _id: "66f201010101010101010180",
-      customer: { name: "Nikhil Chauhan", email: "nikhil@gmail.com", phone: "9457155186" },
-      items: [{ medicine: { name: "Benadryl Cough Syrup 100ml" }, quantity: 1, price: 65 }],
+      customer: {
+        name: "Nikhil Chauhan",
+        email: "nikhil@gmail.com",
+        phone: "9457155186",
+      },
+      items: [
+        {
+          medicine: { name: "Benadryl Cough Syrup 100ml" },
+          quantity: 1,
+          price: 65,
+        },
+      ],
       totalAmount: 65,
       paymentMethod: "ONLINE",
       paymentStatus: "PAID",
@@ -718,8 +780,18 @@ const Dashboard = () => {
     },
     {
       _id: "66f201010101010101010177",
-      customer: { name: "Abhishek Sharma", email: "abhi@gmail.com", phone: "7088870224" },
-      items: [{ medicine: { name: "Becosules Performance Capsules" }, quantity: 2, price: 50 }],
+      customer: {
+        name: "Abhishek Sharma",
+        email: "abhi@gmail.com",
+        phone: "7088870224",
+      },
+      items: [
+        {
+          medicine: { name: "Becosules Performance Capsules" },
+          quantity: 2,
+          price: 50,
+        },
+      ],
       totalAmount: 100,
       paymentMethod: "ONLINE",
       paymentStatus: "PAID",
@@ -728,8 +800,14 @@ const Dashboard = () => {
     },
     {
       _id: "66f201010101010101010172",
-      customer: { name: "Abhi Chauhan", email: "abhi.c@gmail.com", phone: "9045915305" },
-      items: [{ medicine: { name: "Ciplar 40mg Tablet" }, quantity: 1, price: 40 }],
+      customer: {
+        name: "Abhi Chauhan",
+        email: "abhi.c@gmail.com",
+        phone: "9045915305",
+      },
+      items: [
+        { medicine: { name: "Ciplar 40mg Tablet" }, quantity: 1, price: 40 },
+      ],
       totalAmount: 40,
       paymentMethod: "COD",
       paymentStatus: "PENDING",
@@ -738,8 +816,18 @@ const Dashboard = () => {
     },
     {
       _id: "66f201010101010101010165",
-      customer: { name: "Rahul Verma", email: "rahul.v@gmail.com", phone: "9876543210" },
-      items: [{ medicine: { name: "Multivitamin Gold Capsules" }, quantity: 1, price: 299 }],
+      customer: {
+        name: "Rahul Verma",
+        email: "rahul.v@gmail.com",
+        phone: "9876543210",
+      },
+      items: [
+        {
+          medicine: { name: "Multivitamin Gold Capsules" },
+          quantity: 1,
+          price: 299,
+        },
+      ],
       totalAmount: 299,
       paymentMethod: "ONLINE",
       paymentStatus: "PAID",
@@ -748,8 +836,14 @@ const Dashboard = () => {
     },
     {
       _id: "66f201010101010101010150",
-      customer: { name: "Priya Patel", email: "priya.p@gmail.com", phone: "9812345678" },
-      items: [{ medicine: { name: "Betnovate C Cream" }, quantity: 2, price: 65 }],
+      customer: {
+        name: "Priya Patel",
+        email: "priya.p@gmail.com",
+        phone: "9812345678",
+      },
+      items: [
+        { medicine: { name: "Betnovate C Cream" }, quantity: 2, price: 65 },
+      ],
       totalAmount: 130,
       paymentMethod: "COD",
       paymentStatus: "PAID",
@@ -762,7 +856,11 @@ const Dashboard = () => {
     {
       _id: "pay-101",
       transactionId: "TXN-RZP-948201",
-      customer: { name: "Nikhil Chauhan", email: "nikhil@gmail.com", phone: "9457155186" },
+      customer: {
+        name: "Nikhil Chauhan",
+        email: "nikhil@gmail.com",
+        phone: "9457155186",
+      },
       amount: 60,
       paymentMethod: "ONLINE",
       paymentStatus: "PAID",
@@ -772,7 +870,11 @@ const Dashboard = () => {
     {
       _id: "pay-102",
       transactionId: "TXN-COD-6BB281",
-      customer: { name: "Nikhil Chauhan", email: "nikhil@gmail.com", phone: "9457155186" },
+      customer: {
+        name: "Nikhil Chauhan",
+        email: "nikhil@gmail.com",
+        phone: "9457155186",
+      },
       amount: 60,
       paymentMethod: "COD",
       paymentStatus: "PAID",
@@ -782,7 +884,11 @@ const Dashboard = () => {
     {
       _id: "pay-103",
       transactionId: "TXN-RZP-847291",
-      customer: { name: "Abhishek Sharma", email: "abhi@gmail.com", phone: "7088870224" },
+      customer: {
+        name: "Abhishek Sharma",
+        email: "abhi@gmail.com",
+        phone: "7088870224",
+      },
       amount: 100,
       paymentMethod: "ONLINE",
       paymentStatus: "PAID",
@@ -792,7 +898,11 @@ const Dashboard = () => {
     {
       _id: "pay-104",
       transactionId: "TXN-COD-6BB272",
-      customer: { name: "Abhi Chauhan", email: "abhi.c@gmail.com", phone: "9045915305" },
+      customer: {
+        name: "Abhi Chauhan",
+        email: "abhi.c@gmail.com",
+        phone: "9045915305",
+      },
       amount: 40,
       paymentMethod: "COD",
       paymentStatus: "PENDING",
@@ -802,7 +912,11 @@ const Dashboard = () => {
     {
       _id: "pay-105",
       transactionId: "TXN-RZP-736251",
-      customer: { name: "Rahul Verma", email: "rahul.v@gmail.com", phone: "9876543210" },
+      customer: {
+        name: "Rahul Verma",
+        email: "rahul.v@gmail.com",
+        phone: "9876543210",
+      },
       amount: 299,
       paymentMethod: "ONLINE",
       paymentStatus: "PAID",
@@ -812,7 +926,11 @@ const Dashboard = () => {
     {
       _id: "pay-106",
       transactionId: "TXN-COD-6BB250",
-      customer: { name: "Priya Patel", email: "priya.p@gmail.com", phone: "9812345678" },
+      customer: {
+        name: "Priya Patel",
+        email: "priya.p@gmail.com",
+        phone: "9812345678",
+      },
       amount: 130,
       paymentMethod: "COD",
       paymentStatus: "PAID",
@@ -824,26 +942,37 @@ const Dashboard = () => {
   // Filtered lists for active detail modal
   const searchLower = modalSearch.toLowerCase().trim();
 
-  const filteredMedicinesModal = (detailsData?.medicines || []).filter((m) =>
-    (m.name || "").toLowerCase().includes(searchLower) ||
-    (m.company || "").toLowerCase().includes(searchLower) ||
-    (m.category || "").toLowerCase().includes(searchLower) ||
-    (m.batchNumber || "").toLowerCase().includes(searchLower)
+  const filteredMedicinesModal = (detailsData?.medicines || []).filter(
+    (m) =>
+      (m.name || "").toLowerCase().includes(searchLower) ||
+      (m.company || "").toLowerCase().includes(searchLower) ||
+      (m.category || "").toLowerCase().includes(searchLower) ||
+      (m.batchNumber || "").toLowerCase().includes(searchLower),
   );
 
-  const sourceCustomers = (detailsData?.customers && detailsData.customers.length > 0) ? detailsData.customers : defaultFallbackCustomers;
-  const sourceOrders = (detailsData?.orders && detailsData.orders.length > 0) ? detailsData.orders : defaultFallbackOrders;
-  const sourcePayments = (detailsData?.payments && detailsData.payments.length > 0) ? detailsData.payments : defaultFallbackPayments;
+  const sourceCustomers =
+    detailsData?.customers && detailsData.customers.length > 0
+      ? detailsData.customers
+      : defaultFallbackCustomers;
+  const sourceOrders =
+    detailsData?.orders && detailsData.orders.length > 0
+      ? detailsData.orders
+      : defaultFallbackOrders;
+  const sourcePayments =
+    detailsData?.payments && detailsData.payments.length > 0
+      ? detailsData.payments
+      : defaultFallbackPayments;
 
   // Sort customers with highest/latest registration date at the top
   const sortedCustomers = [...sourceCustomers].sort(
-    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
   );
 
-  const filteredCustomersModal = sortedCustomers.filter((c) =>
-    (c.name || "").toLowerCase().includes(searchLower) ||
-    (c.email || "").toLowerCase().includes(searchLower) ||
-    (c.phone || "").toLowerCase().includes(searchLower)
+  const filteredCustomersModal = sortedCustomers.filter(
+    (c) =>
+      (c.name || "").toLowerCase().includes(searchLower) ||
+      (c.email || "").toLowerCase().includes(searchLower) ||
+      (c.phone || "").toLowerCase().includes(searchLower),
   );
 
   const filteredOrdersModal = sourceOrders.filter((o) => {
@@ -851,7 +980,8 @@ const Dashboard = () => {
       (o._id || "").toLowerCase().includes(searchLower) ||
       (o.customer?.name || "").toLowerCase().includes(searchLower) ||
       (o.customer?.phone || "").toLowerCase().includes(searchLower);
-    const matchesStatus = modalStatusFilter === "ALL" || o.orderStatus === modalStatusFilter;
+    const matchesStatus =
+      modalStatusFilter === "ALL" || o.orderStatus === modalStatusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -859,7 +989,11 @@ const Dashboard = () => {
     const payDateObj = new Date(p.paidAt || p.createdAt);
     const dateFormatted = payDateObj.toLocaleDateString("en-IN"); // e.g. "24/8/2026" or "27/8/2026"
     const dateISO = payDateObj.toISOString().split("T")[0]; // e.g. "2026-08-24"
-    const datePad = payDateObj.toLocaleDateString("en-IN", { day: '2-digit', month: '2-digit', year: 'numeric' }); // "24/08/2026"
+    const datePad = payDateObj.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }); // "24/08/2026"
 
     const matchesSearch =
       !searchLower ||
@@ -872,13 +1006,61 @@ const Dashboard = () => {
       dateISO.toLowerCase().includes(searchLower) ||
       datePad.toLowerCase().includes(searchLower);
 
-    const matchesStatus = modalStatusFilter === "ALL" || p.paymentStatus === modalStatusFilter;
+    const matchesStatus =
+      modalStatusFilter === "ALL" || p.paymentStatus === modalStatusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const modalCollectedTotal = filteredPaymentsModal
     .filter((p) => p.paymentStatus === "PAID")
     .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  const returnCustomers = [
+    ...new Map(
+      returns.map((item) => [
+        `${item.customerEmail || item.customerPhone || item.customerName}`,
+        item,
+      ]),
+    ).values(),
+  ].sort((a, b) => (a.customerName || "").localeCompare(b.customerName || ""));
+
+  const filteredReturnRequests = returns.filter((item) => {
+    const itemDate = new Date(item.createdAt);
+    const itemDateOnly = Number.isNaN(itemDate.getTime())
+      ? ""
+      : itemDate.toISOString().split("T")[0];
+    const matchesStatus =
+      returnFilterStatus === "ALL" ||
+      (item.status || "").toUpperCase() === returnFilterStatus;
+    const matchesCustomer =
+      returnCustomerFilter === "ALL" ||
+      `${item.customerEmail || item.customerPhone || item.customerName}` ===
+        returnCustomerFilter;
+    const matchesStartDate =
+      !returnStartDate || itemDateOnly >= returnStartDate;
+    const matchesEndDate = !returnEndDate || itemDateOnly <= returnEndDate;
+    return (
+      matchesStatus && matchesCustomer && matchesStartDate && matchesEndDate
+    );
+  });
+
+  const totalReturnPages = Math.max(
+    1,
+    Math.ceil(filteredReturnRequests.length / returnsPerPage),
+  );
+  const visibleReturnRequests = filteredReturnRequests.slice(
+    (returnPage - 1) * returnsPerPage,
+    returnPage * returnsPerPage,
+  );
+
+  useEffect(() => {
+    setReturnPage(1);
+  }, [
+    returnFilterStatus,
+    returnStartDate,
+    returnEndDate,
+    returnCustomerFilter,
+  ]);
 
   return (
     <div className="dashboard">
@@ -889,7 +1071,14 @@ const Dashboard = () => {
             <Activity className="dash-icon" />
           </div>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
               <h1>MediDeliver Admin Overview</h1>
               {isRefreshing && (
                 <span className="live-sync-indicator">
@@ -902,7 +1091,11 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-header-actions">
-          <Link to="/" className="dash-home-btn" title="Back to Customer Store / Home">
+          <Link
+            to="/"
+            className="dash-home-btn"
+            title="Back to Customer Store / Home"
+          >
             <ArrowLeft className="dash-btn-icon" />
             <span>Back to Home</span>
           </Link>
@@ -910,7 +1103,12 @@ const Dashboard = () => {
           <Link
             to="/suppliers"
             className="dash-home-btn"
-            style={{ background: "#f0fdfa", color: "#0d9488", borderColor: "#99f6e4", fontWeight: 700 }}
+            style={{
+              background: "#f0fdfa",
+              color: "#0d9488",
+              borderColor: "#99f6e4",
+              fontWeight: 700,
+            }}
             title="Manage Medicine Suppliers & Stock Inward"
           >
             <Truck className="dash-btn-icon" />
@@ -975,7 +1173,11 @@ const Dashboard = () => {
               value={dateFilter.startDate}
               onChange={(e) => {
                 const start = e.target.value;
-                setDateFilter((prev) => ({ ...prev, startDate: start, preset: "custom" }));
+                setDateFilter((prev) => ({
+                  ...prev,
+                  startDate: start,
+                  preset: "custom",
+                }));
                 fetchDashboardData(start, dateFilter.endDate);
               }}
             />
@@ -988,7 +1190,11 @@ const Dashboard = () => {
               value={dateFilter.endDate}
               onChange={(e) => {
                 const end = e.target.value;
-                setDateFilter((prev) => ({ ...prev, endDate: end, preset: "custom" }));
+                setDateFilter((prev) => ({
+                  ...prev,
+                  endDate: end,
+                  preset: "custom",
+                }));
                 fetchDashboardData(dateFilter.startDate, end);
               }}
             />
@@ -1021,7 +1227,11 @@ const Dashboard = () => {
           </div>
           <div>
             <h3>Total Medicines</h3>
-            <div className="value">{detailsData?.counts?.totalMedicines || dashboard?.totalMedicines || 0}</div>
+            <div className="value">
+              {detailsData?.counts?.totalMedicines ||
+                dashboard?.totalMedicines ||
+                0}
+            </div>
             <span className="card-click-hint">Click for Medicines List ➔</span>
           </div>
         </div>
@@ -1037,7 +1247,11 @@ const Dashboard = () => {
           </div>
           <div>
             <h3>Total Customers</h3>
-            <div className="value">{detailsData?.counts?.totalCustomers || dashboard?.totalCustomers || 0}</div>
+            <div className="value">
+              {detailsData?.counts?.totalCustomers ||
+                dashboard?.totalCustomers ||
+                0}
+            </div>
             <span className="card-click-hint">Click for Customers List ➔</span>
           </div>
         </div>
@@ -1053,7 +1267,9 @@ const Dashboard = () => {
           </div>
           <div>
             <h3>Total Orders</h3>
-            <div className="value">{detailsData?.counts?.totalOrders || dashboard?.totalOrders || 0}</div>
+            <div className="value">
+              {detailsData?.counts?.totalOrders || dashboard?.totalOrders || 0}
+            </div>
             <span className="card-click-hint">Click for Orders List ➔</span>
           </div>
         </div>
@@ -1070,14 +1286,22 @@ const Dashboard = () => {
           <div>
             <h3>Total Payments</h3>
             <div className="value">
-              {detailsData?.counts?.totalPayments || dashboard?.totalPayments || 0}
+              {detailsData?.counts?.totalPayments ||
+                dashboard?.totalPayments ||
+                0}
               {detailsData?.counts?.totalPaymentAmount ? (
                 <small className="collected-amount">
-                  ₹{Number(detailsData.counts.totalPaymentAmount).toLocaleString()} Total
+                  ₹
+                  {Number(
+                    detailsData.counts.totalPaymentAmount,
+                  ).toLocaleString()}{" "}
+                  Total
                 </small>
               ) : null}
             </div>
-            <span className="card-click-hint">Click for Revenue & Payments ➔</span>
+            <span className="card-click-hint">
+              Click for Revenue & Payments ➔
+            </span>
           </div>
         </div>
 
@@ -1111,12 +1335,28 @@ const Dashboard = () => {
       <div className="dashboard-section returns-admin-section">
         <div className="section-title-row">
           <h2>
-            <RotateCcw className="sec-icon text-teal" /> Customer Medicine Returns & Fault Claims
+            <RotateCcw className="sec-icon text-teal" /> Customer Medicine
+            Returns & Fault Claims
           </h2>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
             {returnFilterStatus !== "ALL" && (
               <span className="active-filter-badge">
-                Filtering: <strong>{returnFilterStatus}</strong> ({returns.filter(r => (r.status || "").toUpperCase() === returnFilterStatus.toUpperCase()).length})
+                Filtering: <strong>{returnFilterStatus}</strong> (
+                {
+                  returns.filter(
+                    (r) =>
+                      (r.status || "").toUpperCase() ===
+                      returnFilterStatus.toUpperCase(),
+                  ).length
+                }
+                )
                 <button
                   type="button"
                   className="clear-filter-btn"
@@ -1135,71 +1375,161 @@ const Dashboard = () => {
         <div className="status-grid return-stats-grid">
           <div
             className={`status-card placed clickable-status-card ${returnFilterStatus === "PENDING" ? "active-filter" : ""}`}
-            onClick={() => setReturnFilterStatus((prev) => (prev === "PENDING" ? "ALL" : "PENDING"))}
+            onClick={() =>
+              setReturnFilterStatus((prev) =>
+                prev === "PENDING" ? "ALL" : "PENDING",
+              )
+            }
             role="button"
             tabIndex={0}
-            title={returnFilterStatus === "PENDING" ? "Click to show all returns" : "Click to view Pending Review returns"}
+            title={
+              returnFilterStatus === "PENDING"
+                ? "Click to show all returns"
+                : "Click to view Pending Review returns"
+            }
           >
             <div className="st-hdr">
               <Clock className="st-svg" /> Pending Review
             </div>
             <strong>{returnStats.pending || 0}</strong>
             <div className="status-card-filter-hint">
-              <span>{returnFilterStatus === "PENDING" ? "● Active Filter" : "Click to filter"}</span>
+              <span>
+                {returnFilterStatus === "PENDING"
+                  ? "● Active Filter"
+                  : "Click to filter"}
+              </span>
               <span>➔</span>
             </div>
           </div>
 
           <div
             className={`status-card confirmed clickable-status-card ${returnFilterStatus === "APPROVED" ? "active-filter" : ""}`}
-            onClick={() => setReturnFilterStatus((prev) => (prev === "APPROVED" ? "ALL" : "APPROVED"))}
+            onClick={() =>
+              setReturnFilterStatus((prev) =>
+                prev === "APPROVED" ? "ALL" : "APPROVED",
+              )
+            }
             role="button"
             tabIndex={0}
-            title={returnFilterStatus === "APPROVED" ? "Click to show all returns" : "Click to view Approved returns"}
+            title={
+              returnFilterStatus === "APPROVED"
+                ? "Click to show all returns"
+                : "Click to view Approved returns"
+            }
           >
             <div className="st-hdr">
               <CheckCircle2 className="st-svg" /> Approved Returns
             </div>
             <strong>{returnStats.approved || 0}</strong>
             <div className="status-card-filter-hint">
-              <span>{returnFilterStatus === "APPROVED" ? "● Active Filter" : "Click to filter"}</span>
-              <span>➔</span>
-            </div>
-          </div>
-
-          <div
-            className={`status-card out_for_delivery clickable-status-card ${returnFilterStatus === "REFUNDED" ? "active-filter" : ""}`}
-            onClick={() => setReturnFilterStatus((prev) => (prev === "REFUNDED" ? "ALL" : "REFUNDED"))}
-            role="button"
-            tabIndex={0}
-            title={returnFilterStatus === "REFUNDED" ? "Click to show all returns" : "Click to view Refunded returns"}
-          >
-            <div className="st-hdr">
-              <RotateCcw className="st-svg" /> Refunded
-            </div>
-            <strong>{returnStats.refunded || 0}</strong>
-            <div className="status-card-filter-hint">
-              <span>{returnFilterStatus === "REFUNDED" ? "● Active Filter" : "Click to filter"}</span>
+              <span>
+                {returnFilterStatus === "APPROVED"
+                  ? "● Active Filter"
+                  : "Click to filter"}
+              </span>
               <span>➔</span>
             </div>
           </div>
 
           <div
             className={`status-card cancelled clickable-status-card ${returnFilterStatus === "REJECTED" ? "active-filter" : ""}`}
-            onClick={() => setReturnFilterStatus((prev) => (prev === "REJECTED" ? "ALL" : "REJECTED"))}
+            onClick={() =>
+              setReturnFilterStatus((prev) =>
+                prev === "REJECTED" ? "ALL" : "REJECTED",
+              )
+            }
             role="button"
             tabIndex={0}
-            title={returnFilterStatus === "REJECTED" ? "Click to show all returns" : "Click to view Rejected returns"}
+            title={
+              returnFilterStatus === "REJECTED"
+                ? "Click to show all returns"
+                : "Click to view Rejected returns"
+            }
           >
             <div className="st-hdr">
               <AlertTriangle className="st-svg" /> Rejected
             </div>
             <strong>{returnStats.rejected || 0}</strong>
             <div className="status-card-filter-hint">
-              <span>{returnFilterStatus === "REJECTED" ? "● Active Filter" : "Click to filter"}</span>
+              <span>
+                {returnFilterStatus === "REJECTED"
+                  ? "● Active Filter"
+                  : "Click to filter"}
+              </span>
               <span>➔</span>
             </div>
           </div>
+        </div>
+
+        <div className="returns-filter-bar">
+          <div className="returns-filter-heading">
+            <Filter className="returns-filter-icon" />
+            <strong>Filter return requests</strong>
+          </div>
+          <label>
+            From
+            <input
+              type="date"
+              value={returnStartDate}
+              max={returnEndDate || undefined}
+              onChange={(e) => {
+                setReturnStartDate(e.target.value);
+                setReturnPage(1);
+              }}
+            />
+          </label>
+          <label>
+            To
+            <input
+              type="date"
+              value={returnEndDate}
+              min={returnStartDate || undefined}
+              onChange={(e) => {
+                setReturnEndDate(e.target.value);
+                setReturnPage(1);
+              }}
+            />
+          </label>
+          <label className="return-customer-filter">
+            Customer
+            <select
+              value={returnCustomerFilter}
+              onChange={(e) => {
+                setReturnCustomerFilter(e.target.value);
+                setReturnPage(1);
+              }}
+            >
+              <option value="ALL">All customers</option>
+              {returnCustomers.map((customer) => {
+                const customerKey = `${customer.customerEmail || customer.customerPhone || customer.customerName}`;
+                return (
+                  <option key={customerKey} value={customerKey}>
+                    {customer.customerName ||
+                      customer.customerEmail ||
+                      customer.customerPhone}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          {(returnStartDate ||
+            returnEndDate ||
+            returnCustomerFilter !== "ALL" ||
+            returnFilterStatus !== "ALL") && (
+            <button
+              type="button"
+              className="clear-return-filters"
+              onClick={() => {
+                setReturnStartDate("");
+                setReturnEndDate("");
+                setReturnCustomerFilter("ALL");
+                setReturnFilterStatus("ALL");
+                setReturnPage(1);
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
         {/* Return Table */}
@@ -1207,13 +1537,22 @@ const Dashboard = () => {
           <div className="empty-returns-box">
             <CheckCircle2 className="empty-check-icon" />
             <h3>No pending medicine return requests</h3>
-            <p>Customer return requests will appear here for review & refund processing.</p>
+            <p>
+              Customer return requests will appear here for review & refund
+              processing.
+            </p>
           </div>
-        ) : (returns.filter((item) => returnFilterStatus === "ALL" || (item.status || "").toUpperCase() === returnFilterStatus.toUpperCase()).length === 0) ? (
+        ) : filteredReturnRequests.length === 0 ? (
           <div className="empty-returns-box" style={{ padding: "30px 20px" }}>
-            <AlertTriangle className="empty-check-icon" style={{ color: "#f59e0b" }} />
+            <AlertTriangle
+              className="empty-check-icon"
+              style={{ color: "#f59e0b" }}
+            />
             <h3>No return requests with status "{returnFilterStatus}"</h3>
-            <p style={{ margin: "6px 0 14px", color: "#64748b" }}>There are currently no customer medicine return requests under this status.</p>
+            <p style={{ margin: "6px 0 14px", color: "#64748b" }}>
+              There are currently no customer medicine return requests under
+              this status.
+            </p>
             <button
               type="button"
               className="preset-btn active"
@@ -1237,45 +1576,81 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {returns
-                  .filter((item) => returnFilterStatus === "ALL" || (item.status || "").toUpperCase() === returnFilterStatus.toUpperCase())
-                  .map((item) => (
+                {visibleReturnRequests.map((item) => (
                   <tr key={item._id}>
                     <td>
-                      <strong className="order-id">#{item.orderNumber || item.billNumber || item._id.slice(-6)}</strong>
+                      <strong className="order-id">
+                        #
+                        {item.orderNumber ||
+                          item.billNumber ||
+                          item._id.slice(-6)}
+                      </strong>
                       <br />
                       <small className="order-date">
                         {new Date(item.createdAt).toLocaleDateString("en-IN")}
                       </small>
                     </td>
                     <td>
-                      <strong className="cust-name">{item.customerName}</strong><br />
-                      <small className="cust-phone">📞 {item.customerPhone}</small><br />
+                      <strong className="cust-name">{item.customerName}</strong>
+                      <br />
+                      <small className="cust-phone">
+                        📞 {item.customerPhone}
+                      </small>
+                      <br />
                       <small className="cust-email">{item.customerEmail}</small>
                     </td>
                     <td>
-                      <span className="reason-badge">{item.reason || item.returnReason}</span>
-                      <strong className="med-name-disp">Med: {item.medicineName}</strong>
-                      <p className="description-text">"{item.description || item.explanation}"</p>
+                      <span className="reason-badge">
+                        {item.reason || item.returnReason}
+                      </span>
+                      <strong className="med-name-disp">
+                        Med: {item.medicineName}
+                      </strong>
+                      <p className="description-text">
+                        "{item.description || item.explanation}"
+                      </p>
                     </td>
                     <td>
                       <div className="rx-refund-info-cell">
-                        <span className={`pay-tag ${item.orderPaymentMethod === "ONLINE" ? "online" : "cod"}`}>
-                          {item.orderPaymentMethod === "ONLINE" ? "💳 Online (Razorpay)" : "💵 COD"}
+                        <span
+                          className={`pay-tag ${item.orderPaymentMethod === "ONLINE" ? "online" : "cod"}`}
+                        >
+                          {item.orderPaymentMethod === "ONLINE"
+                            ? "💳 Online (Razorpay)"
+                            : "💵 COD"}
                         </span>
-                        <strong className="text-teal">Refund: ₹{Number(item.refundAmount || item.orderTotal || 0).toFixed(2)}</strong>
+                        <strong className="text-teal">
+                          Refund: ₹
+                          {Number(
+                            item.refundAmount || item.orderTotal || 0,
+                          ).toFixed(2)}
+                        </strong>
                         <div className="refund-dest-desc">
                           {item.refundMethod === "UPI" ? (
-                            <span>⚡ UPI: <code>{item.refundUpiId || "Registered UPI"}</code></span>
+                            <span>
+                              ⚡ UPI:{" "}
+                              <code>
+                                {item.refundUpiId || "Registered UPI"}
+                              </code>
+                            </span>
                           ) : item.refundMethod === "BANK_TRANSFER" ? (
-                            <span>🏦 A/c: <code>{item.refundAccountNumber || "Bank A/c"}</code> (IFSC: {item.refundIfsc})</span>
+                            <span>
+                              🏦 A/c:{" "}
+                              <code>
+                                {item.refundAccountNumber || "Bank A/c"}
+                              </code>{" "}
+                              (IFSC: {item.refundIfsc})
+                            </span>
                           ) : (
                             <span>🔄 Original Source (Razorpay/Card)</span>
                           )}
                         </div>
-                        {item.status === "REFUNDED" && item.refundTransactionId && (
-                          <small className="refund-ref-tag">Ref: {item.refundTransactionId}</small>
-                        )}
+                        {item.status === "REFUNDED" &&
+                          item.refundTransactionId && (
+                            <small className="refund-ref-tag">
+                              Ref: {item.refundTransactionId}
+                            </small>
+                          )}
                       </div>
                     </td>
                     <td>
@@ -1283,7 +1658,11 @@ const Dashboard = () => {
                         <button
                           type="button"
                           className="rx-view-proof-btn"
-                          onClick={() => setSelectedProofImage(item.proofPhoto || item.proofImage)}
+                          onClick={() =>
+                            setSelectedProofImage(
+                              item.proofPhoto || item.proofImage,
+                            )
+                          }
                           title="Click to view full return proof photo"
                         >
                           <Eye className="eye-ic-sm" />
@@ -1294,7 +1673,9 @@ const Dashboard = () => {
                       )}
                     </td>
                     <td>
-                      <span className={`status-pill ${item.status.toLowerCase()}`}>
+                      <span
+                        className={`status-pill ${item.status.toLowerCase()}`}
+                      >
                         {item.status}
                       </span>
                     </td>
@@ -1306,39 +1687,36 @@ const Dashboard = () => {
                           className="admin-note-input"
                           value={adminNotes[item._id] ?? item.adminNotes ?? ""}
                           onChange={(e) =>
-                            setAdminNotes({ ...adminNotes, [item._id]: e.target.value })
+                            setAdminNotes({
+                              ...adminNotes,
+                              [item._id]: e.target.value,
+                            })
                           }
                         />
 
                         <div className="action-buttons-group">
-                          {item.status !== "APPROVED" && item.status !== "REFUNDED" && (
-                            <button
-                              type="button"
-                              className="btn-action approve"
-                              disabled={updatingId === item._id}
-                              onClick={() => handleUpdateReturnStatus(item._id, "APPROVED")}
-                            >
-                              <Check className="act-ic" /> Approve
-                            </button>
-                          )}
-
-                          {item.status !== "REFUNDED" && (
-                            <button
-                              type="button"
-                              className="btn-action refund"
-                              disabled={updatingId === item._id}
-                              onClick={() => handleOpenRefundModal(item)}
-                            >
-                              <RotateCcw className="act-ic" /> Process Refund
-                            </button>
-                          )}
+                          {item.status !== "APPROVED" &&
+                            item.status !== "REFUNDED" && (
+                              <button
+                                type="button"
+                                className="btn-action approve"
+                                disabled={updatingId === item._id}
+                                onClick={() =>
+                                  handleUpdateReturnStatus(item._id, "APPROVED")
+                                }
+                              >
+                                <Check className="act-ic" /> Approve
+                              </button>
+                            )}
 
                           {item.status !== "REJECTED" && (
                             <button
                               type="button"
                               className="btn-action reject"
                               disabled={updatingId === item._id}
-                              onClick={() => handleUpdateReturnStatus(item._id, "REJECTED")}
+                              onClick={() =>
+                                handleUpdateReturnStatus(item._id, "REJECTED")
+                              }
                             >
                               <X className="act-ic" /> Reject
                             </button>
@@ -1352,6 +1730,39 @@ const Dashboard = () => {
             </table>
           </div>
         )}
+        {filteredReturnRequests.length > 0 && (
+          <div className="returns-pagination">
+            <span>
+              Showing {(returnPage - 1) * returnsPerPage + 1}–
+              {Math.min(
+                returnPage * returnsPerPage,
+                filteredReturnRequests.length,
+              )}{" "}
+              of {filteredReturnRequests.length} requests
+            </span>
+            <div className="returns-pagination-controls">
+              <button
+                type="button"
+                disabled={returnPage === 1}
+                onClick={() => setReturnPage((page) => Math.max(1, page - 1))}
+              >
+                Previous
+              </button>
+              <strong>
+                Page {returnPage} of {totalReturnPages}
+              </strong>
+              <button
+                type="button"
+                disabled={returnPage === totalReturnPages}
+                onClick={() =>
+                  setReturnPage((page) => Math.min(totalReturnPages, page + 1))
+                }
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* =========================================================
@@ -1361,10 +1772,12 @@ const Dashboard = () => {
         <div className="section-title-row">
           <div>
             <h2>
-              <MessageSquare className="sec-icon text-teal" /> Customer Support Tickets & Contact Inquiries
+              <MessageSquare className="sec-icon text-teal" /> Customer Support
+              Tickets & Contact Inquiries
             </h2>
             <p className="section-subtitle">
-              Messages and support forms submitted by users & visitors from the Contact Us page.
+              Messages and support forms submitted by users & visitors from the
+              Contact Us page.
             </p>
           </div>
 
@@ -1433,12 +1846,16 @@ const Dashboard = () => {
 
         {/* Inquiries Table */}
         {contactMessages.filter(
-          (m) => contactStatusFilter === "ALL" || m.status === contactStatusFilter
+          (m) =>
+            contactStatusFilter === "ALL" || m.status === contactStatusFilter,
         ).length === 0 ? (
           <div className="empty-returns-box">
             <CheckCircle2 className="empty-check-icon" />
             <h3>No customer inquiries found for this filter</h3>
-            <p>New inquiries submitted from the Contact Us page will automatically appear here.</p>
+            <p>
+              New inquiries submitted from the Contact Us page will
+              automatically appear here.
+            </p>
           </div>
         ) : (
           <div className="table-responsive">
@@ -1456,35 +1873,57 @@ const Dashboard = () => {
               <tbody>
                 {contactMessages
                   .filter(
-                    (m) => contactStatusFilter === "ALL" || m.status === contactStatusFilter
+                    (m) =>
+                      contactStatusFilter === "ALL" ||
+                      m.status === contactStatusFilter,
                   )
                   .map((item) => (
-                    <tr key={item._id} className={item.status === "NEW" ? "new-inquiry-row" : ""}>
+                    <tr
+                      key={item._id}
+                      className={item.status === "NEW" ? "new-inquiry-row" : ""}
+                    >
                       <td>
                         <strong className="order-id">#{item.ticketId}</strong>
                         <br />
                         <small className="order-date">
-                          {new Date(item.createdAt).toLocaleDateString("en-IN")}<br />
-                          {new Date(item.createdAt).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(item.createdAt).toLocaleDateString("en-IN")}
+                          <br />
+                          {new Date(item.createdAt).toLocaleTimeString(
+                            "en-IN",
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
                         </small>
                       </td>
 
                       <td>
-                        <strong className="cust-name">{item.name}</strong><br />
+                        <strong className="cust-name">{item.name}</strong>
+                        <br />
                         {item.phone && (
-                          <a href={`tel:${item.phone}`} className="inq-phone-link" title="Click to call">
+                          <a
+                            href={`tel:${item.phone}`}
+                            className="inq-phone-link"
+                            title="Click to call"
+                          >
                             <Phone className="mini-inq-ico" /> {item.phone}
                           </a>
                         )}
                         <br />
-                        <a href={`mailto:${item.email}`} className="inq-email-link" title="Click to email">
+                        <a
+                          href={`mailto:${item.email}`}
+                          className="inq-email-link"
+                          title="Click to email"
+                        >
                           <Mail className="mini-inq-ico" /> {item.email}
                         </a>
                       </td>
 
                       <td>
-                        <span className="inq-category-pill">{item.category || "General Inquiry"}</span>
-                        <strong className="inq-subject-text">{item.subject || "No Subject"}</strong>
+                        <span className="inq-category-pill">
+                          {item.category || "General Inquiry"}
+                        </span>
+                        <strong className="inq-subject-text">
+                          {item.subject || "No Subject"}
+                        </strong>
                       </td>
 
                       <td className="inq-msg-cell">
@@ -1499,8 +1938,12 @@ const Dashboard = () => {
                       </td>
 
                       <td>
-                        <span className={`status-pill inq-status-${item.status.toLowerCase()}`}>
-                          {item.status === "NEW" ? "NEW UNREAD" : item.status.replace("_", " ")}
+                        <span
+                          className={`status-pill inq-status-${item.status.toLowerCase()}`}
+                        >
+                          {item.status === "NEW"
+                            ? "NEW UNREAD"
+                            : item.status.replace("_", " ")}
                         </span>
                       </td>
 
@@ -1510,7 +1953,11 @@ const Dashboard = () => {
                             type="text"
                             placeholder="Add admin note..."
                             className="admin-note-input"
-                            value={contactAdminNotes[item._id] ?? item.adminNotes ?? ""}
+                            value={
+                              contactAdminNotes[item._id] ??
+                              item.adminNotes ??
+                              ""
+                            }
                             onChange={(e) =>
                               setContactAdminNotes({
                                 ...contactAdminNotes,
@@ -1523,34 +1970,46 @@ const Dashboard = () => {
                             {item.phone && (
                               <a
                                 href={`https://wa.me/${item.phone.replace(/[^0-9]/g, "")}?text=Hello%20${encodeURIComponent(
-                                  item.name
+                                  item.name,
                                 )},%20this%20is%20MediDeliver%20Support%20regarding%20ticket%20%23${item.ticketId}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="btn-action whatsapp-action-btn"
                                 title="Reply directly via WhatsApp"
                               >
-                                <ExternalLink className="act-ic" /> WhatsApp Reply
+                                <ExternalLink className="act-ic" /> WhatsApp
+                                Reply
                               </a>
                             )}
 
-                            {item.status !== "IN_PROGRESS" && item.status !== "RESOLVED" && (
-                              <button
-                                type="button"
-                                className="btn-action inprogress"
-                                disabled={updatingContactId === item._id}
-                                onClick={() => handleUpdateContactStatus(item._id, "IN_PROGRESS")}
-                              >
-                                <Clock className="act-ic" /> In Progress
-                              </button>
-                            )}
+                            {item.status !== "IN_PROGRESS" &&
+                              item.status !== "RESOLVED" && (
+                                <button
+                                  type="button"
+                                  className="btn-action inprogress"
+                                  disabled={updatingContactId === item._id}
+                                  onClick={() =>
+                                    handleUpdateContactStatus(
+                                      item._id,
+                                      "IN_PROGRESS",
+                                    )
+                                  }
+                                >
+                                  <Clock className="act-ic" /> In Progress
+                                </button>
+                              )}
 
                             {item.status !== "RESOLVED" && (
                               <button
                                 type="button"
                                 className="btn-action approve"
                                 disabled={updatingContactId === item._id}
-                                onClick={() => handleUpdateContactStatus(item._id, "RESOLVED")}
+                                onClick={() =>
+                                  handleUpdateContactStatus(
+                                    item._id,
+                                    "RESOLVED",
+                                  )
+                                }
                               >
                                 <Check className="act-ic" /> Mark Resolved
                               </button>
@@ -1559,7 +2018,12 @@ const Dashboard = () => {
                             <button
                               type="button"
                               className="btn-action delete-inq-btn"
-                              onClick={() => handleDeleteContactMessage(item._id, item.ticketId)}
+                              onClick={() =>
+                                handleDeleteContactMessage(
+                                  item._id,
+                                  item.ticketId,
+                                )
+                              }
                               title="Delete inquiry"
                             >
                               <Trash2 className="act-ic" />
@@ -1581,19 +2045,30 @@ const Dashboard = () => {
 
       {/* 1. MEDICINES LIST MODAL */}
       {activeDetailModal === "medicines" && (
-        <div className="modal-backdrop" onClick={() => setActiveDetailModal(null)}>
-          <div className="modal-content detail-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setActiveDetailModal(null)}
+        >
+          <div
+            className="modal-content detail-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="detail-modal-header">
               <div className="modal-title-wrap">
                 <Pill className="modal-title-ic text-teal" />
                 <div>
                   <h2>Medicines Inventory Catalog</h2>
-                  <p>Showing {filteredMedicinesModal.length} medicines in inventory</p>
+                  <p>
+                    Showing {filteredMedicinesModal.length} medicines in
+                    inventory
+                  </p>
                 </div>
               </div>
 
               <div className="modal-header-actions">
-                <div className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}>
+                <div
+                  className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}
+                >
                   <Search className="search-ic" />
                   <input
                     type="text"
@@ -1602,12 +2077,21 @@ const Dashboard = () => {
                     onChange={(e) => setModalSearch(e.target.value)}
                   />
                   {modalSearch && (
-                    <button type="button" className="modal-search-clear-btn" onClick={() => setModalSearch("")} title="Clear search">
+                    <button
+                      type="button"
+                      className="modal-search-clear-btn"
+                      onClick={() => setModalSearch("")}
+                      title="Clear search"
+                    >
                       <X className="modal-clear-ic" />
                     </button>
                   )}
                 </div>
-                <button type="button" className="close-modal-btn" onClick={() => setActiveDetailModal(null)}>
+                <button
+                  type="button"
+                  className="close-modal-btn"
+                  onClick={() => setActiveDetailModal(null)}
+                >
                   <X />
                 </button>
               </div>
@@ -1632,21 +2116,45 @@ const Dashboard = () => {
                     {filteredMedicinesModal.map((med, idx) => (
                       <tr key={med._id || idx}>
                         <td>{idx + 1}</td>
-                        <td><strong>{med.name}</strong></td>
-                        <td><span className="med-cat-tag">{med.category || "Healthcare"}</span></td>
+                        <td>
+                          <strong>{med.name}</strong>
+                        </td>
+                        <td>
+                          <span className="med-cat-tag">
+                            {med.category || "Healthcare"}
+                          </span>
+                        </td>
                         <td>{med.company || "Generic"}</td>
-                        <td><code>{med.batchNumber || "BATCH-001"}</code></td>
-                        <td><strong className="text-teal">₹{Number(med.sellingPrice || 0).toFixed(2)}</strong></td>
+                        <td>
+                          <code>{med.batchNumber || "BATCH-001"}</code>
+                        </td>
+                        <td>
+                          <strong className="text-teal">
+                            ₹{Number(med.sellingPrice || 0).toFixed(2)}
+                          </strong>
+                        </td>
                         <td>
                           {med.stock <= 0 ? (
-                            <span className="stock-badge out">Out of Stock</span>
+                            <span className="stock-badge out">
+                              Out of Stock
+                            </span>
                           ) : med.stock <= (med.minimumStock || 10) ? (
-                            <span className="stock-badge low">Low ({med.stock})</span>
+                            <span className="stock-badge low">
+                              Low ({med.stock})
+                            </span>
                           ) : (
-                            <span className="stock-badge good">In Stock ({med.stock})</span>
+                            <span className="stock-badge good">
+                              In Stock ({med.stock})
+                            </span>
                           )}
                         </td>
-                        <td>{med.expiryDate ? new Date(med.expiryDate).toLocaleDateString("en-IN") : "2028-12-31"}</td>
+                        <td>
+                          {med.expiryDate
+                            ? new Date(med.expiryDate).toLocaleDateString(
+                                "en-IN",
+                              )
+                            : "2028-12-31"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1659,19 +2167,29 @@ const Dashboard = () => {
 
       {/* 2. CUSTOMERS LIST MODAL */}
       {activeDetailModal === "customers" && (
-        <div className="modal-backdrop" onClick={() => setActiveDetailModal(null)}>
-          <div className="modal-content detail-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setActiveDetailModal(null)}
+        >
+          <div
+            className="modal-content detail-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="detail-modal-header">
               <div className="modal-title-wrap">
                 <Users className="modal-title-ic text-teal" />
                 <div>
                   <h2>Registered Pharmacy Customers</h2>
-                  <p>Showing {filteredCustomersModal.length} registered customers</p>
+                  <p>
+                    Showing {filteredCustomersModal.length} registered customers
+                  </p>
                 </div>
               </div>
 
               <div className="modal-header-actions">
-                <div className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}>
+                <div
+                  className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}
+                >
                   <Search className="search-ic" />
                   <input
                     type="text"
@@ -1680,12 +2198,21 @@ const Dashboard = () => {
                     onChange={(e) => setModalSearch(e.target.value)}
                   />
                   {modalSearch && (
-                    <button type="button" className="modal-search-clear-btn" onClick={() => setModalSearch("")} title="Clear search">
+                    <button
+                      type="button"
+                      className="modal-search-clear-btn"
+                      onClick={() => setModalSearch("")}
+                      title="Clear search"
+                    >
                       <X className="modal-clear-ic" />
                     </button>
                   )}
                 </div>
-                <button type="button" className="close-modal-btn" onClick={() => setActiveDetailModal(null)}>
+                <button
+                  type="button"
+                  className="close-modal-btn"
+                  onClick={() => setActiveDetailModal(null)}
+                >
                   <X />
                 </button>
               </div>
@@ -1709,11 +2236,19 @@ const Dashboard = () => {
                     {filteredCustomersModal.map((cust, idx) => (
                       <tr key={cust.id || cust._id || idx}>
                         <td>{idx + 1}</td>
-                        <td><strong>{cust.name}</strong></td>
+                        <td>
+                          <strong>{cust.name}</strong>
+                        </td>
                         <td>{cust.email}</td>
                         <td>📞 {cust.phone}</td>
                         <td>{cust.address}</td>
-                        <td>{cust.createdAt ? new Date(cust.createdAt).toLocaleDateString("en-IN") : "Recent"}</td>
+                        <td>
+                          {cust.createdAt
+                            ? new Date(cust.createdAt).toLocaleDateString(
+                                "en-IN",
+                              )
+                            : "Recent"}
+                        </td>
                         <td>
                           <div className="cust-actions">
                             <button
@@ -1746,8 +2281,15 @@ const Dashboard = () => {
 
       {/* 2.1 EDIT CUSTOMER MODAL */}
       {editingCustomer && (
-        <div className="modal-backdrop" style={{ zIndex: 1100 }} onClick={() => setEditingCustomer(null)}>
-          <div className="modal-content edit-cust-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 1100 }}
+          onClick={() => setEditingCustomer(null)}
+        >
+          <div
+            className="modal-content edit-cust-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="edit-cust-header">
               <div className="edit-cust-title-wrap">
                 <Users className="modal-title-ic text-teal" />
@@ -1772,7 +2314,12 @@ const Dashboard = () => {
                   type="text"
                   required
                   value={editCustomerForm.name}
-                  onChange={(e) => setEditCustomerForm({ ...editCustomerForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditCustomerForm({
+                      ...editCustomerForm,
+                      name: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -1782,7 +2329,12 @@ const Dashboard = () => {
                   <input
                     type="email"
                     value={editCustomerForm.email}
-                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setEditCustomerForm({
+                        ...editCustomerForm,
+                        email: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="edit-cust-field">
@@ -1791,7 +2343,12 @@ const Dashboard = () => {
                     type="tel"
                     required
                     value={editCustomerForm.phone}
-                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setEditCustomerForm({
+                        ...editCustomerForm,
+                        phone: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -1801,7 +2358,12 @@ const Dashboard = () => {
                 <textarea
                   rows="3"
                   value={editCustomerForm.address}
-                  onChange={(e) => setEditCustomerForm({ ...editCustomerForm, address: e.target.value })}
+                  onChange={(e) =>
+                    setEditCustomerForm({
+                      ...editCustomerForm,
+                      address: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -1828,8 +2390,14 @@ const Dashboard = () => {
 
       {/* 3. ORDERS LIST MODAL */}
       {activeDetailModal === "orders" && (
-        <div className="modal-backdrop" onClick={() => setActiveDetailModal(null)}>
-          <div className="modal-content detail-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setActiveDetailModal(null)}
+        >
+          <div
+            className="modal-content detail-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="detail-modal-header">
               <div className="modal-title-wrap">
                 <ShoppingBag className="modal-title-ic text-teal" />
@@ -1854,7 +2422,9 @@ const Dashboard = () => {
                   <option value="CANCELLED">Cancelled</option>
                 </select>
 
-                <div className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}>
+                <div
+                  className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}
+                >
                   <Search className="search-ic" />
                   <input
                     type="text"
@@ -1863,12 +2433,21 @@ const Dashboard = () => {
                     onChange={(e) => setModalSearch(e.target.value)}
                   />
                   {modalSearch && (
-                    <button type="button" className="modal-search-clear-btn" onClick={() => setModalSearch("")} title="Clear search">
+                    <button
+                      type="button"
+                      className="modal-search-clear-btn"
+                      onClick={() => setModalSearch("")}
+                      title="Clear search"
+                    >
                       <X className="modal-clear-ic" />
                     </button>
                   )}
                 </div>
-                <button type="button" className="close-modal-btn" onClick={() => setActiveDetailModal(null)}>
+                <button
+                  type="button"
+                  className="close-modal-btn"
+                  onClick={() => setActiveDetailModal(null)}
+                >
                   <X />
                 </button>
               </div>
@@ -1892,21 +2471,43 @@ const Dashboard = () => {
                     {filteredOrdersModal.map((ord) => (
                       <tr key={ord._id}>
                         <td>
-                          <code>#{ord.orderNumber || ord._id.slice(-6).toUpperCase()}</code>
+                          <code>
+                            #
+                            {ord.orderNumber || ord._id.slice(-6).toUpperCase()}
+                          </code>
                           <br />
-                          <small className="order-date">{new Date(ord.createdAt).toLocaleDateString("en-IN")}</small>
+                          <small className="order-date">
+                            {new Date(ord.createdAt).toLocaleDateString(
+                              "en-IN",
+                            )}
+                          </small>
                         </td>
                         <td>
-                          <strong>{ord.customerName || ord.customer?.name || "Customer"}</strong><br />
-                          <small>📞 {ord.customerPhone || ord.customer?.phone || "N/A"}</small>
-                          <small className="address-sub">{ord.deliveryAddress || "Address on File"}</small>
+                          <strong>
+                            {ord.customerName ||
+                              ord.customer?.name ||
+                              "Customer"}
+                          </strong>
+                          <br />
+                          <small>
+                            📞{" "}
+                            {ord.customerPhone || ord.customer?.phone || "N/A"}
+                          </small>
+                          <small className="address-sub">
+                            {ord.deliveryAddress || "Address on File"}
+                          </small>
                         </td>
                         <td>
-                          {ord.orderType === "PRESCRIPTION" || ord.prescriptionImage ? (
+                          {ord.orderType === "PRESCRIPTION" ||
+                          ord.prescriptionImage ? (
                             <div className="rx-dashboard-order-box">
-                              <span className="rx-order-pill">📋 Doctor Prescription</span>
+                              <span className="rx-order-pill">
+                                📋 Doctor Prescription
+                              </span>
                               {ord.doctorName && (
-                                <div className="rx-doc-name">🩺 Dr: {ord.doctorName}</div>
+                                <div className="rx-doc-name">
+                                  🩺 Dr: {ord.doctorName}
+                                </div>
                               )}
                               {ord.prescriptionNotes && (
                                 <div className="rx-notes-text">
@@ -1917,46 +2518,79 @@ const Dashboard = () => {
                                 <button
                                   type="button"
                                   className="rx-view-doc-btn"
-                                  onClick={() => setSelectedProofImage(ord.prescriptionImage)}
+                                  onClick={() =>
+                                    setSelectedProofImage(ord.prescriptionImage)
+                                  }
                                 >
-                                  <Eye className="eye-ic-xs" /> View Prescription Image
+                                  <Eye className="eye-ic-xs" /> View
+                                  Prescription Image
                                 </button>
                               ) : (
-                                <small className="text-muted">No image attached</small>
+                                <small className="text-muted">
+                                  No image attached
+                                </small>
                               )}
                             </div>
                           ) : ord.items && ord.items.length > 0 ? (
                             ord.items.map((i, k) => (
                               <div key={k} className="item-line">
-                                • {i.medicine?.name || i.name || "Medicine Item"} x {i.quantity} (₹{i.price || i.medicine?.sellingPrice || 65})
+                                •{" "}
+                                {i.medicine?.name || i.name || "Medicine Item"}{" "}
+                                x {i.quantity} (₹
+                                {i.price || i.medicine?.sellingPrice || 65})
                               </div>
                             ))
                           ) : (
                             <span>Medicine Items</span>
                           )}
                         </td>
-                        <td><strong className="text-teal">₹{Number(ord.totalAmount || 0).toFixed(2)}</strong></td>
                         <td>
-                          <span className={`pay-tag ${ord.paymentStatus?.toLowerCase()}`}>
-                            {ord.paymentMethod === "ONLINE" ? "Razorpay Online" : "COD"} ({ord.paymentStatus || "PAID"})
+                          <strong className="text-teal">
+                            ₹{Number(ord.totalAmount || 0).toFixed(2)}
+                          </strong>
+                        </td>
+                        <td>
+                          <span
+                            className={`pay-tag ${ord.paymentStatus?.toLowerCase()}`}
+                          >
+                            {ord.paymentMethod === "ONLINE"
+                              ? "Razorpay Online"
+                              : "COD"}{" "}
+                            ({ord.paymentStatus || "PAID"})
                           </span>
                         </td>
                         <td>
                           <div className="status-action-cell">
-                            <span className={`status-pill ${ord.orderStatus?.toLowerCase()}`}>
+                            <span
+                              className={`status-pill ${ord.orderStatus?.toLowerCase()}`}
+                            >
                               {ord.orderStatus}
                             </span>
                             <select
                               className="order-status-change-select"
                               value={ord.orderStatus}
-                              onChange={(e) => handleUpdateOrderStatus(ord._id, e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateOrderStatus(ord._id, e.target.value)
+                              }
                             >
-                              <option value="PLACED">PLACED (Pending Verification)</option>
-                              <option value="CONFIRMED">CONFIRMED (Admin Received & Accepted)</option>
-                              <option value="PACKED">PACKED (Medicines Packed & Ready)</option>
-                              <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY (Handed to Rider)</option>
-                              <option value="DELIVERED">DELIVERED (Delivered to Customer)</option>
-                              <option value="CANCELLED">CANCELLED (Order Cancelled)</option>
+                              <option value="PLACED">
+                                PLACED (Pending Verification)
+                              </option>
+                              <option value="CONFIRMED">
+                                CONFIRMED (Admin Received & Accepted)
+                              </option>
+                              <option value="PACKED">
+                                PACKED (Medicines Packed & Ready)
+                              </option>
+                              <option value="OUT_FOR_DELIVERY">
+                                OUT FOR DELIVERY (Handed to Rider)
+                              </option>
+                              <option value="DELIVERED">
+                                DELIVERED (Delivered to Customer)
+                              </option>
+                              <option value="CANCELLED">
+                                CANCELLED (Order Cancelled)
+                              </option>
                             </select>
                           </div>
                         </td>
@@ -1972,8 +2606,14 @@ const Dashboard = () => {
 
       {/* 4. PAYMENTS LIST MODAL */}
       {activeDetailModal === "payments" && (
-        <div className="modal-backdrop" onClick={() => setActiveDetailModal(null)}>
-          <div className="modal-content detail-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setActiveDetailModal(null)}
+        >
+          <div
+            className="modal-content detail-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="detail-modal-header">
               <div className="modal-title-wrap">
                 <CreditCard className="modal-title-ic text-teal" />
@@ -1988,7 +2628,10 @@ const Dashboard = () => {
                   ₹{Number(modalCollectedTotal).toLocaleString()} Collected
                 </div>
 
-                <div className={`modal-search-box ${modalSearch ? "active-searching" : ""}`} title="Filter by date (e.g. 24/8/2026 or 2026-08-24)">
+                <div
+                  className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}
+                  title="Filter by date (e.g. 24/8/2026 or 2026-08-24)"
+                >
                   <Search className="search-ic" />
                   <input
                     type="text"
@@ -1997,7 +2640,12 @@ const Dashboard = () => {
                     onChange={(e) => setModalSearch(e.target.value)}
                   />
                   {modalSearch && (
-                    <button type="button" className="modal-search-clear-btn" onClick={() => setModalSearch("")} title="Clear search">
+                    <button
+                      type="button"
+                      className="modal-search-clear-btn"
+                      onClick={() => setModalSearch("")}
+                      title="Clear search"
+                    >
                       <X className="modal-clear-ic" />
                     </button>
                   )}
@@ -2010,7 +2658,9 @@ const Dashboard = () => {
                     onChange={(e) => {
                       if (e.target.value) {
                         const [yyyy, mm, dd] = e.target.value.split("-");
-                        setModalSearch(`${parseInt(dd)}/${parseInt(mm)}/${yyyy}`);
+                        setModalSearch(
+                          `${parseInt(dd)}/${parseInt(mm)}/${yyyy}`,
+                        );
                       } else {
                         setModalSearch("");
                       }
@@ -2019,7 +2669,11 @@ const Dashboard = () => {
                   />
                 </div>
 
-                <button type="button" className="close-modal-btn" onClick={() => setActiveDetailModal(null)}>
+                <button
+                  type="button"
+                  className="close-modal-btn"
+                  onClick={() => setActiveDetailModal(null)}
+                >
                   <X />
                 </button>
               </div>
@@ -2041,26 +2695,48 @@ const Dashboard = () => {
                   <tbody>
                     {filteredPaymentsModal.map((pay) => (
                       <tr key={pay._id}>
-                        <td><code>{pay.transactionId || pay.razorpayPaymentId || `#TXN-${pay._id.slice(-6)}`}</code></td>
                         <td>
-                          <strong>{pay.customer?.name || "Customer"}</strong><br />
-                          <small>{pay.customer?.email || pay.customer?.phone}</small>
+                          <code>
+                            {pay.transactionId ||
+                              pay.razorpayPaymentId ||
+                              `#TXN-${pay._id.slice(-6)}`}
+                          </code>
                         </td>
-                        <td><strong className="text-teal">₹{Number(pay.amount || 0).toFixed(2)}</strong></td>
+                        <td>
+                          <strong>{pay.customer?.name || "Customer"}</strong>
+                          <br />
+                          <small>
+                            {pay.customer?.email || pay.customer?.phone}
+                          </small>
+                        </td>
+                        <td>
+                          <strong className="text-teal">
+                            ₹{Number(pay.amount || 0).toFixed(2)}
+                          </strong>
+                        </td>
                         <td>
                           <span className="pay-method-badge">
-                            {pay.paymentMethod === "ONLINE" ? "Razorpay Online" : "Cash on Delivery"}
+                            {pay.paymentMethod === "ONLINE"
+                              ? "Razorpay Online"
+                              : "Cash on Delivery"}
                           </span>
                         </td>
                         <td>
                           <div className="status-action-cell">
-                            <span className={`status-pill ${pay.paymentStatus?.toLowerCase()}`}>
+                            <span
+                              className={`status-pill ${pay.paymentStatus?.toLowerCase()}`}
+                            >
                               {pay.paymentStatus}
                             </span>
                             <select
                               className="order-status-change-select"
                               value={pay.paymentStatus || "PENDING"}
-                              onChange={(e) => handleUpdatePaymentStatus(pay._id, e.target.value)}
+                              onChange={(e) =>
+                                handleUpdatePaymentStatus(
+                                  pay._id,
+                                  e.target.value,
+                                )
+                              }
                             >
                               <option value="PAID">PAID (Collected)</option>
                               <option value="PENDING">PENDING</option>
@@ -2069,7 +2745,11 @@ const Dashboard = () => {
                             </select>
                           </div>
                         </td>
-                        <td>{new Date(pay.paidAt || pay.createdAt).toLocaleDateString("en-IN")}</td>
+                        <td>
+                          {new Date(
+                            pay.paidAt || pay.createdAt,
+                          ).toLocaleDateString("en-IN")}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -2082,8 +2762,14 @@ const Dashboard = () => {
 
       {/* 5. CONTACT INQUIRIES MODAL */}
       {activeDetailModal === "contacts" && (
-        <div className="modal-backdrop" onClick={() => setActiveDetailModal(null)}>
-          <div className="modal-content detail-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setActiveDetailModal(null)}
+        >
+          <div
+            className="modal-content detail-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="detail-modal-header">
               <div className="modal-title-wrap">
                 <MessageSquare className="modal-title-ic text-teal" />
@@ -2102,7 +2788,9 @@ const Dashboard = () => {
             </div>
 
             <div className="detail-modal-toolbar">
-              <div className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}>
+              <div
+                className={`modal-search-box ${modalSearch ? "active-searching" : ""}`}
+              >
                 <Search className="search-ic" />
                 <input
                   type="text"
@@ -2111,7 +2799,12 @@ const Dashboard = () => {
                   onChange={(e) => setModalSearch(e.target.value)}
                 />
                 {modalSearch && (
-                  <button type="button" className="modal-search-clear-btn" onClick={() => setModalSearch("")} title="Clear search">
+                  <button
+                    type="button"
+                    className="modal-search-clear-btn"
+                    onClick={() => setModalSearch("")}
+                    title="Clear search"
+                  >
                     <X className="modal-clear-ic" />
                   </button>
                 )}
@@ -2122,10 +2815,18 @@ const Dashboard = () => {
                 value={modalStatusFilter}
                 onChange={(e) => setModalStatusFilter(e.target.value)}
               >
-                <option value="ALL">All Statuses ({contactMessages.length})</option>
-                <option value="NEW">New Unread ({contactStats.new || 0})</option>
-                <option value="IN_PROGRESS">In Progress ({contactStats.inProgress || 0})</option>
-                <option value="RESOLVED">Resolved ({contactStats.resolved || 0})</option>
+                <option value="ALL">
+                  All Statuses ({contactMessages.length})
+                </option>
+                <option value="NEW">
+                  New Unread ({contactStats.new || 0})
+                </option>
+                <option value="IN_PROGRESS">
+                  In Progress ({contactStats.inProgress || 0})
+                </option>
+                <option value="RESOLVED">
+                  Resolved ({contactStats.resolved || 0})
+                </option>
               </select>
             </div>
 
@@ -2155,7 +2856,8 @@ const Dashboard = () => {
                           (m.subject || "").toLowerCase().includes(s) ||
                           (m.message || "").toLowerCase().includes(s);
                         const matchesStatus =
-                          modalStatusFilter === "ALL" || m.status === modalStatusFilter;
+                          modalStatusFilter === "ALL" ||
+                          m.status === modalStatusFilter;
                         return matchesSearch && matchesStatus;
                       })
                       .map((item) => (
@@ -2164,7 +2866,9 @@ const Dashboard = () => {
                             <strong>#{item.ticketId}</strong>
                             <br />
                             <small className="text-muted">
-                              {new Date(item.createdAt).toLocaleDateString("en-IN")}
+                              {new Date(item.createdAt).toLocaleDateString(
+                                "en-IN",
+                              )}
                             </small>
                           </td>
                           <td>
@@ -2175,17 +2879,27 @@ const Dashboard = () => {
                             <small>✉️ {item.email}</small>
                           </td>
                           <td>
-                            <span className="inq-category-pill">{item.category}</span>
+                            <span className="inq-category-pill">
+                              {item.category}
+                            </span>
                             <br />
                             <strong>{item.subject}</strong>
                           </td>
                           <td style={{ maxWidth: "260px" }}>
-                            <p style={{ margin: 0, fontSize: "0.82rem", color: "#334155" }}>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: "0.82rem",
+                                color: "#334155",
+                              }}
+                            >
                               "{item.message}"
                             </p>
                           </td>
                           <td>
-                            <span className={`status-pill inq-status-${item.status.toLowerCase()}`}>
+                            <span
+                              className={`status-pill inq-status-${item.status.toLowerCase()}`}
+                            >
                               {item.status}
                             </span>
                           </td>
@@ -2195,7 +2909,12 @@ const Dashboard = () => {
                                 <button
                                   type="button"
                                   className="btn-action approve"
-                                  onClick={() => handleUpdateContactStatus(item._id, "RESOLVED")}
+                                  onClick={() =>
+                                    handleUpdateContactStatus(
+                                      item._id,
+                                      "RESOLVED",
+                                    )
+                                  }
                                 >
                                   <Check className="act-ic" /> Resolve
                                 </button>
@@ -2203,7 +2922,12 @@ const Dashboard = () => {
                               <button
                                 type="button"
                                 className="btn-action delete-inq-btn"
-                                onClick={() => handleDeleteContactMessage(item._id, item.ticketId)}
+                                onClick={() =>
+                                  handleDeleteContactMessage(
+                                    item._id,
+                                    item.ticketId,
+                                  )
+                                }
                               >
                                 <Trash2 className="act-ic" />
                               </button>
@@ -2221,8 +2945,14 @@ const Dashboard = () => {
 
       {/* LIGHTBOX MODAL FOR PROOF IMAGES */}
       {selectedProofImage && (
-        <div className="modal-backdrop" onClick={() => setSelectedProofImage(null)}>
-          <div className="modal-content image-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setSelectedProofImage(null)}
+        >
+          <div
+            className="modal-content image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>Customer Medicine Proof Image</h3>
               <button
@@ -2234,7 +2964,11 @@ const Dashboard = () => {
               </button>
             </div>
             <div className="modal-body text-center">
-              <img src={selectedProofImage} alt="Return Proof Full" className="full-proof-img" />
+              <img
+                src={selectedProofImage}
+                alt="Return Proof Full"
+                className="full-proof-img"
+              />
             </div>
           </div>
         </div>
@@ -2242,14 +2976,22 @@ const Dashboard = () => {
 
       {/* ADD MEDICINE MODAL */}
       {isAddMedicineOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAddMedicineOpen(false)}>
-          <div className="add-medicine-modal-box" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setIsAddMedicineOpen(false)}
+        >
+          <div
+            className="add-medicine-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="add-med-modal-header">
               <div className="hdr-title-wrap">
                 <Pill className="hdr-pill-icon" />
                 <div>
                   <h2>Add New Medicine to Catalog</h2>
-                  <p>Add a new medicine to inventory stock and online catalog</p>
+                  <p>
+                    Add a new medicine to inventory stock and online catalog
+                  </p>
                 </div>
               </div>
               <button
@@ -2261,7 +3003,10 @@ const Dashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddMedicineSubmit} className="add-medicine-form">
+            <form
+              onSubmit={handleAddMedicineSubmit}
+              className="add-medicine-form"
+            >
               <div className="form-group full-width">
                 <label>Medicine Name *</label>
                 <input
@@ -2269,7 +3014,9 @@ const Dashboard = () => {
                   required
                   placeholder="e.g. Dolo 650mg Tablet"
                   value={medicineForm.name}
-                  onChange={(e) => setMedicineForm({ ...medicineForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setMedicineForm({ ...medicineForm, name: e.target.value })
+                  }
                 />
               </div>
 
@@ -2278,7 +3025,12 @@ const Dashboard = () => {
                   <label>Company / Brand</label>
                   <select
                     value={medicineForm.company}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, company: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        company: e.target.value,
+                      })
+                    }
                   >
                     <option value="Cipla Ltd">Cipla Ltd</option>
                     <option value="Zydus Cadila">Zydus Cadila</option>
@@ -2300,7 +3052,12 @@ const Dashboard = () => {
                       type="text"
                       placeholder="Enter company name"
                       value={medicineForm.customCompany}
-                      onChange={(e) => setMedicineForm({ ...medicineForm, customCompany: e.target.value })}
+                      onChange={(e) =>
+                        setMedicineForm({
+                          ...medicineForm,
+                          customCompany: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 )}
@@ -2309,13 +3066,24 @@ const Dashboard = () => {
                   <label>Category</label>
                   <select
                     value={medicineForm.category}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, category: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        category: e.target.value,
+                      })
+                    }
                   >
                     <option value="Medicines">Medicines</option>
-                    <option value="Vitamins & Supplements">Vitamins & Supplements</option>
+                    <option value="Vitamins & Supplements">
+                      Vitamins & Supplements
+                    </option>
                     <option value="Personal Care">Personal Care</option>
-                    <option value="Healthcare Devices">Healthcare Devices</option>
-                    <option value="Ayurvedic & Herbal">Ayurvedic & Herbal</option>
+                    <option value="Healthcare Devices">
+                      Healthcare Devices
+                    </option>
+                    <option value="Ayurvedic & Herbal">
+                      Ayurvedic & Herbal
+                    </option>
                     <option value="Baby & Mom">Baby & Mom</option>
                   </select>
                 </div>
@@ -2330,7 +3098,12 @@ const Dashboard = () => {
                     required
                     placeholder="150.00"
                     value={medicineForm.sellingPrice}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, sellingPrice: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        sellingPrice: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -2341,7 +3114,12 @@ const Dashboard = () => {
                     step="0.01"
                     placeholder="90.00"
                     value={medicineForm.purchasePrice}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, purchasePrice: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        purchasePrice: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -2353,7 +3131,12 @@ const Dashboard = () => {
                     type="text"
                     placeholder="e.g. BATCH-CIP-101 (Auto-generated if empty)"
                     value={medicineForm.batchNumber}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, batchNumber: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        batchNumber: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -2362,7 +3145,12 @@ const Dashboard = () => {
                   <input
                     type="number"
                     value={medicineForm.stock}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, stock: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        stock: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -2371,134 +3159,33 @@ const Dashboard = () => {
                   <input
                     type="date"
                     value={medicineForm.expiryDate}
-                    onChange={(e) => setMedicineForm({ ...medicineForm, expiryDate: e.target.value })}
+                    onChange={(e) =>
+                      setMedicineForm({
+                        ...medicineForm,
+                        expiryDate: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
 
               <div className="add-med-actions-row">
-                <button type="button" className="cancel-med-btn" onClick={() => setIsAddMedicineOpen(false)}>
+                <button
+                  type="button"
+                  className="cancel-med-btn"
+                  onClick={() => setIsAddMedicineOpen(false)}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="save-med-btn" disabled={addingMedicine}>
+                <button
+                  type="submit"
+                  className="save-med-btn"
+                  disabled={addingMedicine}
+                >
                   {addingMedicine ? "Adding Medicine..." : "Save Medicine"}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          REFUND EXECUTION & SETTLEMENT MODAL
-         ========================================================= */}
-      {refundModalItem && (
-        <div className="modal-backdrop" onClick={() => setRefundModalItem(null)}>
-          <div className="modal-content refund-execution-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-hdr-left">
-                <RotateCcw className="modal-hdr-icon text-teal" />
-                <div>
-                  <h3>Process Payment Refund</h3>
-                  <p>Order #{refundModalItem.billNumber || refundModalItem.orderNumber || refundModalItem._id.slice(-6)} • {refundModalItem.customerName}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="close-modal-btn"
-                onClick={() => setRefundModalItem(null)}
-              >
-                <X className="x-ic" />
-              </button>
-            </div>
-
-            <div className="modal-body refund-modal-body">
-              <div className="refund-summary-box">
-                <div className="ref-sum-row">
-                  <span>Customer Name:</span>
-                  <strong>{refundModalItem.customerName} (📞 {refundModalItem.customerPhone})</strong>
-                </div>
-                <div className="ref-sum-row">
-                  <span>Returned Medicine:</span>
-                  <strong>{refundModalItem.medicineName}</strong>
-                </div>
-                <div className="ref-sum-row">
-                  <span>Order Payment Method:</span>
-                  <strong className="text-teal">
-                    {refundModalItem.orderPaymentMethod === "ONLINE"
-                      ? "💳 Online Paid (Razorpay / UPI)"
-                      : "💵 Cash on Delivery (COD)"}
-                  </strong>
-                </div>
-                <div className="ref-sum-row">
-                  <span>Refund Destination:</span>
-                  <strong className="refund-highlight-dest">
-                    {refundModalItem.refundMethod === "UPI"
-                      ? `⚡ UPI: ${refundModalItem.refundUpiId || "Customer UPI"}`
-                      : refundModalItem.refundMethod === "BANK_TRANSFER"
-                        ? `🏦 Bank A/c: ${refundModalItem.refundAccountNumber} (IFSC: ${refundModalItem.refundIfsc}, Holder: ${refundModalItem.refundAccountHolder})`
-                        : "🔄 Original Payment Source (Razorpay Auto-Refund)"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="refund-inputs-grid">
-                <div className="form-group">
-                  <label>Refund Amount (₹) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="modal-input"
-                    value={refundAmountInput}
-                    onChange={(e) => setRefundAmountInput(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Refund Reference / Transaction ID (UTR) *</label>
-                  <input
-                    type="text"
-                    className="modal-input"
-                    value={refundTxnInput}
-                    onChange={(e) => setRefundTxnInput(e.target.value)}
-                    placeholder="e.g. RFND-RZP-9281928"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group full-width">
-                <label>Admin Resolution Note (Visible to Customer)</label>
-                <input
-                  type="text"
-                  className="modal-input"
-                  placeholder="e.g. Approved. Payment refunded back to original account."
-                  value={adminNotes[refundModalItem._id] ?? refundModalItem.adminNotes ?? ""}
-                  onChange={(e) =>
-                    setAdminNotes({ ...adminNotes, [refundModalItem._id]: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="refund-actions-bar">
-                <button
-                  type="button"
-                  className="cancel-med-btn"
-                  onClick={() => setRefundModalItem(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-action refund refund-confirm-btn"
-                  disabled={isProcessingRefund || !refundAmountInput || !refundTxnInput}
-                  onClick={handleConfirmRefund}
-                >
-                  {isProcessingRefund ? "Processing Refund..." : `Confirm & Issue ₹${Number(refundAmountInput || 0).toFixed(2)} Refund`}
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}

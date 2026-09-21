@@ -24,7 +24,8 @@ import {
   Building2,
   X,
   ChevronRight,
-  Sparkle
+  Sparkle,
+  ShoppingCart
 } from "lucide-react";
 import api from "../api/api";
 import { useCart } from "../context/CartContext";
@@ -37,7 +38,7 @@ import "./home.css";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { cartCount } = useCart();
+  const { cartCount, cartTotal } = useCart();
   const [user, setUser] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
@@ -424,6 +425,20 @@ const Home = () => {
           </div>
 
           <div className="nav-actions">
+            {/* CART BUTTON */}
+            <Link to="/cart" className="home-nav-cart-btn" title="View your shopping cart">
+              <div className="home-cart-icon-wrapper">
+                <ShoppingCart className="nav-btn-icon" />
+                {cartCount > 0 && (
+                  <span className="home-cart-badge">{cartCount}</span>
+                )}
+              </div>
+              <span className="home-cart-label">Cart</span>
+              {cartCount > 0 && (
+                <span className="home-cart-price">₹{cartTotal.toFixed(0)}</span>
+              )}
+            </Link>
+
             {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
               <Link to="/dashboard" className="login-btn dashboard-nav-btn">
                 <LayoutDashboard className="nav-btn-icon" />

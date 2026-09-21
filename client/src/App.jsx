@@ -1,5 +1,6 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Pill } from "lucide-react";
 
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -37,10 +38,39 @@ import RazorpayTest from "./pages/RazorpayTest";
 // APP
 // =========================
 
+const RouteLoadingScreen = () => {
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = window.setTimeout(() => setIsLoading(false), 350);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname, location.search]);
+
+  if (!isLoading) return null;
+
+  return (
+    <div className="global-route-loader" role="status" aria-live="polite">
+      <div className="global-route-loader-card">
+        <div className="global-route-loader-icon">
+          <Pill />
+        </div>
+        <strong>Loading MediDeliver</strong>
+        <span>Preparing your healthcare experience...</span>
+        <div className="global-route-loader-track">
+          <div className="global-route-loader-progress" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <CartProvider>
       <BrowserRouter>
+        <RouteLoadingScreen />
         <Routes>
           {/* AUTH / PUBLIC ROUTES */}
           <Route

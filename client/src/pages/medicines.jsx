@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  ArrowRight,
   ShieldAlert,
   Boxes
 } from "lucide-react";
@@ -157,6 +158,7 @@ const Medicines = () => {
     decreaseQuantity,
     updateQuantity,
     cartCount,
+    cartTotal,
   } = useCart();
 
   // =========================
@@ -636,6 +638,20 @@ const Medicines = () => {
               <span>Back</span>
             </button>
 
+            {/* CART BUTTON IN NAVBAR */}
+            <Link to="/cart" className="med-nav-cart-btn" title="View your shopping cart">
+              <div className="med-nav-cart-icon-wrapper">
+                <ShoppingCart className="nav-btn-icon" />
+                {cartCount > 0 && (
+                  <span className="med-nav-cart-badge">{cartCount}</span>
+                )}
+              </div>
+              <span className="med-nav-cart-label">Cart</span>
+              {cartCount > 0 && (
+                <span className="med-nav-cart-price">₹{cartTotal.toFixed(0)}</span>
+              )}
+            </Link>
+
             {isAdmin && (
               <Link to="/dashboard" className="medicines-login dashboard-nav-btn">
                 <LayoutDashboard className="nav-btn-icon" />
@@ -1041,8 +1057,18 @@ const Medicines = () => {
         {/* Toast / Message */}
         {prescriptionMessage && (
           <div className="prescription-message">
-            <CheckCircle2 className="toast-icon" />
-            <span>{prescriptionMessage}</span>
+            <div className="prescription-message-left">
+              <CheckCircle2 className="toast-icon" />
+              <span>{prescriptionMessage}</span>
+            </div>
+            <button
+              type="button"
+              className="toast-go-cart-btn"
+              onClick={() => navigate("/cart")}
+            >
+              <span>Go to Cart</span>
+              <ArrowRight className="toast-arrow-icon" />
+            </button>
           </div>
         )}
 
@@ -1564,52 +1590,65 @@ const Medicines = () => {
 
                             if (cartQty > 0) {
                               return (
-                                <div className="card-qty-control-wrapper">
-                                  <button
-                                    type="button"
-                                    className="card-qty-btn decrease-btn"
-                                    onClick={() => decreaseQuantity(medicine._id)}
-                                    title="Decrease quantity"
-                                  >
-                                    <Minus className="qty-btn-icon" />
-                                  </button>
+                                <div className="card-cart-active-box">
+                                  <div className="card-qty-control-wrapper">
+                                    <button
+                                      type="button"
+                                      className="card-qty-btn decrease-btn"
+                                      onClick={() => decreaseQuantity(medicine._id)}
+                                      title="Decrease quantity"
+                                    >
+                                      <Minus className="qty-btn-icon" />
+                                    </button>
 
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    max={medicine.stock ? Number(medicine.stock) : 999}
-                                    className="card-qty-input"
-                                    value={cartQty}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      if (val === "") return;
-                                      const parsed = parseInt(val, 10);
-                                      if (!isNaN(parsed)) {
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max={medicine.stock ? Number(medicine.stock) : 999}
+                                      className="card-qty-input"
+                                      value={cartQty}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "") return;
+                                        const parsed = parseInt(val, 10);
+                                        if (!isNaN(parsed)) {
+                                          const maxStock = medicine.stock ? Number(medicine.stock) : 999;
+                                          updateQuantity(medicine._id, Math.min(Math.max(0, parsed), maxStock));
+                                        }
+                                      }}
+                                      onBlur={(e) => {
+                                        if (!e.target.value || parseInt(e.target.value, 10) <= 0) {
+                                          removeFromCart(medicine._id);
+                                        }
+                                      }}
+                                      title="Click to type quantity manually"
+                                    />
+
+                                    <button
+                                      type="button"
+                                      className="card-qty-btn increase-btn"
+                                      onClick={() => {
                                         const maxStock = medicine.stock ? Number(medicine.stock) : 999;
-                                        updateQuantity(medicine._id, Math.min(Math.max(0, parsed), maxStock));
-                                      }
-                                    }}
-                                    onBlur={(e) => {
-                                      if (!e.target.value || parseInt(e.target.value, 10) <= 0) {
-                                        removeFromCart(medicine._id);
-                                      }
-                                    }}
-                                    title="Click to type quantity manually"
-                                  />
+                                        if (cartQty < maxStock) {
+                                          increaseQuantity(medicine._id);
+                                        }
+                                      }}
+                                      disabled={Boolean(medicine.stock && cartQty >= Number(medicine.stock))}
+                                      title="Increase quantity"
+                                    >
+                                      <Plus className="qty-btn-icon" />
+                                    </button>
+                                  </div>
 
                                   <button
                                     type="button"
-                                    className="card-qty-btn increase-btn"
-                                    onClick={() => {
-                                      const maxStock = medicine.stock ? Number(medicine.stock) : 999;
-                                      if (cartQty < maxStock) {
-                                        increaseQuantity(medicine._id);
-                                      }
-                                    }}
-                                    disabled={Boolean(medicine.stock && cartQty >= Number(medicine.stock))}
-                                    title="Increase quantity"
+                                    className="card-go-cart-btn"
+                                    onClick={() => navigate("/cart")}
+                                    title="Go to Cart"
                                   >
-                                    <Plus className="qty-btn-icon" />
+                                    <ShoppingCart className="go-cart-icon" />
+                                    <span>Go to Cart</span>
+                                    <ArrowRight className="go-cart-arrow" />
                                   </button>
                                 </div>
                               );
@@ -1783,6 +1822,38 @@ const Medicines = () => {
         user={user}
         deliveryLocation={deliveryLocation}
       />
+
+      {/* FLOATING CART BAR (WHEN CART HAS ITEMS) */}
+      {cartCount > 0 && (
+        <aside className="floating-cart-bar" aria-label="Cart summary">
+          <div className="floating-cart-container">
+            <div className="floating-cart-left">
+              <div className="floating-cart-icon-box">
+                <ShoppingCart className="floating-cart-icon" />
+                <span className="floating-cart-badge">{cartCount}</span>
+              </div>
+              <div className="floating-cart-details">
+                <div className="floating-cart-title">
+                  <strong>{cartCount} {cartCount === 1 ? "item" : "items"}</strong> in cart
+                </div>
+                <div className="floating-cart-price">
+                  Subtotal: <strong>₹{cartTotal.toFixed(2)}</strong>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="floating-cart-cta-btn"
+              onClick={() => navigate("/cart")}
+              title="Go to Cart"
+            >
+              <span>Go to Cart</span>
+              <ArrowRight className="floating-arrow-icon" />
+            </button>
+          </div>
+        </aside>
+      )}
     </div>
   );
 };

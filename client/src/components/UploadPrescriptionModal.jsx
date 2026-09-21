@@ -19,9 +19,11 @@ import {
   Check,
   Pill,
 } from "lucide-react";
+import { useBodyScrollLock } from "../utils/useBodyScrollLock";
 import "./UploadPrescriptionModal.css";
 
 const UploadPrescriptionModal = ({ isOpen, onClose, user, deliveryLocation }) => {
+  useBodyScrollLock(isOpen);
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 

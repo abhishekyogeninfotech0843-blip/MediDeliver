@@ -16,7 +16,7 @@ import {
   ShoppingCart,
   HelpCircle,
   Truck,
-  Building2
+  Building2,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import "./UserProfileDropdown.css";
@@ -69,7 +69,8 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
+  const isAdmin =
+    user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
 
   return (
     <div className="user-profile-dropdown-container" ref={dropdownRef}>
@@ -102,7 +103,8 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
                 {user.email || "user@medideliver.com"}
               </p>
               <span className="verified-badge">
-                <ShieldCheck className="mini-shield" /> {isAdmin ? "Admin Account" : "Verified Account"}
+                <ShieldCheck className="mini-shield" />{" "}
+                {isAdmin ? "Admin Account" : "Verified Account"}
               </span>
             </div>
           </div>
@@ -156,6 +158,15 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
                 >
                   <UserCheck className="item-icon text-purple" />
                   <span>Admin Profile</span>
+                </Link>
+
+                <Link
+                  to="/contact"
+                  className="dropdown-item"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <HelpCircle className="item-icon text-teal" />
+                  <span>Help & Support</span>
                 </Link>
               </>
             ) : (

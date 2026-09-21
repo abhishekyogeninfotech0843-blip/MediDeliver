@@ -14,9 +14,11 @@ import {
   Minus
 } from "lucide-react";
 import api from "../api/api";
+import { useBodyScrollLock } from "../utils/useBodyScrollLock";
 import "./EditMedicineModal.css";
 
 const EditMedicineModal = ({ isOpen, onClose, medicine, onSuccess }) => {
+  useBodyScrollLock(isOpen);
   const [formData, setFormData] = useState({
     name: "",
     company: "Cipla Ltd",

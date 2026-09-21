@@ -15,6 +15,7 @@ import {
   IndianRupee
 } from "lucide-react";
 import api from "../api/api";
+import { useBodyScrollLock } from "../utils/useBodyScrollLock";
 import "./AddMedicineModal.css";
 
 const popularCompanies = [
@@ -44,6 +45,7 @@ const categoriesList = [
 ];
 
 const AddMedicineModal = ({ isOpen, onClose, onSuccess }) => {
+  useBodyScrollLock(isOpen);
   const [formData, setFormData] = useState({
     name: "",
     company: "Cipla Ltd",
