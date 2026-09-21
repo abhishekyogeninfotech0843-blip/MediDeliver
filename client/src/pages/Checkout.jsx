@@ -24,14 +24,14 @@ import {
   Sparkles,
   Compass,
   ArrowLeft,
-  Edit3
+  Edit3,
 } from "lucide-react";
 import {
   STORE_LOCATION,
   ALIGARH_AREAS,
   ALIGARH_PINCODE_MAP,
   getDeliveryEstimate,
-  detectAligarhCustomLocation
+  detectAligarhCustomLocation,
 } from "../utils/deliveryZone";
 import logoSvg from "../assets/logo.svg";
 import "./Checkout.css";
@@ -68,14 +68,16 @@ const Checkout = () => {
       pincode: loc.pincode || prev.pincode,
       lat: loc.lat || prev.lat,
       lng: loc.lng || prev.lng,
-      address: prev.address ? prev.address : `${loc.city || loc.area}, Aligarh, Uttar Pradesh - ${loc.pincode}`,
+      address: prev.address
+        ? prev.address
+        : `${loc.city || loc.area}, Aligarh, Uttar Pradesh - ${loc.pincode}`,
     }));
     setError("");
     setShowMapPicker(false);
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     let initialUser = {};
     if (storedUser) {
       try {
@@ -126,7 +128,10 @@ const Checkout = () => {
 
     window.addEventListener("deliveryLocationUpdated", handleLocationEvent);
     return () => {
-      window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
+      window.removeEventListener(
+        "deliveryLocationUpdated",
+        handleLocationEvent,
+      );
     };
   }, []);
 
@@ -190,7 +195,7 @@ const Checkout = () => {
     if (val.length === 6 && /^[0-9]{6}$/.test(val)) {
       if (!val.startsWith("202")) {
         setError(
-          `❌ PIN code ${val} is outside Aligarh district. MediDeliver operates exclusively within Aligarh District (PIN: 202xxx).`
+          `❌ PIN code ${val} is outside Aligarh district. MediDeliver operates exclusively within Aligarh District (PIN: 202xxx).`,
         );
         return;
       }
@@ -241,7 +246,7 @@ const Checkout = () => {
     if (!deliveryEstimate.isDeliverable) {
       setError(
         deliveryEstimate.message ||
-          "Delivery is not available outside Aligarh District (up to 45 km radius)."
+          "Delivery is not available outside Aligarh District (up to 45 km radius).",
       );
       return false;
     }
@@ -316,7 +321,9 @@ const Checkout = () => {
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded) {
         isSubmittingRef.current = false;
-        setError("Razorpay SDK failed to load. Please check internet connection.");
+        setError(
+          "Razorpay SDK failed to load. Please check internet connection.",
+        );
         setLoading(false);
         return;
       }
@@ -335,7 +342,10 @@ const Checkout = () => {
       }
 
       const razorpayOrder = rpRes.data.order || rpRes.data.razorpayOrder;
-      const razorpayKey = rpRes.data.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_YourKeyHere";
+      const razorpayKey =
+        rpRes.data.keyId ||
+        import.meta.env.VITE_RAZORPAY_KEY_ID ||
+        "rzp_test_YourKeyHere";
 
       const options = {
         key: razorpayKey,
@@ -355,13 +365,16 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             setLoading(true);
-            const verifyRes = await api.post("/payments/verify-razorpay-payment", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              orderId: order._id,
-              paymentMethod: "ONLINE",
-            });
+            const verifyRes = await api.post(
+              "/payments/verify-razorpay-payment",
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: order._id,
+                paymentMethod: "ONLINE",
+              },
+            );
 
             if (verifyRes.data.success) {
               clearCart();
@@ -431,7 +444,9 @@ const Checkout = () => {
         <div className="checkout-empty">
           <ShoppingBag className="empty-cart-svg" />
           <h2>Your Cart is Empty</h2>
-          <p>Please add medicines to your cart before proceeding to checkout.</p>
+          <p>
+            Please add medicines to your cart before proceeding to checkout.
+          </p>
           <Link to="/medicines" className="shop-btn">
             Browse Medicines
           </Link>
@@ -468,7 +483,8 @@ const Checkout = () => {
             </button>
 
             <div className="checkout-secure-badge">
-              <Lock className="lock-sm" /> <span>256-bit Encrypted Checkout</span>
+              <Lock className="lock-sm" />{" "}
+              <span>256-bit Encrypted Checkout</span>
             </div>
             <UserProfileDropdown user={user} />
           </div>
@@ -480,7 +496,10 @@ const Checkout = () => {
         <div className="checkout-heading">
           <span className="checkout-sub-label">MEDIDELIVER ALIGARH</span>
           <h1>Shipping & Payment</h1>
-          <p>Exclusive pharmacy delivery for Aligarh District (Up to 45 km radius).</p>
+          <p>
+            Exclusive pharmacy delivery for Aligarh District (Up to 45 km
+            radius).
+          </p>
         </div>
 
         {error && (
@@ -499,7 +518,10 @@ const Checkout = () => {
                 <span className="step-number">1</span>
                 <div>
                   <h2>Delivery Address (Aligarh District)</h2>
-                  <p>Medicines will be dispatched directly from our Aligarh Central Pharmacy.</p>
+                  <p>
+                    Medicines will be dispatched directly from our Aligarh
+                    Central Pharmacy.
+                  </p>
                 </div>
               </div>
 
@@ -507,7 +529,9 @@ const Checkout = () => {
               <div className="checkout-zone-tag">
                 <Truck className="cz-icon" />
                 <span>
-                  <strong>Aligarh Coverage Zone:</strong> We deliver to all Aligarh city localities and Tehsils (Koil, Atrauli, Khair, Iglas, Gabhana).
+                  <strong>Aligarh Coverage Zone:</strong> We deliver to all
+                  Aligarh city localities and Tehsils (Koil, Atrauli, Khair,
+                  Iglas, Gabhana).
                 </span>
               </div>
 
@@ -519,7 +543,10 @@ const Checkout = () => {
                   </div>
                   <div className="cma-text">
                     <h4>Pin Custom Delivery Location on Map</h4>
-                    <p>Ordering for another address? (e.g. Gular Road, Banna Devi Thana, Civil Lines)</p>
+                    <p>
+                      Ordering for another address? (e.g. Gular Road, Banna Devi
+                      Thana, Civil Lines)
+                    </p>
                   </div>
                 </div>
                 <button
@@ -537,8 +564,14 @@ const Checkout = () => {
                 <div className="cps-info">
                   <MapPin className="cps-pin-icon" />
                   <div>
-                    <strong>📍 Selected Spot: {address.city || "Centre Point, Aligarh"}</strong>
-                    <span>PIN: {address.pincode} • Coords: {address.lat?.toFixed(4)}, {address.lng?.toFixed(4)}</span>
+                    <strong>
+                      📍 Selected Spot:{" "}
+                      {address.city || "Centre Point, Aligarh"}
+                    </strong>
+                    <span>
+                      PIN: {address.pincode} • Coords: {address.lat?.toFixed(4)}
+                      , {address.lng?.toFixed(4)}
+                    </span>
                   </div>
                 </div>
                 <button
@@ -546,7 +579,15 @@ const Checkout = () => {
                   className="cps-adjust-btn"
                   onClick={() => setShowMapPicker(true)}
                 >
-                  <Edit3 style={{ width: 13, height: 13, display: "inline", marginRight: 4, verticalAlign: "middle" }} />
+                  <Edit3
+                    style={{
+                      width: 13,
+                      height: 13,
+                      display: "inline",
+                      marginRight: 4,
+                      verticalAlign: "middle",
+                    }}
+                  />
                   Adjust on Map
                 </button>
               </div>
@@ -606,17 +647,33 @@ const Checkout = () => {
                 <div className="form-group">
                   <div className="pincode-label-row">
                     <label>
-                      <Sparkles style={{ width: 14, height: 14, color: "#0d9488", display: "inline", marginRight: 4 }} />
+                      <Sparkles
+                        style={{
+                          width: 14,
+                          height: 14,
+                          color: "#0d9488",
+                          display: "inline",
+                          marginRight: 4,
+                        }}
+                      />
                       Quick Search Custom Location / Colony in Aligarh
                     </label>
                     <span
-                      style={{ fontSize: "12px", color: "#0d9488", cursor: "pointer", fontWeight: 600 }}
+                      style={{
+                        fontSize: "12px",
+                        color: "#0d9488",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                      }}
                       onClick={() => setShowMapPicker(true)}
                     >
                       📍 Open Full Map
                     </span>
                   </div>
-                  <div className="input-wrapper" style={{ display: "flex", gap: "8px" }}>
+                  <div
+                    className="input-wrapper"
+                    style={{ display: "flex", gap: "8px" }}
+                  >
                     <input
                       type="text"
                       placeholder="Type custom location (e.g. Gular Road, Banna Devi Thana, Centre Point)..."
@@ -642,7 +699,13 @@ const Checkout = () => {
                     <button
                       type="button"
                       className="cps-adjust-btn"
-                      style={{ padding: "0 16px", height: "42px", display: "flex", alignItems: "center", gap: "6px" }}
+                      style={{
+                        padding: "0 16px",
+                        height: "42px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
                       onClick={() => setShowMapPicker(true)}
                     >
                       <MapPin style={{ width: 16, height: 16 }} />
@@ -686,7 +749,9 @@ const Checkout = () => {
                         value={address.city}
                         onChange={(e) => handleCityChange(e.target.value)}
                       >
-                        {!ALIGARH_AREAS.some((a) => a.name === address.city) && (
+                        {!ALIGARH_AREAS.some(
+                          (a) => a.name === address.city,
+                        ) && (
                           <option value={address.city}>
                             📍 {address.city} (Custom Area)
                           </option>
@@ -709,7 +774,9 @@ const Checkout = () => {
                     </div>
                     <div className="cd-est-info">
                       <div className="cd-badge-row">
-                        <span className="cd-badge">{deliveryEstimate.deliveryBadge}</span>
+                        <span className="cd-badge">
+                          {deliveryEstimate.deliveryBadge}
+                        </span>
                         <span className="cd-dist">
                           ~{deliveryEstimate.distanceKm} km from Pharmacy Hub
                         </span>
@@ -762,7 +829,9 @@ const Checkout = () => {
                       <strong>Razorpay Online Payment</strong>
                       <span className="pay-badge green">Instant & Fast</span>
                     </div>
-                    <p>UPI (GPay, PhonePe, Paytm), Credit/Debit Card, Net Banking</p>
+                    <p>
+                      UPI (GPay, PhonePe, Paytm), Credit/Debit Card, Net Banking
+                    </p>
                   </div>
                 </label>
 
@@ -785,7 +854,9 @@ const Checkout = () => {
                       <strong>Cash on Delivery (COD)</strong>
                       <span className="pay-badge blue">Pay at Doorstep</span>
                     </div>
-                    <p>Pay cash or scan QR when medicines arrive at your doorstep</p>
+                    <p>
+                      Pay cash or scan QR when medicines arrive at your doorstep
+                    </p>
                   </div>
                 </label>
               </div>
@@ -803,12 +874,14 @@ const Checkout = () => {
                   <div>
                     <h3>Order Summary</h3>
                     <p className="summary-subtitle">
-                      {cart.length} medicine{cart.length !== 1 ? "s" : ""} in cart
+                      {cart.length} medicine{cart.length !== 1 ? "s" : ""} in
+                      cart
                     </p>
                   </div>
                 </div>
                 <span className="items-count-badge">
-                  {cart.reduce((total, it) => total + (it.quantity || 1), 0)} Items
+                  {cart.reduce((total, it) => total + (it.quantity || 1), 0)}{" "}
+                  Items
                 </span>
               </div>
 
@@ -822,8 +895,12 @@ const Checkout = () => {
                       <div className="sum-item-details">
                         <strong className="sum-item-name">{item.name}</strong>
                         <div className="sum-item-meta">
-                          <span className="sum-qty-pill">Qty: {item.quantity}</span>
-                          <span className="sum-unit-price">₹{item.sellingPrice} each</span>
+                          <span className="sum-qty-pill">
+                            Qty: {item.quantity}
+                          </span>
+                          <span className="sum-unit-price">
+                            ₹{item.sellingPrice} each
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -871,7 +948,9 @@ const Checkout = () => {
               <div className="summary-row total-row">
                 <div>
                   <span className="total-label">Total Payable</span>
-                  <small className="tax-inclusive-tag">Inclusive of all taxes</small>
+                  <small className="tax-inclusive-tag">
+                    Inclusive of all taxes
+                  </small>
                 </div>
                 <span className="total-price">₹{finalTotal.toFixed(2)}</span>
               </div>
@@ -894,15 +973,15 @@ const Checkout = () => {
                 ) : !deliveryEstimate.isDeliverable ? (
                   <span>Outside Aligarh Service Zone</span>
                 ) : (
-                  <span>
-                    Confirm & Place Order • ₹{finalTotal.toFixed(2)}
-                  </span>
+                  <span>Confirm & Place Order • ₹{finalTotal.toFixed(2)}</span>
                 )}
               </button>
 
               <div className="trust-footer">
                 <ShieldCheck className="trust-ic" />
-                <span>100% Genuine Medicines • Direct Aligarh Pharmacy Dispatch</span>
+                <span>
+                  100% Genuine Medicines • Direct Aligarh Pharmacy Dispatch
+                </span>
               </div>
             </div>
           </div>
@@ -935,7 +1014,8 @@ const Checkout = () => {
 
       {/* FOOTER */}
       <footer className="checkout-footer">
-        © 2026 MediDeliver Aligarh. All rights reserved. 24/7 Healthcare Delivery.
+        © 2026 MediDeliver Aligarh. All rights reserved. 24/7 Healthcare
+        Delivery.
       </footer>
     </div>
   );

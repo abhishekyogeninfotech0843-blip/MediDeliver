@@ -58,13 +58,15 @@ const DEFAULT_SEED_RETURNS = [
     customerPhone: "8171915305",
     medicineName: "Betnovate C",
     returnReason: "Wrong Medicine Delivered",
-    explanation: "Received different tube packaging than ordered. Seal was intact but wrong strength delivered.",
+    explanation:
+      "Received different tube packaging than ordered. Seal was intact but wrong strength delivered.",
     orderPaymentMethod: "ONLINE",
     orderTotal: 65,
     refundAmount: 65,
     refundMethod: "ORIGINAL_SOURCE",
     status: "PENDING",
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 2),
   },
   {
@@ -84,7 +86,8 @@ const DEFAULT_SEED_RETURNS = [
     refundUpiId: "9457155186@paytm",
     status: "APPROVED",
     adminNotes: "Pickup scheduled with courier partner. Verification approved.",
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 24),
   },
   {
@@ -103,7 +106,8 @@ const DEFAULT_SEED_RETURNS = [
     refundMethod: "ORIGINAL_SOURCE",
     status: "APPROVED",
     adminNotes: "Replacement or refund approved. Doorstep inspection verified.",
-    proofImage: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 48),
   },
   {
@@ -123,7 +127,8 @@ const DEFAULT_SEED_RETURNS = [
     refundUpiId: "priya@okaxis",
     status: "APPROVED",
     adminNotes: "Unopened strips confirmed by courier delivery agent.",
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 72),
   },
   {
@@ -142,7 +147,8 @@ const DEFAULT_SEED_RETURNS = [
     refundMethod: "ORIGINAL_SOURCE",
     status: "APPROVED",
     adminNotes: "Verified wrong dosage shipment.",
-    proofImage: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 96),
   },
   {
@@ -161,7 +167,8 @@ const DEFAULT_SEED_RETURNS = [
     refundMethod: "ORIGINAL_SOURCE",
     status: "APPROVED",
     adminNotes: "Transit damage accepted. Return approved.",
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 120),
   },
   {
@@ -183,7 +190,8 @@ const DEFAULT_SEED_RETURNS = [
     refundAccountHolder: "Vikram Singh",
     status: "APPROVED",
     adminNotes: "Intact packaging returned. Bank refund authorized.",
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 144),
   },
   {
@@ -202,7 +210,8 @@ const DEFAULT_SEED_RETURNS = [
     refundMethod: "ORIGINAL_SOURCE",
     status: "APPROVED",
     adminNotes: "Replacement approved by pharmacist.",
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 168),
   },
   {
@@ -221,9 +230,11 @@ const DEFAULT_SEED_RETURNS = [
     refundMethod: "ORIGINAL_SOURCE",
     refundTransactionId: "RFND-RZP-94821104",
     status: "REFUNDED",
-    adminNotes: "Refund credited directly to original UPI source via Razorpay Gateway.",
+    adminNotes:
+      "Refund credited directly to original UPI source via Razorpay Gateway.",
     refundedAt: new Date(Date.now() - 3600000 * 8),
-    proofImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
+    proofImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&auto=format&fit=crop&q=60",
     createdAt: new Date(Date.now() - 3600000 * 192),
   },
 ];
@@ -240,7 +251,11 @@ let memoryCachedReturns = DEFAULT_SEED_RETURNS;
 let memoryCachedStats = DEFAULT_SEED_STATS;
 
 const getCachedReturns = () => {
-  if (memoryCachedReturns && Array.isArray(memoryCachedReturns) && memoryCachedReturns.length > 0) {
+  if (
+    memoryCachedReturns &&
+    Array.isArray(memoryCachedReturns) &&
+    memoryCachedReturns.length > 0
+  ) {
     return memoryCachedReturns;
   }
   try {
@@ -257,7 +272,11 @@ const getCachedReturns = () => {
 };
 
 const getCachedStats = (initialList = []) => {
-  if (memoryCachedStats && typeof memoryCachedStats.total === "number" && memoryCachedStats.total > 0) {
+  if (
+    memoryCachedStats &&
+    typeof memoryCachedStats.total === "number" &&
+    memoryCachedStats.total > 0
+  ) {
     return memoryCachedStats;
   }
   try {
@@ -289,13 +308,15 @@ const Returns = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [user, setUser] = useState(() => {
     try {
-      const stored = localStorage.getItem("user");
+      const stored = sessionStorage.getItem("user");
       return stored ? JSON.parse(stored) : null;
     } catch (e) {
       return null;
     }
   });
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "submit"); // 'submit' | 'my-returns' | 'track'
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "submit",
+  ); // 'submit' | 'my-returns' | 'track'
 
   // User Orders State
   const [userOrders, setUserOrders] = useState([]);
@@ -308,7 +329,7 @@ const Returns = () => {
   // Customer Return Requests List (Instant 0ms initialization)
   const [customerReturns, setCustomerReturns] = useState(() => {
     const cached = getCachedReturns();
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (cached.length > 0 && storedUser) {
       try {
         const u = JSON.parse(storedUser);
@@ -325,7 +346,9 @@ const Returns = () => {
             (uPhone &&
               uPhone.length >= 10 &&
               rPhone &&
-              (uPhone === rPhone || rPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(rPhone.slice(-10))))
+              (uPhone === rPhone ||
+                rPhone.endsWith(uPhone.slice(-10)) ||
+                uPhone.endsWith(rPhone.slice(-10))))
           );
         });
       } catch (e) {}
@@ -335,7 +358,9 @@ const Returns = () => {
 
   // Admin Portal State (Instant 0ms Load from Memory Cache)
   const [adminReturns, setAdminReturns] = useState(getCachedReturns);
-  const [adminStats, setAdminStats] = useState(() => getCachedStats(getCachedReturns()));
+  const [adminStats, setAdminStats] = useState(() =>
+    getCachedStats(getCachedReturns()),
+  );
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminFilterStatus, setAdminFilterStatus] = useState("ALL");
   const [adminSearch, setAdminSearch] = useState("");
@@ -352,7 +377,7 @@ const Returns = () => {
   // Submit Form State
   const [formData, setFormData] = useState(() => {
     try {
-      const stored = localStorage.getItem("user");
+      const stored = sessionStorage.getItem("user");
       const u = stored ? JSON.parse(stored) : null;
       return {
         billNumber: "",
@@ -395,10 +420,11 @@ const Returns = () => {
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackError, setTrackError] = useState("");
 
-  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
+  const isAdmin =
+    user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     let parsedUser = null;
     if (storedUser) {
       try {
@@ -422,7 +448,9 @@ const Returns = () => {
 
   const fetchReturns = async (currentUser) => {
     try {
-      const response = await api.get("/returns").catch(() => ({ data: { success: false, returns: [], stats: {} } }));
+      const response = await api
+        .get("/returns")
+        .catch(() => ({ data: { success: false, returns: [], stats: {} } }));
       if (response.data?.success && Array.isArray(response.data.returns)) {
         const all = response.data.returns;
         setAdminReturns(all);
@@ -439,8 +467,14 @@ const Returns = () => {
 
         // Cache for 0ms instant display next time
         try {
-          localStorage.setItem("medideliver_admin_returns_cache", JSON.stringify(all));
-          localStorage.setItem("medideliver_admin_returns_stats", JSON.stringify(freshStats));
+          localStorage.setItem(
+            "medideliver_admin_returns_cache",
+            JSON.stringify(all),
+          );
+          localStorage.setItem(
+            "medideliver_admin_returns_stats",
+            JSON.stringify(freshStats),
+          );
         } catch (e) {}
 
         if (currentUser) {
@@ -459,7 +493,9 @@ const Returns = () => {
               (uPhone &&
                 uPhone.length >= 10 &&
                 rPhone &&
-                (uPhone === rPhone || rPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(rPhone.slice(-10))))
+                (uPhone === rPhone ||
+                  rPhone.endsWith(uPhone.slice(-10)) ||
+                  uPhone.endsWith(rPhone.slice(-10))))
             );
           });
           setCustomerReturns(userSpecific);
@@ -501,8 +537,14 @@ const Returns = () => {
               ord.user?.id ||
               ""
             ).toString();
-            const custEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
-            const custPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
+            const custEmail = (ord.customerEmail || ord.customer?.email || "")
+              .toLowerCase()
+              .trim();
+            const custPhone = (
+              ord.customerPhone ||
+              ord.customer?.phone ||
+              ""
+            ).replace(/\D/g, "");
 
             return (
               (uId && custId && custId === uId) ||
@@ -510,7 +552,9 @@ const Returns = () => {
               (uPhone &&
                 uPhone.length >= 10 &&
                 custPhone &&
-                (uPhone === custPhone || custPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(custPhone.slice(-10))))
+                (uPhone === custPhone ||
+                  custPhone.endsWith(uPhone.slice(-10)) ||
+                  uPhone.endsWith(custPhone.slice(-10))))
             );
           });
         }
@@ -527,7 +571,7 @@ const Returns = () => {
           const matched = orders.find(
             (o) =>
               (qOrderId && o._id === qOrderId) ||
-              (qBill && o._id.toUpperCase().endsWith(qBill.toUpperCase()))
+              (qBill && o._id.toUpperCase().endsWith(qBill.toUpperCase())),
           );
 
           if (matched) {
@@ -547,7 +591,7 @@ const Returns = () => {
     if (ord.orderStatus !== "DELIVERED") {
       const statusTitle = ord.orderStatus.replace(/_/g, " ");
       setOrderValidationError(
-        `⚠️ Return Denied: Order #${ord._id.slice(-6).toUpperCase()} is currently "${statusTitle}". Returns can ONLY be requested after the medicine is delivered to you.`
+        `⚠️ Return Denied: Order #${ord._id.slice(-6).toUpperCase()} is currently "${statusTitle}". Returns can ONLY be requested after the medicine is delivered to you.`,
       );
       setAvailableMedicines([]);
       setFormData((prev) => ({
@@ -612,7 +656,7 @@ const Returns = () => {
     const matched = userOrders.find(
       (o) =>
         o._id.toUpperCase().endsWith(clean) ||
-        (o.trackingId && o.trackingId.toUpperCase().includes(clean))
+        (o.trackingId && o.trackingId.toUpperCase().includes(clean)),
     );
 
     if (matched) {
@@ -621,7 +665,7 @@ const Returns = () => {
       setSelectedOrder(null);
       setAvailableMedicines([]);
       setOrderValidationError(
-        `❌ Invalid Order: No order found matching "${clean}". Please enter a valid Order ID from your account.`
+        `❌ Invalid Order: No order found matching "${clean}". Please enter a valid Order ID from your account.`,
       );
     }
   };
@@ -664,7 +708,9 @@ const Returns = () => {
     e.preventDefault();
 
     if (!formData.billNumber.trim()) {
-      setSubmitError("Please select or enter your Delivered Order ID / Bill Number.");
+      setSubmitError(
+        "Please select or enter your Delivered Order ID / Bill Number.",
+      );
       return;
     }
 
@@ -675,13 +721,15 @@ const Returns = () => {
 
     if (selectedOrder && selectedOrder.orderStatus !== "DELIVERED") {
       setSubmitError(
-        `⚠️ Return Denied: You can only return medicines AFTER your order is Delivered. Order #${selectedOrder._id.slice(-6).toUpperCase()} is currently "${selectedOrder.orderStatus}".`
+        `⚠️ Return Denied: You can only return medicines AFTER your order is Delivered. Order #${selectedOrder._id.slice(-6).toUpperCase()} is currently "${selectedOrder.orderStatus}".`,
       );
       return;
     }
 
     if (!formData.medicineName.trim()) {
-      setSubmitError("Please select the purchased medicine you wish to return.");
+      setSubmitError(
+        "Please select the purchased medicine you wish to return.",
+      );
       return;
     }
 
@@ -696,17 +744,26 @@ const Returns = () => {
     }
 
     if (!proofImage) {
-      setSubmitError("Please upload clear photo proof showing the medicine fault or damage.");
+      setSubmitError(
+        "Please upload clear photo proof showing the medicine fault or damage.",
+      );
       return;
     }
 
     if (refundMethod === "UPI" && !refundUpiId.trim()) {
-      setSubmitError("Please provide a valid UPI ID (e.g. mobile@paytm or name@okaxis) for your refund.");
+      setSubmitError(
+        "Please provide a valid UPI ID (e.g. mobile@paytm or name@okaxis) for your refund.",
+      );
       return;
     }
 
-    if (refundMethod === "BANK_TRANSFER" && (!refundAccountNumber.trim() || !refundIfsc.trim())) {
-      setSubmitError("Please provide your Bank Account Number and IFSC Code for refund transfer.");
+    if (
+      refundMethod === "BANK_TRANSFER" &&
+      (!refundAccountNumber.trim() || !refundIfsc.trim())
+    ) {
+      setSubmitError(
+        "Please provide your Bank Account Number and IFSC Code for refund transfer.",
+      );
       return;
     }
 
@@ -722,7 +779,8 @@ const Returns = () => {
         refundUpiId: refundUpiId.trim(),
         refundAccountNumber: refundAccountNumber.trim(),
         refundIfsc: refundIfsc.trim().toUpperCase(),
-        refundAccountHolder: refundAccountHolder.trim() || formData.customerName.trim(),
+        refundAccountHolder:
+          refundAccountHolder.trim() || formData.customerName.trim(),
       });
 
       if (response.data.success) {
@@ -747,13 +805,15 @@ const Returns = () => {
         setAvailableMedicines([]);
         fetchReturns(user);
       } else {
-        setSubmitError(response.data.message || "Failed to submit return request.");
+        setSubmitError(
+          response.data.message || "Failed to submit return request.",
+        );
       }
     } catch (err) {
       console.error("Return Submit Error:", err);
       setSubmitError(
         err.response?.data?.message ||
-          "Server error while submitting return request. Please try again."
+          "Server error while submitting return request. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -773,7 +833,7 @@ const Returns = () => {
       setTrackingResults([]);
 
       const response = await api.get(
-        `/returns/track/${encodeURIComponent(trackInput.trim())}`
+        `/returns/track/${encodeURIComponent(trackInput.trim())}`,
       );
       if (response.data.success) {
         setTrackingResults(response.data.returns || []);
@@ -783,7 +843,8 @@ const Returns = () => {
     } catch (err) {
       console.error("Track Error:", err);
       setTrackError(
-        err.response?.data?.message || "No return request found for this Bill Number"
+        err.response?.data?.message ||
+          "No return request found for this Bill Number",
       );
     } finally {
       setTrackingLoading(false);
@@ -793,12 +854,19 @@ const Returns = () => {
   // ADMIN ACTION HANDLERS (Optimistic Instant Response)
   const handleUpdateReturnStatus = async (id, status) => {
     const note = adminNotes[id] || "";
-    
+
     // Instant UI update
     setAdminReturns((prev) => {
-      const updated = prev.map((item) => (item._id === id ? { ...item, status, adminNotes: note || item.adminNotes } : item));
+      const updated = prev.map((item) =>
+        item._id === id
+          ? { ...item, status, adminNotes: note || item.adminNotes }
+          : item,
+      );
       try {
-        localStorage.setItem("medideliver_admin_returns_cache", JSON.stringify(updated));
+        localStorage.setItem(
+          "medideliver_admin_returns_cache",
+          JSON.stringify(updated),
+        );
         const newStats = {
           total: updated.length,
           pending: updated.filter((r) => r.status === "PENDING").length,
@@ -807,7 +875,10 @@ const Returns = () => {
           refunded: updated.filter((r) => r.status === "REFUNDED").length,
         };
         setAdminStats(newStats);
-        localStorage.setItem("medideliver_admin_returns_stats", JSON.stringify(newStats));
+        localStorage.setItem(
+          "medideliver_admin_returns_stats",
+          JSON.stringify(newStats),
+        );
       } catch (e) {}
       return updated;
     });
@@ -843,7 +914,9 @@ const Returns = () => {
   const handleConfirmRefund = async () => {
     if (!refundModalItem) return;
     const itemTarget = refundModalItem;
-    const note = adminNotes[itemTarget._id] || "Refund processed and credited to customer.";
+    const note =
+      adminNotes[itemTarget._id] ||
+      "Refund processed and credited to customer.";
     const refundAmt = Number(refundAmountInput);
 
     // Instant UI update
@@ -857,10 +930,13 @@ const Returns = () => {
               refundTransactionId: refundTxnInput,
               refundAmount: refundAmt,
             }
-          : item
+          : item,
       );
       try {
-        localStorage.setItem("medideliver_admin_returns_cache", JSON.stringify(updated));
+        localStorage.setItem(
+          "medideliver_admin_returns_cache",
+          JSON.stringify(updated),
+        );
         const newStats = {
           total: updated.length,
           pending: updated.filter((r) => r.status === "PENDING").length,
@@ -869,7 +945,10 @@ const Returns = () => {
           refunded: updated.filter((r) => r.status === "REFUNDED").length,
         };
         setAdminStats(newStats);
-        localStorage.setItem("medideliver_admin_returns_stats", JSON.stringify(newStats));
+        localStorage.setItem(
+          "medideliver_admin_returns_stats",
+          JSON.stringify(newStats),
+        );
       } catch (e) {}
       return updated;
     });
@@ -937,7 +1016,8 @@ const Returns = () => {
       (r.medicineName || "").toLowerCase().includes(sLower) ||
       (r.returnReason || "").toLowerCase().includes(sLower);
 
-    const matchesStatus = adminFilterStatus === "ALL" || r.status === adminFilterStatus;
+    const matchesStatus =
+      adminFilterStatus === "ALL" || r.status === adminFilterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -953,7 +1033,11 @@ const Returns = () => {
 
           <div className="nav-returns-badge">
             <RotateCcw className="ret-badge-icon" />
-            <span>{isAdmin ? "Pharmacy Admin Return Portal" : "Medicine Returns Center"}</span>
+            <span>
+              {isAdmin
+                ? "Pharmacy Admin Return Portal"
+                : "Medicine Returns Center"}
+            </span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -989,9 +1073,14 @@ const Returns = () => {
                 <ShieldCheck className="admin-shield-svg" />
               </div>
               <div>
-                <span className="admin-sub-tag">PHARMACY INVENTORY & RETURN CONTROL</span>
+                <span className="admin-sub-tag">
+                  PHARMACY INVENTORY & RETURN CONTROL
+                </span>
                 <h1>Customer Return Requests & Inspection Panel</h1>
-                <p>Review customer fault claims, inspect uploaded proof photos, approve doorstep pickup, and execute refunds.</p>
+                <p>
+                  Review customer fault claims, inspect uploaded proof photos,
+                  approve doorstep pickup, and execute refunds.
+                </p>
               </div>
             </div>
 
@@ -1040,7 +1129,9 @@ const Returns = () => {
                 <span className="stat-title">Approved Returns</span>
                 <CheckCircle2 className="stat-ic approved" />
               </div>
-              <strong className="text-emerald">{adminStats.approved || 0}</strong>
+              <strong className="text-emerald">
+                {adminStats.approved || 0}
+              </strong>
               <small>Pickup scheduled</small>
             </button>
 
@@ -1082,7 +1173,11 @@ const Returns = () => {
                 onChange={(e) => setAdminSearch(e.target.value)}
               />
               {adminSearch && (
-                <button type="button" className="tb-clear-btn" onClick={() => setAdminSearch("")}>
+                <button
+                  type="button"
+                  className="tb-clear-btn"
+                  onClick={() => setAdminSearch("")}
+                >
                   <X className="clear-ic" />
                 </button>
               )}
@@ -1095,11 +1190,21 @@ const Returns = () => {
                 onChange={(e) => setAdminFilterStatus(e.target.value)}
                 className="admin-status-dropdown"
               >
-                <option value="ALL">All Statuses ({adminReturns.length})</option>
-                <option value="PENDING">Pending Review ({adminStats.pending || 0})</option>
-                <option value="APPROVED">Approved ({adminStats.approved || 0})</option>
-                <option value="REFUNDED">Refunded ({adminStats.refunded || 0})</option>
-                <option value="REJECTED">Rejected ({adminStats.rejected || 0})</option>
+                <option value="ALL">
+                  All Statuses ({adminReturns.length})
+                </option>
+                <option value="PENDING">
+                  Pending Review ({adminStats.pending || 0})
+                </option>
+                <option value="APPROVED">
+                  Approved ({adminStats.approved || 0})
+                </option>
+                <option value="REFUNDED">
+                  Refunded ({adminStats.refunded || 0})
+                </option>
+                <option value="REJECTED">
+                  Rejected ({adminStats.rejected || 0})
+                </option>
               </select>
             </div>
           </div>
@@ -1110,13 +1215,19 @@ const Returns = () => {
               <div className="admin-loading-returns">
                 <Loader2 className="admin-spin-loader" />
                 <h3>Loading Return Requests...</h3>
-                <p>Retrieving real-time customer claims, inspection photos, and refund status.</p>
+                <p>
+                  Retrieving real-time customer claims, inspection photos, and
+                  refund status.
+                </p>
               </div>
             ) : filteredAdminReturns.length === 0 ? (
               <div className="admin-no-returns">
                 <RotateCcw className="empty-ic" />
                 <h3>No return requests found</h3>
-                <p>There are no customer medicine returns matching your active search or filter.</p>
+                <p>
+                  There are no customer medicine returns matching your active
+                  search or filter.
+                </p>
               </div>
             ) : (
               <div className="table-responsive">
@@ -1137,15 +1248,26 @@ const Returns = () => {
                       <tr key={item._id}>
                         {/* Bill / Ticket ID */}
                         <td className="cell-bill">
-                          <strong className="bill-num">#{item.billNumber || item._id.slice(-6).toUpperCase()}</strong>
+                          <strong className="bill-num">
+                            #
+                            {item.billNumber ||
+                              item._id.slice(-6).toUpperCase()}
+                          </strong>
                           <small className="ticket-date">
-                            {new Date(item.createdAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {new Date(item.createdAt).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
                           </small>
-                          <span className="order-mode-pill">{item.orderPaymentMethod === "ONLINE" ? "💳 Online" : "💵 COD"}</span>
+                          <span className="order-mode-pill">
+                            {item.orderPaymentMethod === "ONLINE"
+                              ? "💳 Online"
+                              : "💵 COD"}
+                          </span>
                         </td>
 
                         {/* Customer Contact */}
@@ -1153,7 +1275,9 @@ const Returns = () => {
                           <strong>{item.customerName}</strong>
                           <div className="cust-contact-line">
                             <Phone className="mini-ic" />
-                            <a href={`tel:${item.customerPhone}`}>{item.customerPhone}</a>
+                            <a href={`tel:${item.customerPhone}`}>
+                              {item.customerPhone}
+                            </a>
                           </div>
                           {item.customerEmail && (
                             <div className="cust-contact-line">
@@ -1169,31 +1293,45 @@ const Returns = () => {
                             <Pill className="med-pill-ic" />
                             <strong>{item.medicineName}</strong>
                           </div>
-                          <span className="reason-pill">{item.returnReason}</span>
+                          <span className="reason-pill">
+                            {item.returnReason}
+                          </span>
                           <p className="exp-note">"{item.explanation}"</p>
                         </td>
 
                         {/* Refund Details */}
                         <td className="cell-refund">
-                          <strong className="refund-val">₹{Number(item.refundAmount || item.orderTotal || 0).toFixed(2)}</strong>
+                          <strong className="refund-val">
+                            ₹
+                            {Number(
+                              item.refundAmount || item.orderTotal || 0,
+                            ).toFixed(2)}
+                          </strong>
                           <div className="refund-dest-box">
                             <span className="dest-method-tag">
                               {item.refundMethod === "UPI"
                                 ? "📱 UPI Transfer"
                                 : item.refundMethod === "BANK_TRANSFER"
-                                ? "🏦 Bank Account"
-                                : "💳 Original Payment Source"}
+                                  ? "🏦 Bank Account"
+                                  : "💳 Original Payment Source"}
                             </span>
-                            {item.refundMethod === "UPI" && item.refundUpiId && (
-                              <code className="upi-code">{item.refundUpiId}</code>
-                            )}
-                            {item.refundMethod === "BANK_TRANSFER" && item.refundAccountNumber && (
-                              <small className="bank-meta">
-                                A/C: {item.refundAccountNumber} | IFSC: {item.refundIfsc}
-                              </small>
-                            )}
+                            {item.refundMethod === "UPI" &&
+                              item.refundUpiId && (
+                                <code className="upi-code">
+                                  {item.refundUpiId}
+                                </code>
+                              )}
+                            {item.refundMethod === "BANK_TRANSFER" &&
+                              item.refundAccountNumber && (
+                                <small className="bank-meta">
+                                  A/C: {item.refundAccountNumber} | IFSC:{" "}
+                                  {item.refundIfsc}
+                                </small>
+                              )}
                             {item.refundTransactionId && (
-                              <span className="txn-ref-badge">Txn: {item.refundTransactionId}</span>
+                              <span className="txn-ref-badge">
+                                Txn: {item.refundTransactionId}
+                              </span>
                             )}
                           </div>
                         </td>
@@ -1204,14 +1342,24 @@ const Returns = () => {
                             <button
                               type="button"
                               className="admin-view-proof-btn"
-                              onClick={() => setSelectedProofImage(item.proofImage)}
+                              onClick={() =>
+                                setSelectedProofImage(item.proofImage)
+                              }
                               title="Click to view full size proof image"
                             >
-                              <img src={item.proofImage} alt="Proof" className="proof-thumb-img" />
-                              <span><Eye className="eye-ic" /> View</span>
+                              <img
+                                src={item.proofImage}
+                                alt="Proof"
+                                className="proof-thumb-img"
+                              />
+                              <span>
+                                <Eye className="eye-ic" /> View
+                              </span>
                             </button>
                           ) : (
-                            <span className="no-proof-text">No proof photo</span>
+                            <span className="no-proof-text">
+                              No proof photo
+                            </span>
                           )}
                         </td>
 
@@ -1220,7 +1368,8 @@ const Returns = () => {
                           {getStatusBadge(item.status)}
                           {item.adminNotes && (
                             <div className="admin-note-snippet">
-                              <strong>Note:</strong> <span>{item.adminNotes}</span>
+                              <strong>Note:</strong>{" "}
+                              <span>{item.adminNotes}</span>
                             </div>
                           )}
                         </td>
@@ -1233,21 +1382,30 @@ const Returns = () => {
                             className="admin-quick-note"
                             defaultValue={item.adminNotes || ""}
                             onChange={(e) =>
-                              setAdminNotes((prev) => ({ ...prev, [item._id]: e.target.value }))
+                              setAdminNotes((prev) => ({
+                                ...prev,
+                                [item._id]: e.target.value,
+                              }))
                             }
                           />
 
                           <div className="action-buttons-wrap">
-                            {item.status !== "APPROVED" && item.status !== "REFUNDED" && (
-                              <button
-                                type="button"
-                                className="act-btn approve-btn"
-                                onClick={() => handleUpdateReturnStatus(item._id, "APPROVED")}
-                                disabled={updatingId === item._id}
-                              >
-                                <Check className="btn-ic" /> Approve
-                              </button>
-                            )}
+                            {item.status !== "APPROVED" &&
+                              item.status !== "REFUNDED" && (
+                                <button
+                                  type="button"
+                                  className="act-btn approve-btn"
+                                  onClick={() =>
+                                    handleUpdateReturnStatus(
+                                      item._id,
+                                      "APPROVED",
+                                    )
+                                  }
+                                  disabled={updatingId === item._id}
+                                >
+                                  <Check className="btn-ic" /> Approve
+                                </button>
+                              )}
 
                             {item.status !== "REFUNDED" && (
                               <button
@@ -1263,7 +1421,9 @@ const Returns = () => {
                               <button
                                 type="button"
                                 className="act-btn reject-btn"
-                                onClick={() => handleUpdateReturnStatus(item._id, "REJECTED")}
+                                onClick={() =>
+                                  handleUpdateReturnStatus(item._id, "REJECTED")
+                                }
                                 disabled={updatingId === item._id}
                               >
                                 <X className="btn-ic" /> Reject
@@ -1290,7 +1450,10 @@ const Returns = () => {
               <span className="hero-tag">ALIGARH PHARMACY GUARANTEE</span>
               <h1>Delivered Medicine Return & Replacement</h1>
               <p>
-                Returns are strictly allowed for <strong>Delivered orders</strong>. If you received wrong or damaged medicine, select your delivered order and request 100% free doorstep pickup.
+                Returns are strictly allowed for{" "}
+                <strong>Delivered orders</strong>. If you received wrong or
+                damaged medicine, select your delivered order and request 100%
+                free doorstep pickup.
               </p>
             </div>
           </section>
@@ -1307,12 +1470,16 @@ const Returns = () => {
                 <div className="cs-divider"></div>
                 <div className="cs-item">
                   <span className="cs-label">Delivered Orders</span>
-                  <strong className="text-emerald">{deliveredOrders.length}</strong>
+                  <strong className="text-emerald">
+                    {deliveredOrders.length}
+                  </strong>
                 </div>
                 <div className="cs-divider"></div>
                 <div className="cs-item">
                   <span className="cs-label">Return Requests</span>
-                  <strong className="text-teal">{customerReturns.length}</strong>
+                  <strong className="text-teal">
+                    {customerReturns.length}
+                  </strong>
                 </div>
               </div>
             )}
@@ -1357,8 +1524,10 @@ const Returns = () => {
                     </div>
                     <h2>Return Request Registered!</h2>
                     <p>
-                      Your return request for <strong>{submitSuccess.medicineName}</strong> (Order #
-                      {submitSuccess.billNumber}) has been logged. Our pharmacy inspector is reviewing your proof image.
+                      Your return request for{" "}
+                      <strong>{submitSuccess.medicineName}</strong> (Order #
+                      {submitSuccess.billNumber}) has been logged. Our pharmacy
+                      inspector is reviewing your proof image.
                     </p>
 
                     <div className="ticket-summary">
@@ -1407,7 +1576,8 @@ const Returns = () => {
                     <div className="form-header">
                       <h3>Request Return for Delivered Medicine</h3>
                       <p>
-                        Select your delivered order and upload proof of the faulty/wrong product
+                        Select your delivered order and upload proof of the
+                        faulty/wrong product
                       </p>
                     </div>
 
@@ -1417,7 +1587,10 @@ const Returns = () => {
                       <div>
                         <strong>Delivered Orders Only:</strong>
                         <span>
-                          {" "}Medicines cannot be returned while an order is placed, packed, or out for delivery. Return unlocks only after your order is successfully delivered.
+                          {" "}
+                          Medicines cannot be returned while an order is placed,
+                          packed, or out for delivery. Return unlocks only after
+                          your order is successfully delivered.
                         </span>
                       </div>
                     </div>
@@ -1442,21 +1615,30 @@ const Returns = () => {
                         <label>
                           Select Your Delivered Order *
                           <span className="order-pill-badge">
-                            {deliveredOrders.length} Delivered Order(s) Available
+                            {deliveredOrders.length} Delivered Order(s)
+                            Available
                           </span>
                         </label>
                         <div className="input-with-icon">
                           <Package className="inp-icon" />
                           <select
                             value={selectedOrderId}
-                            onChange={(e) => handleSelectOrderDropdown(e.target.value)}
+                            onChange={(e) =>
+                              handleSelectOrderDropdown(e.target.value)
+                            }
                             className="order-dropdown-select"
                           >
-                            <option value="">-- Click to choose your Delivered Order --</option>
+                            <option value="">
+                              -- Click to choose your Delivered Order --
+                            </option>
                             {deliveredOrders.map((ord) => (
                               <option key={ord._id} value={ord._id}>
-                                Order #{ord._id.slice(-6).toUpperCase()} • Delivered •{" "}
-                                {ord.items?.map((it) => it.medicine?.name).join(", ")} (₹
+                                Order #{ord._id.slice(-6).toUpperCase()} •
+                                Delivered •{" "}
+                                {ord.items
+                                  ?.map((it) => it.medicine?.name)
+                                  .join(", ")}{" "}
+                                (₹
                                 {ord.totalAmount})
                               </option>
                             ))}
@@ -1469,7 +1651,9 @@ const Returns = () => {
                         <div>
                           <strong>No Delivered Orders Yet</strong>
                           <p>
-                            You currently do not have any orders marked as Delivered. Returns will become available once your medicines reach your doorstep.
+                            You currently do not have any orders marked as
+                            Delivered. Returns will become available once your
+                            medicines reach your doorstep.
                           </p>
                         </div>
                         <Link to="/my-orders" className="ndo-link">
@@ -1489,7 +1673,9 @@ const Returns = () => {
                             name="billNumber"
                             placeholder="e.g. E1479C"
                             value={formData.billNumber}
-                            onChange={(e) => handleBillNumberChange(e.target.value)}
+                            onChange={(e) =>
+                              handleBillNumberChange(e.target.value)
+                            }
                             required
                           />
                         </div>
@@ -1508,7 +1694,9 @@ const Returns = () => {
                               required
                               className="med-select-dropdown"
                             >
-                              <option value="">-- Select Purchased Medicine --</option>
+                              <option value="">
+                                -- Select Purchased Medicine --
+                              </option>
                               {availableMedicines.map((m, idx) => (
                                 <option key={idx} value={m.name}>
                                   {m.name} (Purchased: {m.quantity} Qty)
@@ -1587,7 +1775,9 @@ const Returns = () => {
 
                     {/* PROOF UPLOAD */}
                     <div className="form-group full-width">
-                      <label>Upload Proof Photo (Fault / Wrong Product Image) *</label>
+                      <label>
+                        Upload Proof Photo (Fault / Wrong Product Image) *
+                      </label>
                       {proofPreview ? (
                         <div className="image-preview-container">
                           <img
@@ -1617,7 +1807,8 @@ const Returns = () => {
                           <Upload className="drop-icon" />
                           <strong>Click to upload proof photo</strong>
                           <small>
-                            Attach clear photo of the wrong/faulty medicine package (Max 10MB)
+                            Attach clear photo of the wrong/faulty medicine
+                            package (Max 10MB)
                           </small>
                         </label>
                       )}
@@ -1630,9 +1821,12 @@ const Returns = () => {
                           <CreditCard className="rc-ic" />
                           <span>REFUND RECOVERY PREFERENCE</span>
                         </div>
-                        <h4>Where would you like to receive your payment refund?</h4>
+                        <h4>
+                          Where would you like to receive your payment refund?
+                        </h4>
                         <p>
-                          Once your return is verified by our pharmacist, the full item amount will be credited back.
+                          Once your return is verified by our pharmacist, the
+                          full item amount will be credited back.
                         </p>
                       </div>
 
@@ -1648,24 +1842,36 @@ const Returns = () => {
                       )}
 
                       <div className="refund-method-options">
-                        {(!selectedOrder || selectedOrder.paymentMethod === "ONLINE") && (
-                          <label className={`refund-method-card ${refundMethod === "ORIGINAL_SOURCE" ? "selected" : ""}`}>
+                        {(!selectedOrder ||
+                          selectedOrder.paymentMethod === "ONLINE") && (
+                          <label
+                            className={`refund-method-card ${refundMethod === "ORIGINAL_SOURCE" ? "selected" : ""}`}
+                          >
                             <input
                               type="radio"
                               name="refundMethod"
                               value="ORIGINAL_SOURCE"
                               checked={refundMethod === "ORIGINAL_SOURCE"}
-                              onChange={() => setRefundMethod("ORIGINAL_SOURCE")}
+                              onChange={() =>
+                                setRefundMethod("ORIGINAL_SOURCE")
+                              }
                             />
                             <div className="rm-sequence-num">1</div>
                             <div className="rm-content">
-                              <strong>Original Payment Source (Razorpay / Bank)</strong>
-                              <span>Refund will be credited back to your original payment account.</span>
+                              <strong>
+                                Original Payment Source (Razorpay / Bank)
+                              </strong>
+                              <span>
+                                Refund will be credited back to your original
+                                payment account.
+                              </span>
                             </div>
                           </label>
                         )}
 
-                        <label className={`refund-method-card ${refundMethod === "UPI" ? "selected" : ""}`}>
+                        <label
+                          className={`refund-method-card ${refundMethod === "UPI" ? "selected" : ""}`}
+                        >
                           <input
                             type="radio"
                             name="refundMethod"
@@ -1675,8 +1881,12 @@ const Returns = () => {
                           />
                           <div className="rm-sequence-num">2</div>
                           <div className="rm-content">
-                            <strong>Instant UPI Transfer (PhonePe / GPay / Paytm)</strong>
-                            <span>Provide UPI ID for instant direct credit.</span>
+                            <strong>
+                              Instant UPI Transfer (PhonePe / GPay / Paytm)
+                            </strong>
+                            <span>
+                              Provide UPI ID for instant direct credit.
+                            </span>
                           </div>
                         </label>
 
@@ -1693,7 +1903,9 @@ const Returns = () => {
                           </div>
                         )}
 
-                        <label className={`refund-method-card ${refundMethod === "BANK_TRANSFER" ? "selected" : ""}`}>
+                        <label
+                          className={`refund-method-card ${refundMethod === "BANK_TRANSFER" ? "selected" : ""}`}
+                        >
                           <input
                             type="radio"
                             name="refundMethod"
@@ -1703,8 +1915,13 @@ const Returns = () => {
                           />
                           <div className="rm-sequence-num">3</div>
                           <div className="rm-content">
-                            <strong>Direct Bank Account Transfer (IMPS / NEFT)</strong>
-                            <span>Direct bank transfer via Account Number and IFSC Code.</span>
+                            <strong>
+                              Direct Bank Account Transfer (IMPS / NEFT)
+                            </strong>
+                            <span>
+                              Direct bank transfer via Account Number and IFSC
+                              Code.
+                            </span>
                           </div>
                         </label>
 
@@ -1716,7 +1933,9 @@ const Returns = () => {
                                 type="text"
                                 placeholder="Name as per bank passbook"
                                 value={refundAccountHolder}
-                                onChange={(e) => setRefundAccountHolder(e.target.value)}
+                                onChange={(e) =>
+                                  setRefundAccountHolder(e.target.value)
+                                }
                               />
                             </div>
                             <div className="form-group">
@@ -1725,7 +1944,9 @@ const Returns = () => {
                                 type="text"
                                 placeholder="Enter account number"
                                 value={refundAccountNumber}
-                                onChange={(e) => setRefundAccountNumber(e.target.value)}
+                                onChange={(e) =>
+                                  setRefundAccountNumber(e.target.value)
+                                }
                                 required
                               />
                             </div>
@@ -1735,7 +1956,9 @@ const Returns = () => {
                                 type="text"
                                 placeholder="e.g. SBIN0001234 or HDFC0000123"
                                 value={refundIfsc}
-                                onChange={(e) => setRefundIfsc(e.target.value.toUpperCase())}
+                                onChange={(e) =>
+                                  setRefundIfsc(e.target.value.toUpperCase())
+                                }
                                 required
                               />
                             </div>
@@ -1772,7 +1995,10 @@ const Returns = () => {
                 <div className="my-returns-header">
                   <div>
                     <h3>My Medicine Return Requests</h3>
-                    <p>Track all return and refund claims you have submitted since registering your account.</p>
+                    <p>
+                      Track all return and refund claims you have submitted
+                      since registering your account.
+                    </p>
                   </div>
                   <span className="my-returns-count-badge">
                     {customerReturns.length} Return Request(s)
@@ -1783,7 +2009,11 @@ const Returns = () => {
                   <div className="empty-my-returns-box">
                     <RotateCcw className="emr-icon" />
                     <h4>No Return Requests Filed</h4>
-                    <p>You haven't requested any medicine returns. If you have an issue with a delivered order, you can submit a return request easily.</p>
+                    <p>
+                      You haven't requested any medicine returns. If you have an
+                      issue with a delivered order, you can submit a return
+                      request easily.
+                    </p>
                     <button
                       type="button"
                       className="primary-btn"
@@ -1798,14 +2028,23 @@ const Returns = () => {
                       <div key={ret._id} className="customer-return-card">
                         <div className="crc-header">
                           <div className="crc-id-block">
-                            <span className="crc-ticket-label">Return Ticket</span>
-                            <strong className="crc-ticket-id">#{ret.billNumber || ret._id.slice(-6).toUpperCase()}</strong>
+                            <span className="crc-ticket-label">
+                              Return Ticket
+                            </span>
+                            <strong className="crc-ticket-id">
+                              #
+                              {ret.billNumber ||
+                                ret._id.slice(-6).toUpperCase()}
+                            </strong>
                             <small className="crc-date">
-                              {new Date(ret.createdAt).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}
+                              {new Date(ret.createdAt).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
                             </small>
                           </div>
                           <div className="crc-status">
@@ -1819,8 +2058,12 @@ const Returns = () => {
                               <Pill className="crc-pill-ic" />
                               <h4>{ret.medicineName}</h4>
                             </div>
-                            <span className="crc-reason-tag">Reason: {ret.returnReason}</span>
-                            <p className="crc-explanation">"{ret.explanation}"</p>
+                            <span className="crc-reason-tag">
+                              Reason: {ret.returnReason}
+                            </span>
+                            <p className="crc-explanation">
+                              "{ret.explanation}"
+                            </p>
                           </div>
 
                           {ret.proofImage && (
@@ -1829,7 +2072,9 @@ const Returns = () => {
                                 src={ret.proofImage}
                                 alt="Proof"
                                 className="crc-thumb-img"
-                                onClick={() => setSelectedProofImage(ret.proofImage)}
+                                onClick={() =>
+                                  setSelectedProofImage(ret.proofImage)
+                                }
                                 title="Click to enlarge proof photo"
                               />
                             </div>
@@ -1843,15 +2088,22 @@ const Returns = () => {
                               {ret.refundMethod === "UPI"
                                 ? `UPI (${ret.refundUpiId || "Registered UPI"})`
                                 : ret.refundMethod === "BANK_TRANSFER"
-                                ? `Bank Transfer (A/C ${ret.refundAccountNumber?.slice(-4) || "Account"})`
-                                : "Original Payment Source"}
+                                  ? `Bank Transfer (A/C ${ret.refundAccountNumber?.slice(-4) || "Account"})`
+                                  : "Original Payment Source"}
                             </strong>
-                            <span className="crc-refund-amt"> • Refund Amount: ₹{Number(ret.refundAmount || ret.orderTotal || 0).toFixed(2)}</span>
+                            <span className="crc-refund-amt">
+                              {" "}
+                              • Refund Amount: ₹
+                              {Number(
+                                ret.refundAmount || ret.orderTotal || 0,
+                              ).toFixed(2)}
+                            </span>
                           </div>
 
                           {ret.adminNotes && (
                             <div className="crc-admin-note">
-                              <strong>Pharmacy Admin Remark:</strong> {ret.adminNotes}
+                              <strong>Pharmacy Admin Remark:</strong>{" "}
+                              {ret.adminNotes}
                             </div>
                           )}
                         </div>
@@ -1868,11 +2120,15 @@ const Returns = () => {
                 <div className="track-header">
                   <h3>Track Return Request by Bill Number</h3>
                   <p>
-                    Enter your Order / Bill Number or Mobile Number to check real-time return and refund status
+                    Enter your Order / Bill Number or Mobile Number to check
+                    real-time return and refund status
                   </p>
                 </div>
 
-                <form onSubmit={handleTrackReturn} className="track-search-form">
+                <form
+                  onSubmit={handleTrackReturn}
+                  className="track-search-form"
+                >
                   <div className="track-input-wrapper">
                     <Search className="tr-icon" />
                     <input
@@ -1881,7 +2137,11 @@ const Returns = () => {
                       value={trackInput}
                       onChange={(e) => setTrackInput(e.target.value)}
                     />
-                    <button type="submit" className="track-submit-btn" disabled={trackingLoading}>
+                    <button
+                      type="submit"
+                      className="track-submit-btn"
+                      disabled={trackingLoading}
+                    >
                       {trackingLoading ? "Searching..." : "Track Status"}
                     </button>
                   </div>
@@ -1901,9 +2161,14 @@ const Returns = () => {
                       <div key={item._id} className="track-card">
                         <div className="track-card-header">
                           <div>
-                            <span className="bill-badge">Order #{item.billNumber}</span>
+                            <span className="bill-badge">
+                              Order #{item.billNumber}
+                            </span>
                             <span className="date-text">
-                              Submitted on: {new Date(item.createdAt).toLocaleDateString("en-IN")}
+                              Submitted on:{" "}
+                              {new Date(item.createdAt).toLocaleDateString(
+                                "en-IN",
+                              )}
                             </span>
                           </div>
                           {getStatusBadge(item.status)}
@@ -1911,10 +2176,20 @@ const Returns = () => {
 
                         <div className="track-card-body">
                           <div className="track-info-col">
-                            <p><strong>Customer:</strong> {item.customerName} ({item.customerPhone})</p>
-                            <p><strong>Medicine:</strong> {item.medicineName}</p>
-                            <p><strong>Reason:</strong> {item.returnReason}</p>
-                            <p className="exp-text"><strong>Issue Explanation:</strong> {item.explanation}</p>
+                            <p>
+                              <strong>Customer:</strong> {item.customerName} (
+                              {item.customerPhone})
+                            </p>
+                            <p>
+                              <strong>Medicine:</strong> {item.medicineName}
+                            </p>
+                            <p>
+                              <strong>Reason:</strong> {item.returnReason}
+                            </p>
+                            <p className="exp-text">
+                              <strong>Issue Explanation:</strong>{" "}
+                              {item.explanation}
+                            </p>
 
                             {item.adminNotes && (
                               <div className="admin-note-box">
@@ -1928,8 +2203,18 @@ const Returns = () => {
                                 <div className="tr-refund-hdr">
                                   <ShieldCheck className="tr-ref-ic" />
                                   <div>
-                                    <strong>Refund Successfully Credited</strong>
-                                    <span>₹{Number(item.refundAmount || item.orderTotal || 0).toFixed(2)} Credited</span>
+                                    <strong>
+                                      Refund Successfully Credited
+                                    </strong>
+                                    <span>
+                                      ₹
+                                      {Number(
+                                        item.refundAmount ||
+                                          item.orderTotal ||
+                                          0,
+                                      ).toFixed(2)}{" "}
+                                      Credited
+                                    </span>
                                   </div>
                                 </div>
                                 <div className="tr-refund-details">
@@ -1939,8 +2224,8 @@ const Returns = () => {
                                       {item.refundMethod === "UPI"
                                         ? `UPI (${item.refundUpiId})`
                                         : item.refundMethod === "BANK_TRANSFER"
-                                        ? `Bank Account (${item.refundAccountNumber})`
-                                        : "Original Payment Source"}
+                                          ? `Bank Account (${item.refundAccountNumber})`
+                                          : "Original Payment Source"}
                                     </strong>
                                   </div>
                                   {item.refundTransactionId && (
@@ -1960,7 +2245,9 @@ const Returns = () => {
                                 src={item.proofImage}
                                 alt="Proof preview"
                                 className="track-proof-thumb"
-                                onClick={() => setSelectedProofImage(item.proofImage)}
+                                onClick={() =>
+                                  setSelectedProofImage(item.proofImage)
+                                }
                                 title="Click to view full photo"
                               />
                               <small>Proof Photo Attached</small>
@@ -1979,8 +2266,14 @@ const Returns = () => {
 
       {/* LIGHTBOX IMAGE MODAL */}
       {selectedProofImage && (
-        <div className="proof-modal-overlay" onClick={() => setSelectedProofImage(null)}>
-          <div className="proof-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="proof-modal-overlay"
+          onClick={() => setSelectedProofImage(null)}
+        >
+          <div
+            className="proof-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="proof-modal-hdr">
               <h3>Customer Uploaded Proof Photo</h3>
               <button
@@ -1992,7 +2285,11 @@ const Returns = () => {
               </button>
             </div>
             <div className="proof-img-frame">
-              <img src={selectedProofImage} alt="Full Proof" className="full-proof-img" />
+              <img
+                src={selectedProofImage}
+                alt="Full Proof"
+                className="full-proof-img"
+              />
             </div>
           </div>
         </div>
@@ -2000,10 +2297,18 @@ const Returns = () => {
 
       {/* REFUND EXECUTION MODAL (ADMIN) */}
       {refundModalItem && (
-        <div className="proof-modal-overlay" onClick={() => setRefundModalItem(null)}>
-          <div className="proof-modal-content refund-execution-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="proof-modal-overlay"
+          onClick={() => setRefundModalItem(null)}
+        >
+          <div
+            className="proof-modal-content refund-execution-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="proof-modal-hdr">
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <DollarSign style={{ color: "#0d9488" }} />
                 <h3>Process Customer Refund</h3>
               </div>
@@ -2020,7 +2325,10 @@ const Returns = () => {
               <div className="refund-summary-box">
                 <div className="ref-sum-row">
                   <span>Customer:</span>
-                  <strong>{refundModalItem.customerName} ({refundModalItem.customerPhone})</strong>
+                  <strong>
+                    {refundModalItem.customerName} (
+                    {refundModalItem.customerPhone})
+                  </strong>
                 </div>
                 <div className="ref-sum-row">
                   <span>Medicine Item:</span>
@@ -2036,8 +2344,8 @@ const Returns = () => {
                     {refundModalItem.refundMethod === "UPI"
                       ? `📱 UPI (${refundModalItem.refundUpiId})`
                       : refundModalItem.refundMethod === "BANK_TRANSFER"
-                      ? `🏦 Bank Account (${refundModalItem.refundAccountNumber} / ${refundModalItem.refundIfsc})`
-                      : "💳 Original Payment Source (Razorpay/Card)"}
+                        ? `🏦 Bank Account (${refundModalItem.refundAccountNumber} / ${refundModalItem.refundIfsc})`
+                        : "💳 Original Payment Source (Razorpay/Card)"}
                   </strong>
                 </div>
               </div>
@@ -2077,7 +2385,9 @@ const Returns = () => {
                   onClick={handleConfirmRefund}
                   disabled={isProcessingRefund}
                 >
-                  {isProcessingRefund ? "Processing..." : `Confirm & Process Refund (₹${Number(refundAmountInput || 0).toFixed(2)})`}
+                  {isProcessingRefund
+                    ? "Processing..."
+                    : `Confirm & Process Refund (₹${Number(refundAmountInput || 0).toFixed(2)})`}
                 </button>
               </div>
             </div>
@@ -2087,7 +2397,8 @@ const Returns = () => {
 
       {/* FOOTER */}
       <footer className="returns-footer">
-        © 2026 MediDeliver. 100% Genuine Medicine Guarantee & Fast Doorstep Returns.
+        © 2026 MediDeliver. 100% Genuine Medicine Guarantee & Fast Doorstep
+        Returns.
       </footer>
     </div>
   );

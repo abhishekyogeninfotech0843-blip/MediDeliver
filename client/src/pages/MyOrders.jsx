@@ -51,8 +51,13 @@ const isOrderBelongingToUser = (ord, currentUser) => {
     ""
   ).toString();
 
-  const cEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
-  const cPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
+  const cEmail = (ord.customerEmail || ord.customer?.email || "")
+    .toLowerCase()
+    .trim();
+  const cPhone = (ord.customerPhone || ord.customer?.phone || "").replace(
+    /\D/g,
+    "",
+  );
 
   // 1. Direct User ID or Customer ID match
   if (uId && cId && cId === uId) return true;
@@ -65,7 +70,9 @@ const isOrderBelongingToUser = (ord, currentUser) => {
     uPhone &&
     uPhone.length >= 10 &&
     cPhone &&
-    (uPhone === cPhone || cPhone.endsWith(uPhone.slice(-10)) || uPhone.endsWith(cPhone.slice(-10)))
+    (uPhone === cPhone ||
+      cPhone.endsWith(uPhone.slice(-10)) ||
+      uPhone.endsWith(cPhone.slice(-10)))
   ) {
     return true;
   }
@@ -103,7 +110,12 @@ const isReturnBelongingToUser = (r, currentUser, userOrders = []) => {
   }
 
   // 3. Exact Email match (if not default fallback identifier)
-  if (uEmail && !uEmail.endsWith("@medideliver.user") && rEmail && rEmail === uEmail) {
+  if (
+    uEmail &&
+    !uEmail.endsWith("@medideliver.user") &&
+    rEmail &&
+    rEmail === uEmail
+  ) {
     return true;
   }
 
@@ -126,7 +138,7 @@ const deduplicateOrders = (orderList = []) => {
 
     const ordTime = new Date(ord.createdAt || Date.now()).getTime();
     const isBurstDup = seenBursts.some(
-      (b) => Math.abs(b.time - ordTime) < 15000 && b.total === ord.totalAmount
+      (b) => Math.abs(b.time - ordTime) < 15000 && b.total === ord.totalAmount,
     );
 
     if (!isBurstDup) {
@@ -141,7 +153,7 @@ const deduplicateOrders = (orderList = []) => {
 const getInitialUserOrders = () => {
   let currentUser = null;
   try {
-    const rawUser = localStorage.getItem("user");
+    const rawUser = sessionStorage.getItem("user");
     if (rawUser) currentUser = JSON.parse(rawUser);
   } catch (e) {}
 
@@ -153,7 +165,9 @@ const getInitialUserOrders = () => {
     if (cached) {
       const parsed = JSON.parse(cached);
       if (Array.isArray(parsed)) {
-        const filtered = parsed.filter((ord) => isOrderBelongingToUser(ord, currentUser));
+        const filtered = parsed.filter((ord) =>
+          isOrderBelongingToUser(ord, currentUser),
+        );
         return deduplicateOrders(filtered);
       }
     }
@@ -165,7 +179,7 @@ const getInitialUserOrders = () => {
 const getInitialUserReturns = () => {
   let currentUser = null;
   try {
-    const rawUser = localStorage.getItem("user");
+    const rawUser = sessionStorage.getItem("user");
     if (rawUser) currentUser = JSON.parse(rawUser);
   } catch (e) {}
 
@@ -177,7 +191,10 @@ const getInitialUserReturns = () => {
     const cached = localStorage.getItem(userCacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed)) return parsed.filter((r) => isReturnBelongingToUser(r, currentUser, initialOrders));
+      if (Array.isArray(parsed))
+        return parsed.filter((r) =>
+          isReturnBelongingToUser(r, currentUser, initialOrders),
+        );
     }
   } catch (e) {}
 
@@ -188,7 +205,7 @@ const MyOrders = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(() => {
     try {
-      const stored = localStorage.getItem("user");
+      const stored = sessionStorage.getItem("user");
       return stored ? JSON.parse(stored) : null;
     } catch (e) {
       return null;
@@ -234,7 +251,7 @@ const MyOrders = () => {
             orderStatus: "CANCELLED",
             cancellationReason: finalReason,
           }
-        : o
+        : o,
     );
     setOrders(updatedOrders);
     try {
@@ -246,13 +263,17 @@ const MyOrders = () => {
       await api.put(`/orders/${ordToCancel._id}/cancel`, {
         cancellationReason: finalReason,
       });
-      setCancelSuccessMsg(`✅ Order #${ordToCancel._id.slice(-6).toUpperCase()} was cancelled successfully.`);
+      setCancelSuccessMsg(
+        `✅ Order #${ordToCancel._id.slice(-6).toUpperCase()} was cancelled successfully.`,
+      );
       setTimeout(() => setCancelSuccessMsg(""), 6000);
       // Background sync
       fetchInitialData(user, true);
     } catch (err) {
       console.error("Cancel Order API Error:", err);
-      setCancelSuccessMsg(`✅ Order #${ordToCancel._id.slice(-6).toUpperCase()} cancellation recorded.`);
+      setCancelSuccessMsg(
+        `✅ Order #${ordToCancel._id.slice(-6).toUpperCase()} cancellation recorded.`,
+      );
       setTimeout(() => setCancelSuccessMsg(""), 6000);
     } finally {
       setIsCancelling(false);
@@ -261,7 +282,7 @@ const MyOrders = () => {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     let currentUser = null;
     if (storedUser) {
       try {
@@ -286,8 +307,12 @@ const MyOrders = () => {
         : {};
 
       const [ordersRes, returnsRes] = await Promise.all([
-        api.get("/orders", { params: userParams }).catch(() => ({ data: { success: true, orders: [] } })),
-        api.get("/returns", { params: userParams }).catch(() => ({ data: { success: true, returns: [] } })),
+        api
+          .get("/orders", { params: userParams })
+          .catch(() => ({ data: { success: true, orders: [] } })),
+        api
+          .get("/returns", { params: userParams })
+          .catch(() => ({ data: { success: true, returns: [] } })),
       ]);
 
       let fetchedOrders = ordersRes.data?.orders || [];
@@ -295,13 +320,15 @@ const MyOrders = () => {
 
       if (currentUser) {
         // 1. Filter Orders strictly for this user & deduplicate rapid burst duplicates
-        const matchedOrders = fetchedOrders.filter((ord) => isOrderBelongingToUser(ord, currentUser));
+        const matchedOrders = fetchedOrders.filter((ord) =>
+          isOrderBelongingToUser(ord, currentUser),
+        );
         const uniqueOrders = deduplicateOrders(matchedOrders);
         setOrders(uniqueOrders);
 
         // 2. Filter Returns strictly for this user's placed orders
         const matchedReturns = fetchedReturns.filter((r) =>
-          isReturnBelongingToUser(r, currentUser, uniqueOrders)
+          isReturnBelongingToUser(r, currentUser, uniqueOrders),
         );
         setUserReturns(matchedReturns);
 
@@ -384,18 +411,27 @@ const MyOrders = () => {
 
     const createdAtDate = new Date(ord.createdAt);
     const placedTimeStr = !isNaN(createdAtDate.getTime())
-      ? createdAtDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+      ? createdAtDate.toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : "Recently";
 
     const formatOffset = (mins, explicitDate) => {
       if (explicitDate) {
         const d = new Date(explicitDate);
         if (!isNaN(d.getTime())) {
-          return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+          return d.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
         }
       }
       const t = new Date(createdAtDate.getTime() + mins * 60000);
-      return t.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+      return t.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     };
 
     return [
@@ -403,7 +439,10 @@ const MyOrders = () => {
         step: 1,
         key: "PLACED",
         title: "Order Placed",
-        shortDesc: ord.paymentMethod === "ONLINE" ? "Online Payment Verified" : "COD Placed",
+        shortDesc:
+          ord.paymentMethod === "ONLINE"
+            ? "Online Payment Verified"
+            : "COD Placed",
         time: placedTimeStr,
         isDone: stepIndex >= 0,
         isCurrent: stepIndex === 0,
@@ -412,7 +451,10 @@ const MyOrders = () => {
         step: 2,
         key: "CONFIRMED",
         title: "Admin Received",
-        shortDesc: stepIndex >= 1 ? "Prescription & Stock Verified" : "Awaiting Admin Review",
+        shortDesc:
+          stepIndex >= 1
+            ? "Prescription & Stock Verified"
+            : "Awaiting Admin Review",
         time: stepIndex >= 1 ? formatOffset(5, ord.confirmedAt) : "Pending",
         isDone: stepIndex >= 1,
         isCurrent: stepIndex === 0,
@@ -421,7 +463,8 @@ const MyOrders = () => {
         step: 3,
         key: "PACKED",
         title: "Medicines Packed",
-        shortDesc: stepIndex >= 2 ? "Tamper-proof Sealed" : "Queued for packing",
+        shortDesc:
+          stepIndex >= 2 ? "Tamper-proof Sealed" : "Queued for packing",
         time: stepIndex >= 2 ? formatOffset(15, ord.packedAt) : "Upcoming",
         isDone: stepIndex >= 2,
         isCurrent: stepIndex === 1,
@@ -431,7 +474,8 @@ const MyOrders = () => {
         key: "OUT_FOR_DELIVERY",
         title: "Out for Delivery",
         shortDesc: stepIndex >= 3 ? "Rider on the way 🛵" : "Rider assignment",
-        time: stepIndex >= 3 ? formatOffset(25, ord.outForDeliveryAt) : "Upcoming",
+        time:
+          stepIndex >= 3 ? formatOffset(25, ord.outForDeliveryAt) : "Upcoming",
         isDone: stepIndex >= 3,
         isCurrent: stepIndex === 2 || stepIndex === 3,
       },
@@ -439,8 +483,12 @@ const MyOrders = () => {
         step: 5,
         key: "DELIVERED",
         title: "Delivered",
-        shortDesc: stepIndex >= 4 ? "Delivered at Doorstep 🎉" : "Expected Delivery",
-        time: stepIndex >= 4 ? formatOffset(40, ord.deliveredAt) : (ord.estimatedDeliveryTime || "30-45 mins"),
+        shortDesc:
+          stepIndex >= 4 ? "Delivered at Doorstep 🎉" : "Expected Delivery",
+        time:
+          stepIndex >= 4
+            ? formatOffset(40, ord.deliveredAt)
+            : ord.estimatedDeliveryTime || "30-45 mins",
         isDone: stepIndex >= 4,
         isCurrent: stepIndex === 4,
       },
@@ -526,19 +574,26 @@ const MyOrders = () => {
   const ordersPerPage = 4;
 
   const totalMedsCount = orders.reduce(
-    (sum, o) => sum + (o.items || []).reduce((itemSum, it) => itemSum + (it.quantity || 1), 0),
-    0
+    (sum, o) =>
+      sum +
+      (o.items || []).reduce((itemSum, it) => itemSum + (it.quantity || 1), 0),
+    0,
   );
-  const totalDeliveredCount = orders.filter((o) => o.orderStatus === "DELIVERED").length;
+  const totalDeliveredCount = orders.filter(
+    (o) => o.orderStatus === "DELIVERED",
+  ).length;
 
   const filteredOrders = orders.filter((ord) => {
     const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch =
       (ord._id || "").toLowerCase().includes(searchLower) ||
       (ord.deliveryAddress || "").toLowerCase().includes(searchLower) ||
-      (ord.items || []).some((i) => (i.medicine?.name || "").toLowerCase().includes(searchLower));
+      (ord.items || []).some((i) =>
+        (i.medicine?.name || "").toLowerCase().includes(searchLower),
+      );
 
-    const matchesStatus = statusFilter === "ALL" || ord.orderStatus === statusFilter;
+    const matchesStatus =
+      statusFilter === "ALL" || ord.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -559,10 +614,16 @@ const MyOrders = () => {
     });
   };
 
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredOrders.length / ordersPerPage),
+  );
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const currentOrders = filteredOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder,
+  );
 
   return (
     <div className="my-orders-page">
@@ -600,7 +661,9 @@ const MyOrders = () => {
               }}
               title="Refresh order statuses & live tracking"
             >
-              <RefreshCw className={`btn-refresh-ic ${isSyncing ? "spinning" : ""}`} />
+              <RefreshCw
+                className={`btn-refresh-ic ${isSyncing ? "spinning" : ""}`}
+              />
               <span>{isSyncing ? "Syncing..." : "Refresh"}</span>
             </button>
 
@@ -634,7 +697,10 @@ const MyOrders = () => {
         <div className="orders-header-row">
           <div>
             <h1>My Medicine Orders & Live Tracking 🛍️</h1>
-            <p>Track your medicine orders in real-time — check packing status, admin confirmation & delivery rider location</p>
+            <p>
+              Track your medicine orders in real-time — check packing status,
+              admin confirmation & delivery rider location
+            </p>
           </div>
 
           <Link to="/returns" className="request-return-btn">
@@ -708,7 +774,10 @@ const MyOrders = () => {
             </div>
             <div className="orders-loading-text-wrap">
               <h3>Syncing Medicine Orders & Live Tracking...</h3>
-              <p>Fetching your prescriptions, delivery rider status and order history</p>
+              <p>
+                Fetching your prescriptions, delivery rider status and order
+                history
+              </p>
               <div className="orders-loading-progress-bar">
                 <div className="orders-progress-fill" />
               </div>
@@ -728,18 +797,26 @@ const MyOrders = () => {
             {currentOrders.map((ord) => {
               const banner = getOrderStatusBanner(ord);
               const trackingSteps = getOrderTrackingSteps(ord);
-              const trackingCode = ord.trackingId || `TRK-${ord._id.slice(-6).toUpperCase()}`;
+              const trackingCode =
+                ord.trackingId || `TRK-${ord._id.slice(-6).toUpperCase()}`;
               const matchingReturn = userReturns.find(
                 (r) =>
                   r.orderId === ord._id ||
                   r.billNumber === ord._id.slice(-6).toUpperCase() ||
-                  (r.billNumber && ord._id.toUpperCase().endsWith(r.billNumber.toUpperCase()))
+                  (r.billNumber &&
+                    ord._id.toUpperCase().endsWith(r.billNumber.toUpperCase())),
               );
               const isExpanded = expandedOrderIds.has(ord._id);
-              const totalItemsCount = (ord.items || []).reduce((acc, it) => acc + (it.quantity || 1), 0);
+              const totalItemsCount = (ord.items || []).reduce(
+                (acc, it) => acc + (it.quantity || 1),
+                0,
+              );
 
               return (
-                <div key={ord._id} className={`order-history-card ${isExpanded ? "card-expanded" : "card-collapsed"}`}>
+                <div
+                  key={ord._id}
+                  className={`order-history-card ${isExpanded ? "card-expanded" : "card-collapsed"}`}
+                >
                   {/* CARD HEADER (CLICKABLE ACCORDION HEADER) */}
                   <div
                     className={`ord-card-hdr ${isExpanded ? "hdr-expanded" : ""}`}
@@ -767,19 +844,27 @@ const MyOrders = () => {
                         <div className="ord-meta-row">
                           <span className="ord-date-text">
                             <Calendar className="cal-ic" />{" "}
-                            {new Date(ord.createdAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {new Date(ord.createdAt).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
                             {" • "}
-                            {new Date(ord.createdAt).toLocaleTimeString("en-IN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {new Date(ord.createdAt).toLocaleTimeString(
+                              "en-IN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
                           </span>
                           <span className="ord-items-snippet">
-                            {totalItemsCount} {totalItemsCount === 1 ? "item" : "items"} • ₹{Number(ord.totalAmount || 0).toFixed(2)}
+                            {totalItemsCount}{" "}
+                            {totalItemsCount === 1 ? "item" : "items"} • ₹
+                            {Number(ord.totalAmount || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -796,7 +881,9 @@ const MyOrders = () => {
                         }}
                         title="Check latest status"
                       >
-                        <RefreshCw className={`ref-ic ${refreshingId === ord._id ? "spinning" : ""}`} />
+                        <RefreshCw
+                          className={`ref-ic ${refreshingId === ord._id ? "spinning" : ""}`}
+                        />
                       </button>
 
                       <button
@@ -808,7 +895,9 @@ const MyOrders = () => {
                         }}
                         aria-expanded={isExpanded}
                       >
-                        <span>{isExpanded ? "Hide Details" : "View Details"}</span>
+                        <span>
+                          {isExpanded ? "Hide Details" : "View Details"}
+                        </span>
                         {isExpanded ? (
                           <ChevronUp className="toggle-chevron-ic" />
                         ) : (
@@ -827,22 +916,37 @@ const MyOrders = () => {
                           <div className="ora-left">
                             <RotateCcw className="ora-ic" />
                             <div>
-                              <strong>Return Request Active: {matchingReturn.medicineName}</strong>
-                              <small>Ticket #{matchingReturn.billNumber} • Status: {matchingReturn.status}</small>
+                              <strong>
+                                Return Request Active:{" "}
+                                {matchingReturn.medicineName}
+                              </strong>
+                              <small>
+                                Ticket #{matchingReturn.billNumber} • Status:{" "}
+                                {matchingReturn.status}
+                              </small>
                             </div>
                           </div>
-                          <Link to="/returns?tab=my-returns" className="ora-view-link">
+                          <Link
+                            to="/returns?tab=my-returns"
+                            className="ora-view-link"
+                          >
                             View Return Claim <ChevronRight className="nl-ic" />
                           </Link>
                         </div>
                       )}
 
                       {/* 1. LIVE ORDER STATUS HIGHLIGHT BANNER */}
-                      <div className={`order-status-banner ${banner.bannerClass}`}>
+                      <div
+                        className={`order-status-banner ${banner.bannerClass}`}
+                      >
                         <div className="os-banner-left">
-                          <div className="os-banner-icon-box">{banner.icon}</div>
+                          <div className="os-banner-icon-box">
+                            {banner.icon}
+                          </div>
                           <div className="os-banner-text">
-                            <span className="os-stage-tag">{banner.stageLabel}</span>
+                            <span className="os-stage-tag">
+                              {banner.stageLabel}
+                            </span>
                             <h4>{banner.title}</h4>
                             <p>{banner.desc}</p>
                           </div>
@@ -871,22 +975,32 @@ const MyOrders = () => {
                           {trackingSteps.map((s, idx) => {
                             let stepStateClass = "step-pending";
                             if (s.isDone) stepStateClass = "step-completed";
-                            else if (s.isCurrent) stepStateClass = "step-active";
+                            else if (s.isCurrent)
+                              stepStateClass = "step-active";
 
                             return (
-                              <div key={idx} className={`stepper-step-item ${stepStateClass}`}>
+                              <div
+                                key={idx}
+                                className={`stepper-step-item ${stepStateClass}`}
+                              >
                                 <div className="step-circle">
                                   {s.isDone ? (
                                     <Check className="step-ic-done" />
                                   ) : s.isCurrent ? (
                                     <span className="step-active-dot" />
                                   ) : (
-                                    <span className="step-number">{s.step}</span>
+                                    <span className="step-number">
+                                      {s.step}
+                                    </span>
                                   )}
                                 </div>
                                 <div className="step-label-box">
-                                  <strong className="step-name">{s.title}</strong>
-                                  <small className="step-sub">{s.shortDesc}</small>
+                                  <strong className="step-name">
+                                    {s.title}
+                                  </strong>
+                                  <small className="step-sub">
+                                    {s.shortDesc}
+                                  </small>
                                   <span className="step-time">{s.time}</span>
                                 </div>
                               </div>
@@ -896,44 +1010,67 @@ const MyOrders = () => {
                       </div>
 
                       {/* 3. DELIVERY PARTNER CARD IF OUT FOR DELIVERY */}
-                      {ord.orderStatus === "OUT_FOR_DELIVERY" && banner.partner && (
-                        <div className="active-rider-card">
-                          <div className="rider-avatar-box">
-                            <Bike className="rider-bike-ic" />
-                          </div>
-                          <div className="rider-details-box">
-                            <div className="rider-name-row">
-                              <strong>{banner.partner.name}</strong>
-                              <span className="rider-badge">🛵 Assigned Delivery Partner</span>
+                      {ord.orderStatus === "OUT_FOR_DELIVERY" &&
+                        banner.partner && (
+                          <div className="active-rider-card">
+                            <div className="rider-avatar-box">
+                              <Bike className="rider-bike-ic" />
                             </div>
-                            <small className="rider-sub">
-                              Vehicle: {banner.partner.vehicle || "Electric Scooter (UP 81 AB 4920)"} • Contact: {banner.partner.phone || "+91 98765 43210"}
-                            </small>
+                            <div className="rider-details-box">
+                              <div className="rider-name-row">
+                                <strong>{banner.partner.name}</strong>
+                                <span className="rider-badge">
+                                  🛵 Assigned Delivery Partner
+                                </span>
+                              </div>
+                              <small className="rider-sub">
+                                Vehicle:{" "}
+                                {banner.partner.vehicle ||
+                                  "Electric Scooter (UP 81 AB 4920)"}{" "}
+                                • Contact:{" "}
+                                {banner.partner.phone || "+91 98765 43210"}
+                              </small>
+                            </div>
+                            <a
+                              href={`tel:${banner.partner.phone || "9876543210"}`}
+                              className="rider-call-button"
+                            >
+                              <Phone className="phone-ic" /> Call Rider
+                            </a>
                           </div>
-                          <a
-                            href={`tel:${banner.partner.phone || "9876543210"}`}
-                            className="rider-call-button"
-                          >
-                            <Phone className="phone-ic" /> Call Rider
-                          </a>
-                        </div>
-                      )}
+                        )}
 
                       {/* CARD BODY: ITEMS & SUMMARY */}
                       <div className="ord-card-body">
                         <div className="items-list-container">
-                          <h4 className="body-section-title">Purchased Medicines:</h4>
+                          <h4 className="body-section-title">
+                            Purchased Medicines:
+                          </h4>
                           {(ord.items || []).map((item, idx) => (
                             <div key={idx} className="order-item-row">
                               <div className="item-med-icon">
                                 <Pill className="med-pill-svg" />
                               </div>
                               <div className="item-med-details">
-                                <strong>{item.medicine?.name || item.name || "Medicine Item"}</strong>
-                                <small>Quantity: {item.quantity} x ₹{item.price || item.medicine?.sellingPrice || 50}</small>
+                                <strong>
+                                  {item.medicine?.name ||
+                                    item.name ||
+                                    "Medicine Item"}
+                                </strong>
+                                <small>
+                                  Quantity: {item.quantity} x ₹
+                                  {item.price ||
+                                    item.medicine?.sellingPrice ||
+                                    50}
+                                </small>
                               </div>
                               <strong className="item-row-total">
-                                ₹{((item.price || item.medicine?.sellingPrice || 50) * item.quantity).toFixed(2)}
+                                ₹
+                                {(
+                                  (item.price ||
+                                    item.medicine?.sellingPrice ||
+                                    50) * item.quantity
+                                ).toFixed(2)}
                               </strong>
                             </div>
                           ))}
@@ -941,15 +1078,23 @@ const MyOrders = () => {
 
                         <div className="ord-summary-sidebar">
                           <div className="address-snippet">
-                            <small className="snippet-label">Delivery Address:</small>
+                            <small className="snippet-label">
+                              Delivery Address:
+                            </small>
                             <p>{ord.deliveryAddress || "Address on File"}</p>
                           </div>
 
                           <div className="payment-snippet">
-                            <small className="snippet-label">Payment Status:</small>
+                            <small className="snippet-label">
+                              Payment Status:
+                            </small>
                             <strong>
-                              {ord.paymentMethod === "ONLINE" ? "Razorpay Online" : "Cash on Delivery (COD)"}
-                              <span className={`mini-pay-tag ${ord.paymentStatus?.toLowerCase()}`}>
+                              {ord.paymentMethod === "ONLINE"
+                                ? "Razorpay Online"
+                                : "Cash on Delivery (COD)"}
+                              <span
+                                className={`mini-pay-tag ${ord.paymentStatus?.toLowerCase()}`}
+                              >
                                 {ord.paymentStatus || "PAID"}
                               </span>
                             </strong>
@@ -957,7 +1102,9 @@ const MyOrders = () => {
 
                           <div className="amount-total-box">
                             <span>Total Paid:</span>
-                            <strong className="final-amt">₹{Number(ord.totalAmount || 0).toFixed(2)}</strong>
+                            <strong className="final-amt">
+                              ₹{Number(ord.totalAmount || 0).toFixed(2)}
+                            </strong>
                           </div>
                         </div>
                       </div>
@@ -965,7 +1112,8 @@ const MyOrders = () => {
                       {/* CARD FOOTER ACTIONS */}
                       <div className="ord-card-ftr">
                         <div className="ftr-left-info">
-                          <ShieldCheck className="shield-sm" /> 100% Genuine Pharmacy Order • Temperature Controlled
+                          <ShieldCheck className="shield-sm" /> 100% Genuine
+                          Pharmacy Order • Temperature Controlled
                         </div>
 
                         <div className="ftr-buttons">
@@ -995,7 +1143,10 @@ const MyOrders = () => {
                               <RotateCcw className="btn-ic" /> Return Medicine
                             </Link>
                           ) : ord.orderStatus === "CANCELLED" ? (
-                            <span className="return-btn return-btn-locked" title="Cancelled order">
+                            <span
+                              className="return-btn return-btn-locked"
+                              title="Cancelled order"
+                            >
                               <AlertTriangle className="btn-ic" /> Cancelled
                             </span>
                           ) : (
@@ -1026,7 +1177,11 @@ const MyOrders = () => {
         {filteredOrders.length > ordersPerPage && (
           <div className="orders-pagination">
             <div className="orders-pagination-info">
-              Showing <strong>{indexOfFirstOrder + 1}</strong> - <strong>{Math.min(indexOfLastOrder, filteredOrders.length)}</strong> of <strong>{filteredOrders.length}</strong> orders
+              Showing <strong>{indexOfFirstOrder + 1}</strong> -{" "}
+              <strong>
+                {Math.min(indexOfLastOrder, filteredOrders.length)}
+              </strong>{" "}
+              of <strong>{filteredOrders.length}</strong> orders
             </div>
             <div className="orders-pagination-controls">
               <button
@@ -1042,19 +1197,21 @@ const MyOrders = () => {
               </button>
 
               <div className="orders-page-numbers">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    className={`orders-page-num-btn ${currentPage === pageNum ? "active" : ""}`}
-                    onClick={() => {
-                      setCurrentPage(pageNum);
-                      window.scrollTo({ top: 200, behavior: "smooth" });
-                    }}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      className={`orders-page-num-btn ${currentPage === pageNum ? "active" : ""}`}
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 200, behavior: "smooth" });
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  ),
+                )}
               </div>
 
               <button
@@ -1075,14 +1232,25 @@ const MyOrders = () => {
 
       {/* DETAILED LIVE TRACKING MODAL */}
       {activeTrackingOrder && (
-        <div className="modal-backdrop" onClick={() => setActiveTrackingOrder(null)}>
-          <div className="tracking-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setActiveTrackingOrder(null)}
+        >
+          <div
+            className="tracking-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="track-modal-header">
               <div className="track-modal-title">
                 <Navigation className="tm-ic text-primary" />
                 <div>
                   <h3>Live Order Tracking</h3>
-                  <p>Order #{activeTrackingOrder._id.slice(-6).toUpperCase()} • Tracking ID: {activeTrackingOrder.trackingId || `TRK-${activeTrackingOrder._id.slice(-6).toUpperCase()}`}</p>
+                  <p>
+                    Order #{activeTrackingOrder._id.slice(-6).toUpperCase()} •
+                    Tracking ID:{" "}
+                    {activeTrackingOrder.trackingId ||
+                      `TRK-${activeTrackingOrder._id.slice(-6).toUpperCase()}`}
+                  </p>
                 </div>
               </div>
               <button
@@ -1128,15 +1296,26 @@ const MyOrders = () => {
                     <div>
                       <strong>Delivery Destination</strong>
                       <small className="dest-addr-short">
-                        {activeTrackingOrder.customerName || user?.name || "Customer"}, {activeTrackingOrder.deliveryAddress?.slice(0, 45)}...
+                        {activeTrackingOrder.customerName ||
+                          user?.name ||
+                          "Customer"}
+                        , {activeTrackingOrder.deliveryAddress?.slice(0, 45)}...
                       </small>
                     </div>
                   </div>
                 </div>
 
                 <div className="route-footer-info">
-                  <span>⏱️ Estimated Arrival: <strong>{activeTrackingOrder.estimatedDeliveryTime || "30 - 45 mins"}</strong></span>
-                  <span>📍 Distance: <strong>~2.4 km</strong></span>
+                  <span>
+                    ⏱️ Estimated Arrival:{" "}
+                    <strong>
+                      {activeTrackingOrder.estimatedDeliveryTime ||
+                        "30 - 45 mins"}
+                    </strong>
+                  </span>
+                  <span>
+                    📍 Distance: <strong>~2.4 km</strong>
+                  </span>
                 </div>
               </div>
 
@@ -1148,11 +1327,21 @@ const MyOrders = () => {
                   </div>
                   <div>
                     <div className="dpm-name-row">
-                      <strong>{activeTrackingOrder.deliveryPartner?.name || "Ramesh Sharma"}</strong>
-                      <span className="star-rating">★ 4.9 (520+ deliveries)</span>
+                      <strong>
+                        {activeTrackingOrder.deliveryPartner?.name ||
+                          "Ramesh Sharma"}
+                      </strong>
+                      <span className="star-rating">
+                        ★ 4.9 (520+ deliveries)
+                      </span>
                     </div>
                     <p className="dpm-meta">
-                      Vehicle: {activeTrackingOrder.deliveryPartner?.vehicle || "Electric Bike (UP 81 AB 4920)"} • Contact: {activeTrackingOrder.deliveryPartner?.phone || "+91 98765 43210"}
+                      Vehicle:{" "}
+                      {activeTrackingOrder.deliveryPartner?.vehicle ||
+                        "Electric Bike (UP 81 AB 4920)"}{" "}
+                      • Contact:{" "}
+                      {activeTrackingOrder.deliveryPartner?.phone ||
+                        "+91 98765 43210"}
                     </p>
                   </div>
                 </div>
@@ -1170,9 +1359,16 @@ const MyOrders = () => {
                 <h4>Order Activity Timeline</h4>
                 <div className="audit-timeline-list">
                   {getOrderTrackingSteps(activeTrackingOrder).map((st, i) => (
-                    <div key={i} className={`audit-step-row ${st.isDone ? "audit-done" : st.isCurrent ? "audit-current" : "audit-pending"}`}>
+                    <div
+                      key={i}
+                      className={`audit-step-row ${st.isDone ? "audit-done" : st.isCurrent ? "audit-current" : "audit-pending"}`}
+                    >
                       <div className="audit-step-indicator">
-                        {st.isDone ? <Check className="audit-check" /> : <div className="audit-circle" />}
+                        {st.isDone ? (
+                          <Check className="audit-check" />
+                        ) : (
+                          <div className="audit-circle" />
+                        )}
                       </div>
                       <div className="audit-step-content">
                         <div className="audit-time-row">
@@ -1187,28 +1383,32 @@ const MyOrders = () => {
               </div>
 
               {/* MODAL CANCEL ORDER OPTION IF ACTIVE */}
-              {activeTrackingOrder.orderStatus !== "DELIVERED" && activeTrackingOrder.orderStatus !== "CANCELLED" && (
-                <div className="modal-cancel-action-bar">
-                  <button
-                    type="button"
-                    className="modal-cancel-btn"
-                    onClick={() => {
-                      const tgt = activeTrackingOrder;
-                      setActiveTrackingOrder(null);
-                      handleOpenCancelModal(tgt);
-                    }}
-                  >
-                    <X className="btn-ic" /> Cancel This Medicine Order
-                  </button>
-                </div>
-              )}
+              {activeTrackingOrder.orderStatus !== "DELIVERED" &&
+                activeTrackingOrder.orderStatus !== "CANCELLED" && (
+                  <div className="modal-cancel-action-bar">
+                    <button
+                      type="button"
+                      className="modal-cancel-btn"
+                      onClick={() => {
+                        const tgt = activeTrackingOrder;
+                        setActiveTrackingOrder(null);
+                        handleOpenCancelModal(tgt);
+                      }}
+                    >
+                      <X className="btn-ic" /> Cancel This Medicine Order
+                    </button>
+                  </div>
+                )}
 
               {/* HELPLINE BOX */}
               <div className="pharmacy-helpline-box">
                 <ShieldCheck className="help-ic" />
                 <div>
                   <strong>Need help or have medicine queries?</strong>
-                  <p>MediDeliver 24x7 Customer Support: 1800-200-MEDICINE (Toll Free)</p>
+                  <p>
+                    MediDeliver 24x7 Customer Support: 1800-200-MEDICINE (Toll
+                    Free)
+                  </p>
                 </div>
               </div>
             </div>
@@ -1218,8 +1418,14 @@ const MyOrders = () => {
 
       {/* CUSTOMER CANCEL ORDER CONFIRMATION MODAL */}
       {cancelModalOrder && (
-        <div className="modal-backdrop" onClick={() => !isCancelling && setCancelModalOrder(null)}>
-          <div className="cancel-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          onClick={() => !isCancelling && setCancelModalOrder(null)}
+        >
+          <div
+            className="cancel-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="cancel-modal-header">
               <div className="cancel-hdr-left">
                 <div className="cancel-hdr-icon">
@@ -1227,7 +1433,10 @@ const MyOrders = () => {
                 </div>
                 <div>
                   <h3>Cancel Medicine Order</h3>
-                  <p>Order #{cancelModalOrder._id.slice(-6).toUpperCase()} • ₹{Number(cancelModalOrder.totalAmount || 0).toFixed(2)}</p>
+                  <p>
+                    Order #{cancelModalOrder._id.slice(-6).toUpperCase()} • ₹
+                    {Number(cancelModalOrder.totalAmount || 0).toFixed(2)}
+                  </p>
                 </div>
               </div>
               <button
@@ -1243,17 +1452,26 @@ const MyOrders = () => {
               <div className="cancel-summary-box">
                 <div className="csb-row">
                   <span>Customer:</span>
-                  <strong>{cancelModalOrder.customerName || user?.name || "Customer"}</strong>
+                  <strong>
+                    {cancelModalOrder.customerName || user?.name || "Customer"}
+                  </strong>
                 </div>
                 <div className="csb-row">
                   <span>Payment Mode:</span>
-                  <strong>{cancelModalOrder.paymentMethod === "ONLINE" ? "💳 Razorpay Online" : "💵 Cash on Delivery (COD)"}</strong>
+                  <strong>
+                    {cancelModalOrder.paymentMethod === "ONLINE"
+                      ? "💳 Razorpay Online"
+                      : "💵 Cash on Delivery (COD)"}
+                  </strong>
                 </div>
                 <div className="csb-row">
                   <span>Medicines:</span>
                   <strong>
                     {(cancelModalOrder.items || [])
-                      .map((i) => `${i.medicine?.name || i.name || "Medicine"} (${i.quantity}x)`)
+                      .map(
+                        (i) =>
+                          `${i.medicine?.name || i.name || "Medicine"} (${i.quantity}x)`,
+                      )
                       .join(", ") || "Prescription Medicines"}
                   </strong>
                 </div>
@@ -1264,7 +1482,12 @@ const MyOrders = () => {
                   <ShieldCheck className="crn-ic" />
                   <div>
                     <strong>Full Refund Guaranteed</strong>
-                    <p>Since you paid online, a 100% refund of ₹{Number(cancelModalOrder.totalAmount || 0).toFixed(2)} will be credited back to your original payment source automatically within 2-4 hours.</p>
+                    <p>
+                      Since you paid online, a 100% refund of ₹
+                      {Number(cancelModalOrder.totalAmount || 0).toFixed(2)}{" "}
+                      will be credited back to your original payment source
+                      automatically within 2-4 hours.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -1272,13 +1495,18 @@ const MyOrders = () => {
                   <CheckCircle2 className="crn-ic" />
                   <div>
                     <strong>Cash on Delivery (No Charge)</strong>
-                    <p>Your order dispatch has been stopped immediately. No payment is required.</p>
+                    <p>
+                      Your order dispatch has been stopped immediately. No
+                      payment is required.
+                    </p>
                   </div>
                 </div>
               )}
 
               <div className="cancel-reason-group">
-                <label className="reason-label">Select reason for cancellation:</label>
+                <label className="reason-label">
+                  Select reason for cancellation:
+                </label>
                 <div className="reason-radios">
                   {[
                     "Ordered by mistake",
@@ -1287,7 +1515,10 @@ const MyOrders = () => {
                     "Found medicines at a local pharmacy",
                     "Other Reason",
                   ].map((r) => (
-                    <label key={r} className={`reason-radio-card ${cancelReason === r ? "active" : ""}`}>
+                    <label
+                      key={r}
+                      className={`reason-radio-card ${cancelReason === r ? "active" : ""}`}
+                    >
                       <input
                         type="radio"
                         name="cancelReason"
@@ -1350,7 +1581,8 @@ const MyOrders = () => {
 
       {/* FOOTER */}
       <footer className="orders-footer">
-        © 2026 MediDeliver. All rights reserved. Express Healthcare & Prescription Delivery.
+        © 2026 MediDeliver. All rights reserved. Express Healthcare &
+        Prescription Delivery.
       </footer>
     </div>
   );

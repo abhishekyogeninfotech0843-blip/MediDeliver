@@ -76,7 +76,7 @@ const Contact = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);

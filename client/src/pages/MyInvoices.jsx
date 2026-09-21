@@ -124,7 +124,7 @@ const MyInvoices = () => {
   };
 
   useEffect(() => {
-    const rawUser = localStorage.getItem("user");
+    const rawUser = sessionStorage.getItem("user");
     if (!rawUser) {
       navigate("/login");
       return;

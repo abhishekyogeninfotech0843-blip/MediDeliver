@@ -46,7 +46,7 @@ const UserProfileDropdown = ({ user, onLogout, onOpenLocation }) => {
     if (onLogout) {
       onLogout();
     } else {
-      localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
       navigate("/login");
     }
   };

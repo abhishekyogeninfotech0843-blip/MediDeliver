@@ -17,7 +17,7 @@ import {
   Lock,
   ArrowRight,
   ArrowLeft,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import logoSvg from "../assets/logo.svg";
 import "./Profile.css";
@@ -47,7 +47,9 @@ const Profile = () => {
         phone: currentUser.phone || undefined,
         userId: currentUser._id || currentUser.id || undefined,
       };
-      const response = await api.get("/orders", { params: userParams }).catch(() => null);
+      const response = await api
+        .get("/orders", { params: userParams })
+        .catch(() => null);
       if (response?.data?.success && Array.isArray(response.data.orders)) {
         const userEmailLower = (currentUser.email || "").toLowerCase().trim();
         const userPhoneClean = (currentUser.phone || "").replace(/\D/g, "");
@@ -62,8 +64,14 @@ const Profile = () => {
         const myOrders = response.data.orders.filter((ord) => {
           if (duplicateTestIds.has(ord._id)) return false;
 
-          const custEmail = (ord.customerEmail || ord.customer?.email || "").toLowerCase().trim();
-          const custPhone = (ord.customerPhone || ord.customer?.phone || "").replace(/\D/g, "");
+          const custEmail = (ord.customerEmail || ord.customer?.email || "")
+            .toLowerCase()
+            .trim();
+          const custPhone = (
+            ord.customerPhone ||
+            ord.customer?.phone ||
+            ""
+          ).replace(/\D/g, "");
           const cId = (
             ord.customer?._id ||
             ord.customer?.id ||
@@ -76,7 +84,8 @@ const Profile = () => {
           ).toString();
 
           if (uId && cId && cId === uId) return true;
-          if (userEmailLower && custEmail && custEmail === userEmailLower) return true;
+          if (userEmailLower && custEmail && custEmail === userEmailLower)
+            return true;
           if (
             userPhoneClean &&
             userPhoneClean.length >= 10 &&
@@ -96,7 +105,7 @@ const Profile = () => {
         for (const ord of myOrders) {
           const t = new Date(ord.createdAt).getTime();
           const isDup = seen.some(
-            (s) => Math.abs(s.time - t) < 15000 && s.total === ord.totalAmount
+            (s) => Math.abs(s.time - t) < 15000 && s.total === ord.totalAmount,
           );
           if (!isDup) {
             uniqueOrders.push(ord);
@@ -112,7 +121,7 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     let currentUser = {};
     if (storedUser) {
       try {
@@ -164,7 +173,7 @@ const Profile = () => {
         address: profileData.address,
       };
 
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
 
       localStorage.setItem(
@@ -174,7 +183,7 @@ const Profile = () => {
           state: profileData.state,
           pincode: profileData.pincode,
           fullAddress: profileData.address,
-        })
+        }),
       );
 
       setLoading(false);
@@ -192,7 +201,8 @@ const Profile = () => {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
+  const isAdmin =
+    user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
 
   return (
     <div className="profile-page">
@@ -348,7 +358,11 @@ const Profile = () => {
                     <input
                       type="text"
                       disabled
-                      value={isAdmin ? "Pharmacy Admin" : "Customer / Patient Account"}
+                      value={
+                        isAdmin
+                          ? "Pharmacy Admin"
+                          : "Customer / Patient Account"
+                      }
                     />
                   </div>
                 </div>
@@ -423,7 +437,9 @@ const Profile = () => {
                 disabled={loading}
               >
                 <Save className="btn-ic" />
-                <span>{loading ? "Saving Changes..." : "Save Profile Details"}</span>
+                <span>
+                  {loading ? "Saving Changes..." : "Save Profile Details"}
+                </span>
               </button>
             </form>
           </div>
@@ -432,7 +448,8 @@ const Profile = () => {
 
       {/* FOOTER */}
       <footer className="profile-footer">
-        © 2026 MediDeliver. All rights reserved. Express Healthcare & Prescription Delivery.
+        © 2026 MediDeliver. All rights reserved. Express Healthcare &
+        Prescription Delivery.
       </footer>
     </div>
   );

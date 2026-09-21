@@ -32,7 +32,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ShieldAlert,
-  Boxes
+  Boxes,
 } from "lucide-react";
 import LocationModal from "../components/LocationModal";
 import UserProfileDropdown from "../components/UserProfileDropdown";
@@ -75,10 +75,12 @@ const Medicines = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 16;
 
-  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
+  const isAdmin =
+    user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
 
   const handleStockFilterClick = (filterType) => {
-    const newFilter = stockFilter === filterType && filterType !== "all" ? "all" : filterType;
+    const newFilter =
+      stockFilter === filterType && filterType !== "all" ? "all" : filterType;
     setStockFilter(newFilter);
     setCurrentPage(1);
 
@@ -102,7 +104,9 @@ const Medicines = () => {
       setMedicines((prev) => prev.filter((m) => m._id !== deletedId));
     } else if (updatedMed) {
       setMedicines((prev) =>
-        prev.map((m) => (m._id === updatedMed._id ? { ...m, ...updatedMed } : m))
+        prev.map((m) =>
+          m._id === updatedMed._id ? { ...m, ...updatedMed } : m,
+        ),
       );
     }
   };
@@ -113,7 +117,11 @@ const Medicines = () => {
   };
 
   const handleResetDefaultMedicines = async () => {
-    if (!window.confirm("Are you sure you want to restore default demo medicines catalog?")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to restore default demo medicines catalog?",
+      )
+    ) {
       return;
     }
     try {
@@ -132,7 +140,11 @@ const Medicines = () => {
   };
 
   const handleQuickDelete = async (medicine) => {
-    if (!window.confirm(`Are you sure you want to delete "${medicine.name}" from the catalog?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${medicine.name}" from the catalog?`,
+      )
+    ) {
       return;
     }
     try {
@@ -168,7 +180,7 @@ const Medicines = () => {
   const [prescriptionMessage, setPrescriptionMessage] = useState("");
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -215,7 +227,10 @@ const Medicines = () => {
 
     window.addEventListener("deliveryLocationUpdated", handleLocationEvent);
     return () => {
-      window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
+      window.removeEventListener(
+        "deliveryLocationUpdated",
+        handleLocationEvent,
+      );
     };
   }, []);
 
@@ -235,7 +250,7 @@ const Medicines = () => {
   }, [searchParams]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     setUser(null);
     navigate("/login");
   };
@@ -257,9 +272,7 @@ const Medicines = () => {
       }
     } catch (err) {
       console.error("Medicine API Error:", err);
-      setError(
-        "Unable to fetch medicines from server.",
-      );
+      setError("Unable to fetch medicines from server.");
     } finally {
       setLoading(false);
     }
@@ -292,7 +305,11 @@ const Medicines = () => {
           const name = (med.name || "").toLowerCase();
           const comp = (med.company || "").toLowerCase();
           const cat = (med.category || "").toLowerCase();
-          return name.includes(qClean) || comp.includes(qClean) || cat.includes(qClean);
+          return (
+            name.includes(qClean) ||
+            comp.includes(qClean) ||
+            cat.includes(qClean)
+          );
         })
         .slice(0, 7)
     : [];
@@ -329,21 +346,25 @@ const Medicines = () => {
     "Micro Labs",
     "Himalaya Wellness",
     "Dabur India",
-    "HealthKart"
+    "HealthKart",
   ];
 
   const dynamicCompanies = Array.from(
-    new Set(medicines.map((m) => m.company).filter(Boolean))
+    new Set(medicines.map((m) => m.company).filter(Boolean)),
   );
 
   const companies = [
     "All",
-    ...Array.from(new Set([...defaultPopularCompanies, ...dynamicCompanies]))
+    ...Array.from(new Set([...defaultPopularCompanies, ...dynamicCompanies])),
   ];
 
   const getCompanyMedicineCount = (compName) => {
-    if (compName === "All" || compName === "All Companies") return medicines.length;
-    const target = compName.toLowerCase().replace(" ltd", "").replace(" india", "");
+    if (compName === "All" || compName === "All Companies")
+      return medicines.length;
+    const target = compName
+      .toLowerCase()
+      .replace(" ltd", "")
+      .replace(" india", "");
     return medicines.filter((m) => {
       const c = (m.company || "").toLowerCase();
       return c.includes(target) || target.includes(c);
@@ -421,7 +442,10 @@ const Medicines = () => {
   const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage) || 1;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentMedicines = filteredMedicines.slice(indexOfFirstItem, indexOfLastItem);
+  const currentMedicines = filteredMedicines.slice(
+    indexOfFirstItem,
+    indexOfLastItem,
+  );
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -492,7 +516,9 @@ const Medicines = () => {
     const min = Number(m.minimumStock || 10);
     return s > 0 && s <= min;
   }).length;
-  const outOfStockCount = medicines.filter((m) => Number(m.stock || 0) <= 0).length;
+  const outOfStockCount = medicines.filter(
+    (m) => Number(m.stock || 0) <= 0,
+  ).length;
   const inStockCount = medicines.filter((m) => Number(m.stock || 0) > 0).length;
 
   return (
@@ -563,7 +589,8 @@ const Medicines = () => {
               <div className="search-dropdown-menu">
                 <div className="search-dropdown-header">
                   <span className="dropdown-title">
-                    <Search className="mini-search-icon" /> Results for "<strong>{search}</strong>"
+                    <Search className="mini-search-icon" /> Results for "
+                    <strong>{search}</strong>"
                   </span>
                   <span className="results-count-pill">
                     {searchSuggestions.length} found
@@ -580,7 +607,11 @@ const Medicines = () => {
                       >
                         <div className="sugg-icon-box">
                           {item.image ? (
-                            <img src={item.image} alt={item.name} className="sugg-img" />
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="sugg-img"
+                            />
                           ) : (
                             <Pill className="sugg-pill-icon" />
                           )}
@@ -591,9 +622,13 @@ const Medicines = () => {
                             <span className="sugg-name">{item.name}</span>
                           </div>
                           <div className="sugg-meta">
-                            <span className="sugg-cat">{item.category || "Healthcare"}</span>
+                            <span className="sugg-cat">
+                              {item.category || "Healthcare"}
+                            </span>
                             <span className="sugg-dot">•</span>
-                            <span className="sugg-company">{item.company || "Generic"}</span>
+                            <span className="sugg-company">
+                              {item.company || "Generic"}
+                            </span>
                           </div>
                         </div>
 
@@ -603,10 +638,14 @@ const Medicines = () => {
                           </span>
                           <span
                             className={`sugg-stock-badge ${
-                              Number(item.stock) === 0 ? "out-stock" : "in-stock"
+                              Number(item.stock) === 0
+                                ? "out-stock"
+                                : "in-stock"
                             }`}
                           >
-                            {Number(item.stock) === 0 ? "Out of Stock" : "In Stock"}
+                            {Number(item.stock) === 0
+                              ? "Out of Stock"
+                              : "In Stock"}
                           </span>
                         </div>
                       </div>
@@ -614,7 +653,9 @@ const Medicines = () => {
                   </div>
                 ) : (
                   <div className="no-suggestions-box">
-                    <p>No medicines found for "<strong>{search}</strong>"</p>
+                    <p>
+                      No medicines found for "<strong>{search}</strong>"
+                    </p>
                   </div>
                 )}
               </div>
@@ -639,7 +680,11 @@ const Medicines = () => {
             </button>
 
             {/* CART BUTTON IN NAVBAR */}
-            <Link to="/cart" className="med-nav-cart-btn" title="View your shopping cart">
+            <Link
+              to="/cart"
+              className="med-nav-cart-btn"
+              title="View your shopping cart"
+            >
               <div className="med-nav-cart-icon-wrapper">
                 <ShoppingCart className="nav-btn-icon" />
                 {cartCount > 0 && (
@@ -648,12 +693,17 @@ const Medicines = () => {
               </div>
               <span className="med-nav-cart-label">Cart</span>
               {cartCount > 0 && (
-                <span className="med-nav-cart-price">₹{cartTotal.toFixed(0)}</span>
+                <span className="med-nav-cart-price">
+                  ₹{cartTotal.toFixed(0)}
+                </span>
               )}
             </Link>
 
             {isAdmin && (
-              <Link to="/dashboard" className="medicines-login dashboard-nav-btn">
+              <Link
+                to="/dashboard"
+                className="medicines-login dashboard-nav-btn"
+              >
                 <LayoutDashboard className="nav-btn-icon" />
                 <span>Dashboard</span>
               </Link>
@@ -674,7 +724,8 @@ const Medicines = () => {
           <span className="pharmacy-badge">MEDIDELIVER PHARMACY</span>
           <h1>Medicines & Healthcare</h1>
           <p>
-            Genuine medicines and healthcare essentials delivered directly to your doorstep.
+            Genuine medicines and healthcare essentials delivered directly to
+            your doorstep.
           </p>
         </div>
 
@@ -683,7 +734,8 @@ const Medicines = () => {
           <div
             className="admin-inventory-bar"
             style={{
-              background: "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0f766e 100%)",
+              background:
+                "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0f766e 100%)",
               borderRadius: "18px",
               padding: "22px 26px",
               color: "#ffffff",
@@ -705,7 +757,10 @@ const Medicines = () => {
                 flexWrap: "wrap",
               }}
             >
-              <div className="admin-bar-left" style={{ textAlign: "left", maxWidth: "600px" }}>
+              <div
+                className="admin-bar-left"
+                style={{ textAlign: "left", maxWidth: "600px" }}
+              >
                 <div
                   className="admin-shield-badge"
                   style={{
@@ -726,15 +781,47 @@ const Medicines = () => {
                   <ShieldCheck style={{ width: "14px", height: "14px" }} />
                   <span>PHARMACY ADMIN CONTROL PANEL</span>
                 </div>
-                <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", margin: "0 0 4px 0", letterSpacing: "-0.4px" }}>
+                <h2
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 800,
+                    color: "#ffffff",
+                    margin: "0 0 4px 0",
+                    letterSpacing: "-0.4px",
+                  }}
+                >
                   Medicine Inventory & Stock Controls (स्टॉक व दवाई प्रबंधन)
                 </h2>
-                <p style={{ fontSize: "13.5px", color: "#d1fae5", margin: 0, lineHeight: 1.4 }}>
-                  Add new stock, edit prices/names, or delete catalog items. <em style={{ color: "#fef08a", fontStyle: "normal", fontWeight: 600 }}>(Admin Account Only)</em>
+                <p
+                  style={{
+                    fontSize: "13.5px",
+                    color: "#d1fae5",
+                    margin: 0,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Add new stock, edit prices/names, or delete catalog items.{" "}
+                  <em
+                    style={{
+                      color: "#fef08a",
+                      fontStyle: "normal",
+                      fontWeight: 600,
+                    }}
+                  >
+                    (Admin Account Only)
+                  </em>
                 </p>
               </div>
 
-              <div className="admin-bar-stats" style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <div
+                className="admin-bar-stats"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
                 {/* TOTAL ITEMS CHIP */}
                 <button
                   type="button"
@@ -742,8 +829,14 @@ const Medicines = () => {
                   onClick={() => handleStockFilterClick("all")}
                   title="Click to view all medicines in catalog (सभी दवाइयां देखें)"
                   style={{
-                    background: stockFilter === "all" ? "#ffffff" : "rgba(255, 255, 255, 0.15)",
-                    border: stockFilter === "all" ? "2px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.25)",
+                    background:
+                      stockFilter === "all"
+                        ? "#ffffff"
+                        : "rgba(255, 255, 255, 0.15)",
+                    border:
+                      stockFilter === "all"
+                        ? "2px solid #ffffff"
+                        : "1.5px solid rgba(255, 255, 255, 0.25)",
                     borderRadius: "12px",
                     padding: "8px 16px",
                     display: "flex",
@@ -751,8 +844,12 @@ const Medicines = () => {
                     alignItems: "center",
                     minWidth: "84px",
                     cursor: "pointer",
-                    transform: stockFilter === "all" ? "scale(1.06)" : "scale(1)",
-                    boxShadow: stockFilter === "all" ? "0 6px 16px rgba(0, 0, 0, 0.25)" : "none",
+                    transform:
+                      stockFilter === "all" ? "scale(1.06)" : "scale(1)",
+                    boxShadow:
+                      stockFilter === "all"
+                        ? "0 6px 16px rgba(0, 0, 0, 0.25)"
+                        : "none",
                     transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
                 >
@@ -779,7 +876,16 @@ const Medicines = () => {
                     {medicines.length}
                   </strong>
                   {stockFilter === "all" && (
-                    <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#059669", marginTop: "1px" }}>✓ All Items</span>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 800,
+                        color: "#059669",
+                        marginTop: "1px",
+                      }}
+                    >
+                      ✓ All Items
+                    </span>
                   )}
                 </button>
 
@@ -790,8 +896,14 @@ const Medicines = () => {
                   onClick={() => handleStockFilterClick("instock")}
                   title="Click to filter and view only in-stock medicines (स्टॉक में उपलब्ध दवाइयां)"
                   style={{
-                    background: stockFilter === "instock" ? "#10b981" : "rgba(16, 185, 129, 0.22)",
-                    border: stockFilter === "instock" ? "2px solid #ffffff" : "1.5px solid rgba(52, 211, 153, 0.4)",
+                    background:
+                      stockFilter === "instock"
+                        ? "#10b981"
+                        : "rgba(16, 185, 129, 0.22)",
+                    border:
+                      stockFilter === "instock"
+                        ? "2px solid #ffffff"
+                        : "1.5px solid rgba(52, 211, 153, 0.4)",
                     borderRadius: "12px",
                     padding: "8px 16px",
                     display: "flex",
@@ -799,8 +911,12 @@ const Medicines = () => {
                     alignItems: "center",
                     minWidth: "84px",
                     cursor: "pointer",
-                    transform: stockFilter === "instock" ? "scale(1.06)" : "scale(1)",
-                    boxShadow: stockFilter === "instock" ? "0 6px 16px rgba(16, 185, 129, 0.4)" : "none",
+                    transform:
+                      stockFilter === "instock" ? "scale(1.06)" : "scale(1)",
+                    boxShadow:
+                      stockFilter === "instock"
+                        ? "0 6px 16px rgba(16, 185, 129, 0.4)"
+                        : "none",
                     transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
                 >
@@ -827,7 +943,16 @@ const Medicines = () => {
                     {inStockCount}
                   </strong>
                   {stockFilter === "instock" && (
-                    <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#ecfdf5", marginTop: "1px" }}>✓ Filtered</span>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 800,
+                        color: "#ecfdf5",
+                        marginTop: "1px",
+                      }}
+                    >
+                      ✓ Filtered
+                    </span>
                   )}
                 </button>
 
@@ -838,8 +963,14 @@ const Medicines = () => {
                   onClick={() => handleStockFilterClick("lowstock")}
                   title="Click to filter and view low-stock medicines (कम स्टॉक वाली दवाइयां)"
                   style={{
-                    background: stockFilter === "lowstock" ? "#eab308" : "rgba(234, 179, 8, 0.22)",
-                    border: stockFilter === "lowstock" ? "2px solid #ffffff" : "1.5px solid rgba(253, 224, 71, 0.45)",
+                    background:
+                      stockFilter === "lowstock"
+                        ? "#eab308"
+                        : "rgba(234, 179, 8, 0.22)",
+                    border:
+                      stockFilter === "lowstock"
+                        ? "2px solid #ffffff"
+                        : "1.5px solid rgba(253, 224, 71, 0.45)",
                     borderRadius: "12px",
                     padding: "8px 16px",
                     display: "flex",
@@ -847,8 +978,12 @@ const Medicines = () => {
                     alignItems: "center",
                     minWidth: "84px",
                     cursor: "pointer",
-                    transform: stockFilter === "lowstock" ? "scale(1.06)" : "scale(1)",
-                    boxShadow: stockFilter === "lowstock" ? "0 6px 16px rgba(234, 179, 8, 0.4)" : "none",
+                    transform:
+                      stockFilter === "lowstock" ? "scale(1.06)" : "scale(1)",
+                    boxShadow:
+                      stockFilter === "lowstock"
+                        ? "0 6px 16px rgba(234, 179, 8, 0.4)"
+                        : "none",
                     transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
                 >
@@ -875,7 +1010,16 @@ const Medicines = () => {
                     {lowStockCount}
                   </strong>
                   {stockFilter === "lowstock" && (
-                    <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#713f12", marginTop: "1px" }}>✓ Filtered</span>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 800,
+                        color: "#713f12",
+                        marginTop: "1px",
+                      }}
+                    >
+                      ✓ Filtered
+                    </span>
                   )}
                 </button>
 
@@ -886,8 +1030,14 @@ const Medicines = () => {
                   onClick={() => handleStockFilterClick("outstock")}
                   title="Click to filter and view out-of-stock medicines (खत्म स्टॉक वाली दवाइयां)"
                   style={{
-                    background: stockFilter === "outstock" ? "#ef4444" : "rgba(239, 68, 68, 0.22)",
-                    border: stockFilter === "outstock" ? "2px solid #ffffff" : "1.5px solid rgba(248, 113, 113, 0.45)",
+                    background:
+                      stockFilter === "outstock"
+                        ? "#ef4444"
+                        : "rgba(239, 68, 68, 0.22)",
+                    border:
+                      stockFilter === "outstock"
+                        ? "2px solid #ffffff"
+                        : "1.5px solid rgba(248, 113, 113, 0.45)",
                     borderRadius: "12px",
                     padding: "8px 16px",
                     display: "flex",
@@ -895,8 +1045,12 @@ const Medicines = () => {
                     alignItems: "center",
                     minWidth: "84px",
                     cursor: "pointer",
-                    transform: stockFilter === "outstock" ? "scale(1.06)" : "scale(1)",
-                    boxShadow: stockFilter === "outstock" ? "0 6px 16px rgba(239, 68, 68, 0.4)" : "none",
+                    transform:
+                      stockFilter === "outstock" ? "scale(1.06)" : "scale(1)",
+                    boxShadow:
+                      stockFilter === "outstock"
+                        ? "0 6px 16px rgba(239, 68, 68, 0.4)"
+                        : "none",
                     transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
                 >
@@ -923,7 +1077,16 @@ const Medicines = () => {
                     {outOfStockCount}
                   </strong>
                   {stockFilter === "outstock" && (
-                    <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#ffffff", marginTop: "1px" }}>✓ Filtered</span>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 800,
+                        color: "#ffffff",
+                        marginTop: "1px",
+                      }}
+                    >
+                      ✓ Filtered
+                    </span>
                   )}
                 </button>
               </div>
@@ -1025,12 +1188,14 @@ const Medicines = () => {
             <div className="rx-text">
               <h3>Have a prescription?</h3>
               <p>
-                Upload your doctor's prescription and our certified pharmacists will prepare your order.
+                Upload your doctor's prescription and our certified pharmacists
+                will prepare your order.
               </p>
 
               {prescriptionFile && (
                 <div className="selected-file-tag">
-                  <Check className="check-sm" /> Selected: {prescriptionFile.name}
+                  <Check className="check-sm" /> Selected:{" "}
+                  {prescriptionFile.name}
                 </div>
               )}
             </div>
@@ -1080,7 +1245,9 @@ const Medicines = () => {
                 <Building2 className="brand-header-icon" />
                 <div>
                   <h2>Select Medicine Brand / Company (कंपनी चुनें)</h2>
-                  <p>Choose any brand below to view all its medicines instantly:</p>
+                  <p>
+                    Choose any brand below to view all its medicines instantly:
+                  </p>
                 </div>
               </div>
 
@@ -1102,10 +1269,18 @@ const Medicines = () => {
             <div className="company-buttons-list">
               {companies.map((compName) => {
                 const isSelected =
-                  (compName === "All" && (company === "All" || company === "All Companies")) ||
+                  (compName === "All" &&
+                    (company === "All" || company === "All Companies")) ||
                   (compName !== "All" &&
                     (company.toLowerCase() === compName.toLowerCase() ||
-                      company.toLowerCase().includes(compName.toLowerCase().replace(" ltd", "").replace(" india", ""))));
+                      company
+                        .toLowerCase()
+                        .includes(
+                          compName
+                            .toLowerCase()
+                            .replace(" ltd", "")
+                            .replace(" india", ""),
+                        )));
 
                 const count = getCompanyMedicineCount(compName);
 
@@ -1128,7 +1303,9 @@ const Medicines = () => {
                       <span className="btn-brand-name">
                         {compName === "All" ? "All Pharma Brands" : compName}
                       </span>
-                      <span className="btn-brand-count">{count} {count === 1 ? "medicine" : "medicines"}</span>
+                      <span className="btn-brand-count">
+                        {count} {count === 1 ? "medicine" : "medicines"}
+                      </span>
                     </div>
                     {isSelected && <Check className="btn-check-icon" />}
                   </button>
@@ -1185,7 +1362,8 @@ const Medicines = () => {
                   <div className="search-dropdown-menu">
                     <div className="search-dropdown-header">
                       <span className="dropdown-title">
-                        <Search className="mini-search-icon" /> Results for "<strong>{search}</strong>"
+                        <Search className="mini-search-icon" /> Results for "
+                        <strong>{search}</strong>"
                       </span>
                       <span className="results-count-pill">
                         {searchSuggestions.length} found
@@ -1202,7 +1380,11 @@ const Medicines = () => {
                           >
                             <div className="sugg-icon-box">
                               {item.image ? (
-                                <img src={item.image} alt={item.name} className="sugg-img" />
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="sugg-img"
+                                />
                               ) : (
                                 <Pill className="sugg-pill-icon" />
                               )}
@@ -1213,9 +1395,13 @@ const Medicines = () => {
                                 <span className="sugg-name">{item.name}</span>
                               </div>
                               <div className="sugg-meta">
-                                <span className="sugg-cat">{item.category || "Healthcare"}</span>
+                                <span className="sugg-cat">
+                                  {item.category || "Healthcare"}
+                                </span>
                                 <span className="sugg-dot">•</span>
-                                <span className="sugg-company">{item.company || "Generic"}</span>
+                                <span className="sugg-company">
+                                  {item.company || "Generic"}
+                                </span>
                               </div>
                             </div>
 
@@ -1225,10 +1411,14 @@ const Medicines = () => {
                               </span>
                               <span
                                 className={`sugg-stock-badge ${
-                                  Number(item.stock) === 0 ? "out-stock" : "in-stock"
+                                  Number(item.stock) === 0
+                                    ? "out-stock"
+                                    : "in-stock"
                                 }`}
                               >
-                                {Number(item.stock) === 0 ? "Out of Stock" : "In Stock"}
+                                {Number(item.stock) === 0
+                                  ? "Out of Stock"
+                                  : "In Stock"}
                               </span>
                             </div>
                           </div>
@@ -1236,7 +1426,9 @@ const Medicines = () => {
                       </div>
                     ) : (
                       <div className="no-suggestions-box">
-                        <p>No medicines found for "<strong>{search}</strong>"</p>
+                        <p>
+                          No medicines found for "<strong>{search}</strong>"
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1288,12 +1480,23 @@ const Medicines = () => {
             </div>
 
             {/* Active Filters Bar */}
-            {(category !== "All" || company !== "All" || search || stockFilter !== "all") && (
+            {(category !== "All" ||
+              company !== "All" ||
+              search ||
+              stockFilter !== "all") && (
               <div className="active-filters-bar">
                 <span className="active-filters-title">Selected Filters:</span>
                 {stockFilter !== "all" && (
-                  <span className="filter-tag" style={{ background: "#ecfdf5", borderColor: "#6ee7b7", color: "#065f46" }}>
-                    Stock: <strong>
+                  <span
+                    className="filter-tag"
+                    style={{
+                      background: "#ecfdf5",
+                      borderColor: "#6ee7b7",
+                      color: "#065f46",
+                    }}
+                  >
+                    Stock:{" "}
+                    <strong>
                       {stockFilter === "instock" && "In Stock Medicines"}
                       {stockFilter === "lowstock" && "Low Stock Alert"}
                       {stockFilter === "outstock" && "Out of Stock"}
@@ -1306,7 +1509,13 @@ const Medicines = () => {
                 {company !== "All" && (
                   <span className="filter-tag">
                     Company: <strong>{company}</strong>
-                    <button type="button" onClick={() => { setCompany("All"); setSearchParams({}); }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCompany("All");
+                        setSearchParams({});
+                      }}
+                    >
                       <X className="tag-x" />
                     </button>
                   </span>
@@ -1420,8 +1629,17 @@ const Medicines = () => {
           <>
             <div className="result-header" id="medicines-catalog-section">
               <div className="result-count">
-                Showing <strong>{filteredMedicines.length === 0 ? 0 : indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredMedicines.length)}</strong> of <strong>{filteredMedicines.length}</strong> medicines
-                {totalPages > 1 && <span style={{ color: "#64748b", marginLeft: "8px" }}>(Page {currentPage} of {totalPages})</span>}
+                Showing{" "}
+                <strong>
+                  {filteredMedicines.length === 0 ? 0 : indexOfFirstItem + 1} -{" "}
+                  {Math.min(indexOfLastItem, filteredMedicines.length)}
+                </strong>{" "}
+                of <strong>{filteredMedicines.length}</strong> medicines
+                {totalPages > 1 && (
+                  <span style={{ color: "#64748b", marginLeft: "8px" }}>
+                    (Page {currentPage} of {totalPages})
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1437,14 +1655,14 @@ const Medicines = () => {
                     stockFilter === "instock"
                       ? "#ecfdf5"
                       : stockFilter === "lowstock"
-                      ? "#fefce8"
-                      : "#fef2f2",
+                        ? "#fefce8"
+                        : "#fef2f2",
                   border:
                     stockFilter === "instock"
                       ? "1.5px solid #6ee7b7"
                       : stockFilter === "lowstock"
-                      ? "1.5px solid #fde047"
-                      : "1.5px solid #fca5a5",
+                        ? "1.5px solid #fde047"
+                        : "1.5px solid #fca5a5",
                   padding: "10px 18px",
                   borderRadius: "12px",
                   marginBottom: "16px",
@@ -1452,19 +1670,26 @@ const Medicines = () => {
                     stockFilter === "instock"
                       ? "#065f46"
                       : stockFilter === "lowstock"
-                      ? "#854d0e"
-                      : "#991b1b",
+                        ? "#854d0e"
+                        : "#991b1b",
                   fontWeight: 700,
                   fontSize: "14px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
                   <span>
-                    {stockFilter === "instock" && "🟢 Stock Filter: In-Stock Medicines"}
-                    {stockFilter === "lowstock" && "🟡 Stock Filter: Low-Stock Alert Medicines"}
-                    {stockFilter === "outstock" && "🔴 Stock Filter: Out-of-Stock Medicines"}
+                    {stockFilter === "instock" &&
+                      "🟢 Stock Filter: In-Stock Medicines"}
+                    {stockFilter === "lowstock" &&
+                      "🟡 Stock Filter: Low-Stock Alert Medicines"}
+                    {stockFilter === "outstock" &&
+                      "🔴 Stock Filter: Out-of-Stock Medicines"}
                   </span>
-                  <span style={{ fontSize: "12px", opacity: 0.85 }}>({filteredMedicines.length} medicines)</span>
+                  <span style={{ fontSize: "12px", opacity: 0.85 }}>
+                    ({filteredMedicines.length} medicines)
+                  </span>
                 </div>
 
                 <button
@@ -1496,9 +1721,13 @@ const Medicines = () => {
                   {stockFilter === "all" && "No medicines found"}
                 </h2>
                 <p>
-                  {stockFilter === "outstock" && "Great! All medicines currently in your catalog have stock available. (Kisi bhi medicine ko out-of-stock test karne ke liye 'Edit Stock' par click karke stock 0 set karein)."}
-                  {stockFilter === "lowstock" && "All medicines currently have stock above the minimum alert threshold."}
-                  {stockFilter !== "outstock" && stockFilter !== "lowstock" && "Try searching for a different medicine name, brand or category."}
+                  {stockFilter === "outstock" &&
+                    "Great! All medicines currently in your catalog have stock available. (Kisi bhi medicine ko out-of-stock test karne ke liye 'Edit Stock' par click karke stock 0 set karein)."}
+                  {stockFilter === "lowstock" &&
+                    "All medicines currently have stock above the minimum alert threshold."}
+                  {stockFilter !== "outstock" &&
+                    stockFilter !== "lowstock" &&
+                    "Try searching for a different medicine name, brand or category."}
                 </p>
 
                 <button
@@ -1559,13 +1788,15 @@ const Medicines = () => {
 
                             {outOfStock && (
                               <div className="medicine-stock stock-out">
-                                <AlertCircle className="stock-icon" /> Out of stock
+                                <AlertCircle className="stock-icon" /> Out of
+                                stock
                               </div>
                             )}
 
                             {!outOfStock && lowStock && (
                               <div className="medicine-stock stock-low">
-                                <AlertTriangle className="stock-icon" /> Only {stock} left
+                                <AlertTriangle className="stock-icon" /> Only{" "}
+                                {stock} left
                               </div>
                             )}
 
@@ -1584,87 +1815,113 @@ const Medicines = () => {
                             >
                               <span>Out of Stock</span>
                             </button>
-                          ) : (() => {
-                            const cartItem = cart?.find((item) => item._id === medicine._id);
-                            const cartQty = cartItem ? cartItem.quantity : 0;
+                          ) : (
+                            (() => {
+                              const cartItem = cart?.find(
+                                (item) => item._id === medicine._id,
+                              );
+                              const cartQty = cartItem ? cartItem.quantity : 0;
 
-                            if (cartQty > 0) {
-                              return (
-                                <div className="card-cart-active-box">
-                                  <div className="card-qty-control-wrapper">
+                              if (cartQty > 0) {
+                                return (
+                                  <div className="card-cart-active-box">
+                                    <div className="card-qty-control-wrapper">
+                                      <button
+                                        type="button"
+                                        className="card-qty-btn decrease-btn"
+                                        onClick={() =>
+                                          decreaseQuantity(medicine._id)
+                                        }
+                                        title="Decrease quantity"
+                                      >
+                                        <Minus className="qty-btn-icon" />
+                                      </button>
+
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max={
+                                          medicine.stock
+                                            ? Number(medicine.stock)
+                                            : 999
+                                        }
+                                        className="card-qty-input"
+                                        value={cartQty}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          if (val === "") return;
+                                          const parsed = parseInt(val, 10);
+                                          if (!isNaN(parsed)) {
+                                            const maxStock = medicine.stock
+                                              ? Number(medicine.stock)
+                                              : 999;
+                                            updateQuantity(
+                                              medicine._id,
+                                              Math.min(
+                                                Math.max(0, parsed),
+                                                maxStock,
+                                              ),
+                                            );
+                                          }
+                                        }}
+                                        onBlur={(e) => {
+                                          if (
+                                            !e.target.value ||
+                                            parseInt(e.target.value, 10) <= 0
+                                          ) {
+                                            removeFromCart(medicine._id);
+                                          }
+                                        }}
+                                        title="Click to type quantity manually"
+                                      />
+
+                                      <button
+                                        type="button"
+                                        className="card-qty-btn increase-btn"
+                                        onClick={() => {
+                                          const maxStock = medicine.stock
+                                            ? Number(medicine.stock)
+                                            : 999;
+                                          if (cartQty < maxStock) {
+                                            increaseQuantity(medicine._id);
+                                          }
+                                        }}
+                                        disabled={Boolean(
+                                          medicine.stock &&
+                                          cartQty >= Number(medicine.stock),
+                                        )}
+                                        title="Increase quantity"
+                                      >
+                                        <Plus className="qty-btn-icon" />
+                                      </button>
+                                    </div>
+
                                     <button
                                       type="button"
-                                      className="card-qty-btn decrease-btn"
-                                      onClick={() => decreaseQuantity(medicine._id)}
-                                      title="Decrease quantity"
+                                      className="card-go-cart-btn"
+                                      onClick={() => navigate("/cart")}
+                                      title="Go to Cart"
                                     >
-                                      <Minus className="qty-btn-icon" />
-                                    </button>
-
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      max={medicine.stock ? Number(medicine.stock) : 999}
-                                      className="card-qty-input"
-                                      value={cartQty}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === "") return;
-                                        const parsed = parseInt(val, 10);
-                                        if (!isNaN(parsed)) {
-                                          const maxStock = medicine.stock ? Number(medicine.stock) : 999;
-                                          updateQuantity(medicine._id, Math.min(Math.max(0, parsed), maxStock));
-                                        }
-                                      }}
-                                      onBlur={(e) => {
-                                        if (!e.target.value || parseInt(e.target.value, 10) <= 0) {
-                                          removeFromCart(medicine._id);
-                                        }
-                                      }}
-                                      title="Click to type quantity manually"
-                                    />
-
-                                    <button
-                                      type="button"
-                                      className="card-qty-btn increase-btn"
-                                      onClick={() => {
-                                        const maxStock = medicine.stock ? Number(medicine.stock) : 999;
-                                        if (cartQty < maxStock) {
-                                          increaseQuantity(medicine._id);
-                                        }
-                                      }}
-                                      disabled={Boolean(medicine.stock && cartQty >= Number(medicine.stock))}
-                                      title="Increase quantity"
-                                    >
-                                      <Plus className="qty-btn-icon" />
+                                      <ShoppingCart className="go-cart-icon" />
+                                      <span>Go to Cart</span>
+                                      <ArrowRight className="go-cart-arrow" />
                                     </button>
                                   </div>
+                                );
+                              }
 
-                                  <button
-                                    type="button"
-                                    className="card-go-cart-btn"
-                                    onClick={() => navigate("/cart")}
-                                    title="Go to Cart"
-                                  >
-                                    <ShoppingCart className="go-cart-icon" />
-                                    <span>Go to Cart</span>
-                                    <ArrowRight className="go-cart-arrow" />
-                                  </button>
-                                </div>
+                              return (
+                                <button
+                                  type="button"
+                                  className="add-cart-button"
+                                  onClick={() => handleAddToCart(medicine)}
+                                >
+                                  <ShoppingCart className="btn-cart-svg" />
+                                  <span>Add to Cart</span>
+                                </button>
                               );
-                            }
-
-                            return (
-                              <button
-                                type="button"
-                                className="add-cart-button"
-                                onClick={() => handleAddToCart(medicine)}
-                              >
-                                <ShoppingCart className="btn-cart-svg" />
-                                <span>Add to Cart</span>
-                              </button>
-                            );
-                          })()}
+                            })()
+                          )}
 
                           {/* ADMIN EDIT & DELETE ACTIONS (ADMIN ONLY) */}
                           {isAdmin && (
@@ -1700,7 +1957,9 @@ const Medicines = () => {
                                   transition: "all 0.2s ease",
                                 }}
                               >
-                                <Edit style={{ width: "14px", height: "14px" }} />
+                                <Edit
+                                  style={{ width: "14px", height: "14px" }}
+                                />
                                 <span>Edit Stock</span>
                               </button>
 
@@ -1725,7 +1984,9 @@ const Medicines = () => {
                                   transition: "all 0.2s ease",
                                 }}
                               >
-                                <Trash2 style={{ width: "15px", height: "15px" }} />
+                                <Trash2
+                                  style={{ width: "15px", height: "15px" }}
+                                />
                               </button>
                             </div>
                           )}
@@ -1739,7 +2000,9 @@ const Medicines = () => {
                 {totalPages > 1 && (
                   <div className="pagination-wrapper">
                     <div className="pagination-info">
-                      Showing page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> ({filteredMedicines.length} total medicines)
+                      Showing page <strong>{currentPage}</strong> of{" "}
+                      <strong>{totalPages}</strong> ({filteredMedicines.length}{" "}
+                      total medicines)
                     </div>
 
                     <div className="pagination-controls">
@@ -1754,7 +2017,10 @@ const Medicines = () => {
                       </button>
 
                       <div className="page-numbers">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        {Array.from(
+                          { length: totalPages },
+                          (_, i) => i + 1,
+                        ).map((pageNum) => (
                           <button
                             key={pageNum}
                             type="button"
@@ -1834,7 +2100,10 @@ const Medicines = () => {
               </div>
               <div className="floating-cart-details">
                 <div className="floating-cart-title">
-                  <strong>{cartCount} {cartCount === 1 ? "item" : "items"}</strong> in cart
+                  <strong>
+                    {cartCount} {cartCount === 1 ? "item" : "items"}
+                  </strong>{" "}
+                  in cart
                 </div>
                 <div className="floating-cart-price">
                   Subtotal: <strong>₹{cartTotal.toFixed(2)}</strong>
@@ -1859,4 +2128,3 @@ const Medicines = () => {
 };
 
 export default Medicines;
-

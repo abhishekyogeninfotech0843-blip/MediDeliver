@@ -25,7 +25,7 @@ import {
   X,
   ChevronRight,
   Sparkle,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import api from "../api/api";
 import { useCart } from "../context/CartContext";
@@ -49,7 +49,7 @@ const Home = () => {
   const searchRef = useRef(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -96,7 +96,10 @@ const Home = () => {
 
     window.addEventListener("deliveryLocationUpdated", handleLocationEvent);
     return () => {
-      window.removeEventListener("deliveryLocationUpdated", handleLocationEvent);
+      window.removeEventListener(
+        "deliveryLocationUpdated",
+        handleLocationEvent,
+      );
     };
   }, []);
 
@@ -109,7 +112,10 @@ const Home = () => {
           setMedicinesList(res.data.medicines);
         }
       } catch (err) {
-        console.log("Could not load medicines catalog for search suggestions:", err);
+        console.log(
+          "Could not load medicines catalog for search suggestions:",
+          err,
+        );
       }
     };
     fetchMeds();
@@ -145,35 +151,192 @@ const Home = () => {
   };
 
   const fallbackCatalog = [
-    { name: "Amoxicillin 500mg", company: "Cipla Ltd", category: "Medicines", sellingPrice: 85, stock: 60 },
-    { name: "Azithromycin 500mg (Azee)", company: "Cipla Ltd", category: "Medicines", sellingPrice: 120, stock: 45 },
-    { name: "Brufen 400mg Tablet", company: "Abbott India", category: "Medicines", sellingPrice: 38, stock: 90 },
-    { name: "Betadine 10% Ointment", company: "Win-Medicare", category: "Personal Care", sellingPrice: 110, stock: 35 },
-    { name: "Benadryl Cough Syrup (100ml)", company: "Johnson & Johnson", category: "Medicines", sellingPrice: 135, stock: 50 },
-    { name: "Becosules Z Capsules", company: "Pfizer", category: "Vitamins & Supplements", sellingPrice: 52, stock: 120 },
-    { name: "Baby Dove Rich Moisture Lotion", company: "Hindustan Unilever", category: "Baby Care", sellingPrice: 220, stock: 30 },
-    { name: "Cetirizine 10mg (Cetzine)", company: "Dr. Reddy's", category: "Medicines", sellingPrice: 22, stock: 150 },
-    { name: "Crocin 650 Advance", company: "GSK Consumer", category: "Medicines", sellingPrice: 32, stock: 140 },
-    { name: "Digene Gel Acidity Relief (200ml)", company: "Abbott", category: "Medicines", sellingPrice: 165, stock: 60 },
-    { name: "Dolo 650mg Paracetamol", company: "Micro Labs Ltd", category: "Medicines", sellingPrice: 30, stock: 200 },
-    { name: "Dettol Antiseptic Liquid (500ml)", company: "Reckitt", category: "Personal Care", sellingPrice: 185, stock: 80 },
-    { name: "Evion 400mg Vitamin E", company: "Merck", category: "Vitamins & Supplements", sellingPrice: 78, stock: 95 },
-    { name: "Gelusil MPS Antacid Syrup", company: "Pfizer", category: "Medicines", sellingPrice: 140, stock: 40 },
-    { name: "Himalaya Liv.52 DS Tablets", company: "Himalaya Wellness", category: "Medicines", sellingPrice: 195, stock: 75 },
-    { name: "Ibuprofen & Paracetamol (Combiflam)", company: "Sanofi", category: "Medicines", sellingPrice: 48, stock: 110 },
-    { name: "Limcee Vitamin C 500mg", company: "Abbott", category: "Vitamins & Supplements", sellingPrice: 25, stock: 180 },
-    { name: "Metformin 500mg Glycomet", company: "USV Ltd", category: "Diabetes Care", sellingPrice: 45, stock: 85 },
-    { name: "Montair-LC Tablet", company: "Cipla Ltd", category: "Medicines", sellingPrice: 198, stock: 65 },
-    { name: "Neurobion Forte Tablet", company: "Procter & Gamble", category: "Vitamins & Supplements", sellingPrice: 38, stock: 130 },
-    { name: "Omeprazole 20mg (Omez)", company: "Dr. Reddy's", category: "Medicines", sellingPrice: 62, stock: 90 },
-    { name: "Pantoprazole 40mg (Pan 40)", company: "Alkem Laboratories", category: "Medicines", sellingPrice: 115, stock: 80 },
-    { name: "Shelcal 500 Calcium Tablets", company: "Torrent Pharma", category: "Vitamins & Supplements", sellingPrice: 125, stock: 70 },
-    { name: "Telmisartan 40mg (Telma)", company: "Glenmark", category: "Heart Care", sellingPrice: 145, stock: 55 },
-    { name: "Volini Pain Relief Gel (50g)", company: "Sun Pharma", category: "Personal Care", sellingPrice: 155, stock: 60 },
-    { name: "Zifi 200 Cefixime Tablet", company: "FDC Ltd", category: "Medicines", sellingPrice: 112, stock: 40 },
+    {
+      name: "Amoxicillin 500mg",
+      company: "Cipla Ltd",
+      category: "Medicines",
+      sellingPrice: 85,
+      stock: 60,
+    },
+    {
+      name: "Azithromycin 500mg (Azee)",
+      company: "Cipla Ltd",
+      category: "Medicines",
+      sellingPrice: 120,
+      stock: 45,
+    },
+    {
+      name: "Brufen 400mg Tablet",
+      company: "Abbott India",
+      category: "Medicines",
+      sellingPrice: 38,
+      stock: 90,
+    },
+    {
+      name: "Betadine 10% Ointment",
+      company: "Win-Medicare",
+      category: "Personal Care",
+      sellingPrice: 110,
+      stock: 35,
+    },
+    {
+      name: "Benadryl Cough Syrup (100ml)",
+      company: "Johnson & Johnson",
+      category: "Medicines",
+      sellingPrice: 135,
+      stock: 50,
+    },
+    {
+      name: "Becosules Z Capsules",
+      company: "Pfizer",
+      category: "Vitamins & Supplements",
+      sellingPrice: 52,
+      stock: 120,
+    },
+    {
+      name: "Baby Dove Rich Moisture Lotion",
+      company: "Hindustan Unilever",
+      category: "Baby Care",
+      sellingPrice: 220,
+      stock: 30,
+    },
+    {
+      name: "Cetirizine 10mg (Cetzine)",
+      company: "Dr. Reddy's",
+      category: "Medicines",
+      sellingPrice: 22,
+      stock: 150,
+    },
+    {
+      name: "Crocin 650 Advance",
+      company: "GSK Consumer",
+      category: "Medicines",
+      sellingPrice: 32,
+      stock: 140,
+    },
+    {
+      name: "Digene Gel Acidity Relief (200ml)",
+      company: "Abbott",
+      category: "Medicines",
+      sellingPrice: 165,
+      stock: 60,
+    },
+    {
+      name: "Dolo 650mg Paracetamol",
+      company: "Micro Labs Ltd",
+      category: "Medicines",
+      sellingPrice: 30,
+      stock: 200,
+    },
+    {
+      name: "Dettol Antiseptic Liquid (500ml)",
+      company: "Reckitt",
+      category: "Personal Care",
+      sellingPrice: 185,
+      stock: 80,
+    },
+    {
+      name: "Evion 400mg Vitamin E",
+      company: "Merck",
+      category: "Vitamins & Supplements",
+      sellingPrice: 78,
+      stock: 95,
+    },
+    {
+      name: "Gelusil MPS Antacid Syrup",
+      company: "Pfizer",
+      category: "Medicines",
+      sellingPrice: 140,
+      stock: 40,
+    },
+    {
+      name: "Himalaya Liv.52 DS Tablets",
+      company: "Himalaya Wellness",
+      category: "Medicines",
+      sellingPrice: 195,
+      stock: 75,
+    },
+    {
+      name: "Ibuprofen & Paracetamol (Combiflam)",
+      company: "Sanofi",
+      category: "Medicines",
+      sellingPrice: 48,
+      stock: 110,
+    },
+    {
+      name: "Limcee Vitamin C 500mg",
+      company: "Abbott",
+      category: "Vitamins & Supplements",
+      sellingPrice: 25,
+      stock: 180,
+    },
+    {
+      name: "Metformin 500mg Glycomet",
+      company: "USV Ltd",
+      category: "Diabetes Care",
+      sellingPrice: 45,
+      stock: 85,
+    },
+    {
+      name: "Montair-LC Tablet",
+      company: "Cipla Ltd",
+      category: "Medicines",
+      sellingPrice: 198,
+      stock: 65,
+    },
+    {
+      name: "Neurobion Forte Tablet",
+      company: "Procter & Gamble",
+      category: "Vitamins & Supplements",
+      sellingPrice: 38,
+      stock: 130,
+    },
+    {
+      name: "Omeprazole 20mg (Omez)",
+      company: "Dr. Reddy's",
+      category: "Medicines",
+      sellingPrice: 62,
+      stock: 90,
+    },
+    {
+      name: "Pantoprazole 40mg (Pan 40)",
+      company: "Alkem Laboratories",
+      category: "Medicines",
+      sellingPrice: 115,
+      stock: 80,
+    },
+    {
+      name: "Shelcal 500 Calcium Tablets",
+      company: "Torrent Pharma",
+      category: "Vitamins & Supplements",
+      sellingPrice: 125,
+      stock: 70,
+    },
+    {
+      name: "Telmisartan 40mg (Telma)",
+      company: "Glenmark",
+      category: "Heart Care",
+      sellingPrice: 145,
+      stock: 55,
+    },
+    {
+      name: "Volini Pain Relief Gel (50g)",
+      company: "Sun Pharma",
+      category: "Personal Care",
+      sellingPrice: 155,
+      stock: 60,
+    },
+    {
+      name: "Zifi 200 Cefixime Tablet",
+      company: "FDC Ltd",
+      category: "Medicines",
+      sellingPrice: 112,
+      stock: 40,
+    },
   ];
 
-  const allAvailableMeds = medicinesList.length > 0 ? medicinesList : fallbackCatalog;
+  const allAvailableMeds =
+    medicinesList.length > 0 ? medicinesList : fallbackCatalog;
   const qClean = searchQuery.trim().toLowerCase();
   const searchSuggestions = qClean
     ? allAvailableMeds
@@ -181,13 +344,17 @@ const Home = () => {
           const name = (med.name || "").toLowerCase();
           const comp = (med.company || "").toLowerCase();
           const cat = (med.category || "").toLowerCase();
-          return name.includes(qClean) || comp.includes(qClean) || cat.includes(qClean);
+          return (
+            name.includes(qClean) ||
+            comp.includes(qClean) ||
+            cat.includes(qClean)
+          );
         })
         .slice(0, 7)
     : [];
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     setUser(null);
     navigate("/login");
   };
@@ -195,7 +362,10 @@ const Home = () => {
   const categories = [
     { icon: <Pill className="cat-icon-svg" />, name: "Medicines" },
     { icon: <Stethoscope className="cat-icon-svg" />, name: "Diabetes Care" },
-    { icon: <Dumbbell className="cat-icon-svg" />, name: "Vitamins & Supplements" },
+    {
+      icon: <Dumbbell className="cat-icon-svg" />,
+      name: "Vitamins & Supplements",
+    },
     { icon: <Sparkles className="cat-icon-svg" />, name: "Personal Care" },
     { icon: <Baby className="cat-icon-svg" />, name: "Baby Care" },
     { icon: <Heart className="cat-icon-svg" />, name: "Heart Care" },
@@ -350,10 +520,12 @@ const Home = () => {
               <div className="search-dropdown-menu">
                 <div className="search-dropdown-header">
                   <span className="dropdown-title">
-                    <Search className="mini-search-icon" /> Results for "<strong>{searchQuery}</strong>"
+                    <Search className="mini-search-icon" /> Results for "
+                    <strong>{searchQuery}</strong>"
                   </span>
                   <span className="results-count-pill">
-                    {searchSuggestions.length} {searchSuggestions.length === 1 ? "match" : "matches"}
+                    {searchSuggestions.length}{" "}
+                    {searchSuggestions.length === 1 ? "match" : "matches"}
                   </span>
                 </div>
 
@@ -367,7 +539,11 @@ const Home = () => {
                       >
                         <div className="sugg-icon-box">
                           {item.image ? (
-                            <img src={item.image} alt={item.name} className="sugg-img" />
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="sugg-img"
+                            />
                           ) : (
                             <Pill className="sugg-pill-icon" />
                           )}
@@ -378,9 +554,13 @@ const Home = () => {
                             <span className="sugg-name">{item.name}</span>
                           </div>
                           <div className="sugg-meta">
-                            <span className="sugg-cat">{item.category || "Healthcare"}</span>
+                            <span className="sugg-cat">
+                              {item.category || "Healthcare"}
+                            </span>
                             <span className="sugg-dot">•</span>
-                            <span className="sugg-company">{item.company || "Generic"}</span>
+                            <span className="sugg-company">
+                              {item.company || "Generic"}
+                            </span>
                           </div>
                         </div>
 
@@ -390,10 +570,14 @@ const Home = () => {
                           </span>
                           <span
                             className={`sugg-stock-badge ${
-                              Number(item.stock) === 0 ? "out-stock" : "in-stock"
+                              Number(item.stock) === 0
+                                ? "out-stock"
+                                : "in-stock"
                             }`}
                           >
-                            {Number(item.stock) === 0 ? "Out of Stock" : "In Stock"}
+                            {Number(item.stock) === 0
+                              ? "Out of Stock"
+                              : "In Stock"}
                           </span>
                         </div>
                       </div>
@@ -410,7 +594,9 @@ const Home = () => {
                   </div>
                 ) : (
                   <div className="no-suggestions-box">
-                    <p>No medicines found for "<strong>{searchQuery}</strong>"</p>
+                    <p>
+                      No medicines found for "<strong>{searchQuery}</strong>"
+                    </p>
                     <button
                       type="button"
                       className="no-sugg-browse-btn"
@@ -426,7 +612,11 @@ const Home = () => {
 
           <div className="nav-actions">
             {/* CART BUTTON */}
-            <Link to="/cart" className="home-nav-cart-btn" title="View your shopping cart">
+            <Link
+              to="/cart"
+              className="home-nav-cart-btn"
+              title="View your shopping cart"
+            >
               <div className="home-cart-icon-wrapper">
                 <ShoppingCart className="nav-btn-icon" />
                 {cartCount > 0 && (
@@ -439,7 +629,8 @@ const Home = () => {
               )}
             </Link>
 
-            {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+            {(user?.role === "admin" ||
+              user?.email?.toLowerCase().includes("admin")) && (
               <Link to="/dashboard" className="login-btn dashboard-nav-btn">
                 <LayoutDashboard className="nav-btn-icon" />
                 <span>Dashboard</span>
@@ -634,7 +825,10 @@ const Home = () => {
             <div>
               <span className="sub-label">TOP BRANDS</span>
               <h2>Shop by Company / Brand</h2>
-              <p>Explore genuine medicines directly from trusted pharmaceutical manufacturers.</p>
+              <p>
+                Explore genuine medicines directly from trusted pharmaceutical
+                manufacturers.
+              </p>
             </div>
 
             <Link to="/medicines" className="view-all-link">
@@ -651,10 +845,19 @@ const Home = () => {
                 key={comp.name}
               >
                 <div className="company-header">
-                  <div className="company-logo-badge" style={{ backgroundColor: comp.badgeColor }}>
+                  <div
+                    className="company-logo-badge"
+                    style={{ backgroundColor: comp.badgeColor }}
+                  >
                     <Building2 className="company-logo-icon" />
                   </div>
-                  <span className="company-tag" style={{ color: comp.badgeColor, backgroundColor: comp.bgColor }}>
+                  <span
+                    className="company-tag"
+                    style={{
+                      color: comp.badgeColor,
+                      backgroundColor: comp.bgColor,
+                    }}
+                  >
                     {comp.count}
                   </span>
                 </div>
@@ -732,7 +935,8 @@ const Home = () => {
               </div>
               <h3>Genuine Medicines</h3>
               <p>
-                Quality medicines sourced directly from verified pharmacies and certified suppliers.
+                Quality medicines sourced directly from verified pharmacies and
+                certified suppliers.
               </p>
             </div>
 
@@ -742,7 +946,8 @@ const Home = () => {
               </div>
               <h3>Fast Delivery</h3>
               <p>
-                Get your healthcare essentials delivered conveniently to your doorstep with real-time tracking.
+                Get your healthcare essentials delivered conveniently to your
+                doorstep with real-time tracking.
               </p>
             </div>
 
@@ -752,7 +957,8 @@ const Home = () => {
               </div>
               <h3>Secure Payments</h3>
               <p>
-                Multiple safe and encrypted payment options including Razorpay, UPI, Cards, and COD.
+                Multiple safe and encrypted payment options including Razorpay,
+                UPI, Cards, and COD.
               </p>
             </div>
 
@@ -762,7 +968,8 @@ const Home = () => {
               </div>
               <h3>Easy Ordering</h3>
               <p>
-                Simple, fast ordering experience from quick search to hassle-free doorstep delivery.
+                Simple, fast ordering experience from quick search to
+                hassle-free doorstep delivery.
               </p>
             </div>
           </div>
@@ -779,7 +986,9 @@ const Home = () => {
               <br />
               delivered with care.
             </h2>
-            <p>Shop genuine medicines and health products from MediDeliver today.</p>
+            <p>
+              Shop genuine medicines and health products from MediDeliver today.
+            </p>
           </div>
 
           <Link to="/medicines" className="cta-btn">
@@ -794,10 +1003,16 @@ const Home = () => {
         <div className="footer-container">
           <div className="footer-about">
             <Link to="/" className="footer-logo">
-              <img src={logoSvg} alt="MediDeliver Logo" className="footer-logo-img" />
+              <img
+                src={logoSvg}
+                alt="MediDeliver Logo"
+                className="footer-logo-img"
+              />
               Medi<span>Deliver</span>
             </Link>
-            <p>Your trusted 24/7 digital healthcare & medicine delivery partner.</p>
+            <p>
+              Your trusted 24/7 digital healthcare & medicine delivery partner.
+            </p>
           </div>
 
           <div className="footer-column">
@@ -805,7 +1020,8 @@ const Home = () => {
             <Link to="/medicines">Medicines</Link>
             <Link to="/cart">Cart</Link>
             <Link to="/returns">Return Medicine</Link>
-            {(user?.role === "admin" || user?.email?.toLowerCase().includes("admin")) && (
+            {(user?.role === "admin" ||
+              user?.email?.toLowerCase().includes("admin")) && (
               <Link to="/dashboard">Dashboard</Link>
             )}
             <Link to="/login">Login</Link>
@@ -829,7 +1045,8 @@ const Home = () => {
         </div>
 
         <div className="footer-bottom">
-          © 2026 MediDeliver. All rights reserved. Built for fast & reliable healthcare.
+          © 2026 MediDeliver. All rights reserved. Built for fast & reliable
+          healthcare.
         </div>
       </footer>
 

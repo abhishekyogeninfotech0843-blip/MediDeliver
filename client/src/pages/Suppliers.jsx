@@ -104,7 +104,8 @@ const Suppliers = () => {
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedSupplyForPay, setSelectedSupplyForPay] = useState(null);
-  const [selectedSupplyForInvoice, setSelectedSupplyForInvoice] = useState(null);
+  const [selectedSupplyForInvoice, setSelectedSupplyForInvoice] =
+    useState(null);
   const [paymentForm, setPaymentForm] = useState({
     amount: "",
     method: "BANK_TRANSFER",
@@ -118,7 +119,7 @@ const Suppliers = () => {
 
   // Load User
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
@@ -216,7 +217,10 @@ const Suppliers = () => {
     setFormSubmitting(true);
     try {
       if (editingSupplier) {
-        const res = await api.put(`/suppliers/${editingSupplier._id}`, supplierForm);
+        const res = await api.put(
+          `/suppliers/${editingSupplier._id}`,
+          supplierForm,
+        );
         if (res.data?.success) {
           showAlert("Supplier updated successfully! ✅");
         }
@@ -239,7 +243,7 @@ const Suppliers = () => {
   const handleDeleteSupplier = async (id, name) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete supplier "${name}"? This will also remove associated supply history.`
+        `Are you sure you want to delete supplier "${name}"? This will also remove associated supply history.`,
       )
     ) {
       return;
@@ -260,7 +264,7 @@ const Suppliers = () => {
   // ==========================================
   const handleOpenAddSupply = (preselectedSupplierId = "") => {
     setSupplyForm({
-      supplierId: preselectedSupplierId || (suppliers[0]?._id || ""),
+      supplierId: preselectedSupplierId || suppliers[0]?._id || "",
       invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
       purchaseDate: new Date().toISOString().split("T")[0],
       taxAmount: 0,
@@ -276,7 +280,9 @@ const Suppliers = () => {
           companyBrand: "",
           category: "General",
           batchNumber: `BATCH-${Date.now().toString().slice(-4)}`,
-          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
           quantity: 100,
           unitCost: 0,
           mrp: 0,
@@ -296,7 +302,9 @@ const Suppliers = () => {
           companyBrand: "",
           category: "General",
           batchNumber: `BATCH-${Date.now().toString().slice(-4)}`,
-          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
           quantity: 50,
           unitCost: 0,
           mrp: 0,
@@ -350,7 +358,9 @@ const Suppliers = () => {
       return;
     }
 
-    const hasEmptyMed = supplyForm.medicines.some((m) => !m.medicineName?.trim());
+    const hasEmptyMed = supplyForm.medicines.some(
+      (m) => !m.medicineName?.trim(),
+    );
     if (hasEmptyMed) {
       alert("Please enter medicine names for all rows.");
       return;
@@ -373,7 +383,11 @@ const Suppliers = () => {
   };
 
   const handleDeleteSupply = async (id, invoiceNumber) => {
-    if (!window.confirm(`Are you sure you want to delete invoice "${invoiceNumber}"?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete invoice "${invoiceNumber}"?`,
+      )
+    ) {
       return;
     }
     try {
@@ -412,7 +426,7 @@ const Suppliers = () => {
     try {
       const res = await api.post(
         `/suppliers/supplies/${selectedSupplyForPay._id}/payment`,
-        paymentForm
+        paymentForm,
       );
       if (res.data?.success) {
         showAlert(res.data.message || "Payment recorded successfully! 💳");
@@ -439,15 +453,24 @@ const Suppliers = () => {
       (sup.contactPerson || "").toLowerCase().includes(q) ||
       (sup.phone || "").toLowerCase().includes(q) ||
       (sup.gstNumber || "").toLowerCase().includes(q) ||
-      (sup.stats?.suppliedMedicines || []).some((m) => m.toLowerCase().includes(q))
+      (sup.stats?.suppliedMedicines || []).some((m) =>
+        m.toLowerCase().includes(q),
+      )
     );
   });
 
   const filteredSupplies = supplies.filter((sp) => {
-    if (paymentFilter !== "ALL" && (sp.paymentStatus || "").toUpperCase() !== paymentFilter) {
+    if (
+      paymentFilter !== "ALL" &&
+      (sp.paymentStatus || "").toUpperCase() !== paymentFilter
+    ) {
       return false;
     }
-    if (supplierFilter !== "ALL" && sp.supplier?._id !== supplierFilter && sp.supplier !== supplierFilter) {
+    if (
+      supplierFilter !== "ALL" &&
+      sp.supplier?._id !== supplierFilter &&
+      sp.supplier !== supplierFilter
+    ) {
       return false;
     }
     if (!searchQuery.trim()) return true;
@@ -460,7 +483,7 @@ const Suppliers = () => {
         (m) =>
           (m.medicineName || "").toLowerCase().includes(q) ||
           (m.companyBrand || "").toLowerCase().includes(q) ||
-          (m.batchNumber || "").toLowerCase().includes(q)
+          (m.batchNumber || "").toLowerCase().includes(q),
       )
     );
   });
@@ -540,7 +563,8 @@ const Suppliers = () => {
           <div
             style={{
               padding: "14px 20px",
-              background: alertMessage.type === "success" ? "#ecfdf5" : "#fef2f2",
+              background:
+                alertMessage.type === "success" ? "#ecfdf5" : "#fef2f2",
               border: `1px solid ${alertMessage.type === "success" ? "#a7f3d0" : "#fca5a5"}`,
               borderRadius: "12px",
               color: alertMessage.type === "success" ? "#065f46" : "#991b1b",
@@ -564,8 +588,9 @@ const Suppliers = () => {
               <Truck size={28} /> Medicine Suppliers & Stock Inward Ledger
             </h1>
             <p>
-              Manage pharmaceutical vendors (Cipla, Mankind, Sun Pharma, etc.), record incoming
-              medicine supplies & batches, track purchase billings, and monitor remaining payment dues.
+              Manage pharmaceutical vendors (Cipla, Mankind, Sun Pharma, etc.),
+              record incoming medicine supplies & batches, track purchase
+              billings, and monitor remaining payment dues.
             </p>
           </div>
           <div style={{ display: "flex", gap: "12px", zIndex: 1 }}>
@@ -589,7 +614,9 @@ const Suppliers = () => {
             </div>
             <div className="kpi-content">
               <h4>Active Suppliers</h4>
-              <p className="kpi-num">{stats.totalSuppliers || suppliers.length || 0}</p>
+              <p className="kpi-num">
+                {stats.totalSuppliers || suppliers.length || 0}
+              </p>
             </div>
           </div>
 
@@ -600,7 +627,9 @@ const Suppliers = () => {
             </div>
             <div className="kpi-content">
               <h4>Supply Invoices</h4>
-              <p className="kpi-num">{stats.totalInvoices || supplies.length || 0}</p>
+              <p className="kpi-num">
+                {stats.totalInvoices || supplies.length || 0}
+              </p>
             </div>
           </div>
 
@@ -611,7 +640,9 @@ const Suppliers = () => {
             </div>
             <div className="kpi-content">
               <h4>Total Purchases</h4>
-              <p className="kpi-num">₹{Number(stats.totalBilled || 0).toLocaleString("en-IN")}</p>
+              <p className="kpi-num">
+                ₹{Number(stats.totalBilled || 0).toLocaleString("en-IN")}
+              </p>
             </div>
           </div>
 
@@ -717,7 +748,12 @@ const Suppliers = () => {
             {searchQuery && (
               <button
                 type="button"
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#64748b",
+                }}
                 onClick={() => setSearchQuery("")}
               >
                 <X size={16} />
@@ -765,7 +801,10 @@ const Suppliers = () => {
               <div className="empty-suppliers-state">
                 <Building2 className="empty-icon-lg" />
                 <h3>No suppliers found</h3>
-                <p>Add pharmaceutical companies (Cipla, Mankind, etc.) to start managing inward supplies.</p>
+                <p>
+                  Add pharmaceutical companies (Cipla, Mankind, etc.) to start
+                  managing inward supplies.
+                </p>
                 <button
                   type="button"
                   className="action-btn-primary"
@@ -796,8 +835,10 @@ const Suppliers = () => {
                       totalDue: 0,
                       suppliedMedicines: [],
                     };
-                    const isFullyPaid = stats.totalDue === 0 && stats.totalBilled > 0;
-                    const isPartiallyPaid = stats.totalPaid > 0 && stats.totalDue > 0;
+                    const isFullyPaid =
+                      stats.totalDue === 0 && stats.totalBilled > 0;
+                    const isPartiallyPaid =
+                      stats.totalPaid > 0 && stats.totalDue > 0;
 
                     return (
                       <tr key={sup._id}>
@@ -808,79 +849,135 @@ const Suppliers = () => {
                               🏢 {sup.companyName || "Pharmaceutical Co."}
                             </span>
                             {sup.contactPerson && (
-                              <span className="cell-subtext">Contact: {sup.contactPerson}</span>
+                              <span className="cell-subtext">
+                                Contact: {sup.contactPerson}
+                              </span>
                             )}
                           </div>
                         </td>
                         <td>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>📞 {sup.phone}</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "2px",
+                            }}
+                          >
+                            <span
+                              style={{ fontSize: "0.85rem", fontWeight: 600 }}
+                            >
+                              📞 {sup.phone}
+                            </span>
                             {sup.email && (
-                              <span className="cell-subtext">✉️ {sup.email}</span>
+                              <span className="cell-subtext">
+                                ✉️ {sup.email}
+                              </span>
                             )}
                             {sup.address && (
-                              <span className="cell-subtext" style={{ maxWidth: "220px" }}>
+                              <span
+                                className="cell-subtext"
+                                style={{ maxWidth: "220px" }}
+                              >
                                 📍 {sup.address}
                               </span>
                             )}
                           </div>
                         </td>
                         <td>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "3px",
+                            }}
+                          >
                             {sup.gstNumber ? (
-                              <code style={{ fontSize: "0.78rem", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                              <code
+                                style={{
+                                  fontSize: "0.78rem",
+                                  background: "#f1f5f9",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                }}
+                              >
                                 GST: {sup.gstNumber}
                               </code>
                             ) : (
                               <span className="cell-subtext">No GST</span>
                             )}
                             {sup.drugLicenseNumber && (
-                              <small style={{ color: "#64748b", fontSize: "0.72rem" }}>
+                              <small
+                                style={{
+                                  color: "#64748b",
+                                  fontSize: "0.72rem",
+                                }}
+                              >
                                 DL: {sup.drugLicenseNumber}
                               </small>
                             )}
                           </div>
                         </td>
                         <td>
-                          {stats.suppliedMedicines && stats.suppliedMedicines.length > 0 ? (
+                          {stats.suppliedMedicines &&
+                          stats.suppliedMedicines.length > 0 ? (
                             <div className="medicines-chips-list">
-                              {stats.suppliedMedicines.slice(0, 3).map((med, idx) => (
-                                <span key={idx} className="med-chip">
-                                  💊 {med}
-                                </span>
-                              ))}
+                              {stats.suppliedMedicines
+                                .slice(0, 3)
+                                .map((med, idx) => (
+                                  <span key={idx} className="med-chip">
+                                    💊 {med}
+                                  </span>
+                                ))}
                               {stats.suppliedMedicines.length > 3 && (
-                                <span className="med-chip" style={{ background: "#e2e8f0" }}>
+                                <span
+                                  className="med-chip"
+                                  style={{ background: "#e2e8f0" }}
+                                >
                                   +{stats.suppliedMedicines.length - 3} more
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="cell-subtext">No inward bills yet</span>
+                            <span className="cell-subtext">
+                              No inward bills yet
+                            </span>
                           )}
                         </td>
                         <td>
                           <div className="ledger-amounts-cell">
                             <span className="ledger-billed">
-                              Billed: ₹{Number(stats.totalBilled).toLocaleString("en-IN")}
+                              Billed: ₹
+                              {Number(stats.totalBilled).toLocaleString(
+                                "en-IN",
+                              )}
                             </span>
                             <span className="ledger-paid">
-                              Paid: ₹{Number(stats.totalPaid).toLocaleString("en-IN")}
+                              Paid: ₹
+                              {Number(stats.totalPaid).toLocaleString("en-IN")}
                             </span>
                             <span className="ledger-due">
-                              Baki Due: ₹{Number(stats.totalDue).toLocaleString("en-IN")}
+                              Baki Due: ₹
+                              {Number(stats.totalDue).toLocaleString("en-IN")}
                             </span>
                           </div>
                         </td>
                         <td>
                           {stats.totalBilled === 0 ? (
-                            <span className="badge-status inactive">No Bills</span>
+                            <span className="badge-status inactive">
+                              No Bills
+                            </span>
                           ) : isFullyPaid ? (
-                            <span className="badge-status paid">✅ All Paid</span>
+                            <span className="badge-status paid">
+                              ✅ All Paid
+                            </span>
                           ) : isPartiallyPaid ? (
-                            <span className="badge-status partial">⚠️ Part Due</span>
+                            <span className="badge-status partial">
+                              ⚠️ Part Due
+                            </span>
                           ) : (
-                            <span className="badge-status unpaid">🛑 Full Due</span>
+                            <span className="badge-status unpaid">
+                              🛑 Full Due
+                            </span>
                           )}
                         </td>
                         <td>
@@ -904,7 +1001,9 @@ const Suppliers = () => {
                             <button
                               type="button"
                               className="btn-icon-action delete"
-                              onClick={() => handleDeleteSupplier(sup._id, sup.name)}
+                              onClick={() =>
+                                handleDeleteSupplier(sup._id, sup.name)
+                              }
                               title="Delete Supplier"
                             >
                               <Trash2 size={15} />
@@ -929,7 +1028,10 @@ const Suppliers = () => {
               <div className="empty-suppliers-state">
                 <Package className="empty-icon-lg" />
                 <h3>No inward stock invoices match your filter</h3>
-                <p>Record invoices when new medicine stocks arrive from companies.</p>
+                <p>
+                  Record invoices when new medicine stocks arrive from
+                  companies.
+                </p>
                 <button
                   type="button"
                   className="action-btn-primary"
@@ -955,34 +1057,59 @@ const Suppliers = () => {
                   {filteredSupplies.map((sp) => (
                     <tr key={sp._id}>
                       <td>
-                        <strong style={{ color: "#0f172a", fontSize: "0.95rem" }}>
+                        <strong
+                          style={{ color: "#0f172a", fontSize: "0.95rem" }}
+                        >
                           #{sp.invoiceNumber}
                         </strong>
                         <br />
                         <small style={{ color: "#64748b" }}>
-                          📅 {new Date(sp.purchaseDate).toLocaleDateString("en-IN")}
+                          📅{" "}
+                          {new Date(sp.purchaseDate).toLocaleDateString(
+                            "en-IN",
+                          )}
                         </small>
                       </td>
                       <td>
-                        <strong style={{ color: "#0f172a" }}>{sp.supplierName}</strong>
+                        <strong style={{ color: "#0f172a" }}>
+                          {sp.supplierName}
+                        </strong>
                         <br />
                         <span className="supplier-company-tag">
                           🏢 {sp.companyName || "Pharma"}
                         </span>
                       </td>
                       <td>
-                        <div className="medicines-chips-list" style={{ maxWidth: "360px" }}>
+                        <div
+                          className="medicines-chips-list"
+                          style={{ maxWidth: "360px" }}
+                        >
                           {(sp.medicines || []).map((med, idx) => (
-                            <div key={idx} className="med-chip" style={{ width: "100%", justifyContent: "space-between" }}>
+                            <div
+                              key={idx}
+                              className="med-chip"
+                              style={{
+                                width: "100%",
+                                justifyContent: "space-between",
+                              }}
+                            >
                               <div>
                                 <strong>💊 {med.medicineName}</strong>
                                 {med.companyBrand && (
-                                  <span style={{ fontSize: "0.7rem", color: "#64748b", marginLeft: "4px" }}>
+                                  <span
+                                    style={{
+                                      fontSize: "0.7rem",
+                                      color: "#64748b",
+                                      marginLeft: "4px",
+                                    }}
+                                  >
                                     ({med.companyBrand})
                                   </span>
                                 )}
                                 <br />
-                                <small style={{ color: "#0d9488", fontWeight: 700 }}>
+                                <small
+                                  style={{ color: "#0d9488", fontWeight: 700 }}
+                                >
                                   Batch: {med.batchNumber}
                                 </small>{" "}
                                 |{" "}
@@ -991,9 +1118,13 @@ const Suppliers = () => {
                                 </small>
                               </div>
                               <div style={{ textAlign: "right" }}>
-                                <span className="med-qty-badge">{med.quantity} Units</span>
+                                <span className="med-qty-badge">
+                                  {med.quantity} Units
+                                </span>
                                 <br />
-                                <small style={{ fontWeight: 700, color: "#0f172a" }}>
+                                <small
+                                  style={{ fontWeight: 700, color: "#0f172a" }}
+                                >
                                   @₹{med.unitCost} = ₹{med.totalCost}
                                 </small>
                               </div>
@@ -1003,17 +1134,28 @@ const Suppliers = () => {
                       </td>
                       <td>
                         <div className="ledger-amounts-cell">
-                          <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
+                          <span
+                            style={{ fontSize: "0.85rem", fontWeight: 700 }}
+                          >
                             Subtotal: ₹{Number(sp.totalAmount || 0).toFixed(2)}
                           </span>
                           {sp.taxAmount > 0 && (
-                            <small style={{ color: "#64748b" }}>+ Tax: ₹{sp.taxAmount}</small>
+                            <small style={{ color: "#64748b" }}>
+                              + Tax: ₹{sp.taxAmount}
+                            </small>
                           )}
                           {sp.discountAmount > 0 && (
-                            <small style={{ color: "#16a34a" }}>- Disc: ₹{sp.discountAmount}</small>
+                            <small style={{ color: "#16a34a" }}>
+                              - Disc: ₹{sp.discountAmount}
+                            </small>
                           )}
-                          <strong style={{ color: "#0d9488", fontSize: "0.95rem" }}>
-                            Total: ₹{Number(sp.grandTotal || sp.totalAmount || 0).toFixed(2)}
+                          <strong
+                            style={{ color: "#0d9488", fontSize: "0.95rem" }}
+                          >
+                            Total: ₹
+                            {Number(
+                              sp.grandTotal || sp.totalAmount || 0,
+                            ).toFixed(2)}
                           </strong>
                         </div>
                       </td>
@@ -1026,7 +1168,9 @@ const Suppliers = () => {
                             Baki Due: ₹{Number(sp.dueAmount || 0).toFixed(2)}
                           </span>
                           {sp.paymentMethod && (
-                            <small style={{ color: "#64748b", fontSize: "0.72rem" }}>
+                            <small
+                              style={{ color: "#64748b", fontSize: "0.72rem" }}
+                            >
                               Mode: {sp.paymentMethod.replace("_", " ")}
                             </small>
                           )}
@@ -1036,7 +1180,9 @@ const Suppliers = () => {
                         {sp.paymentStatus === "PAID" ? (
                           <span className="badge-status paid">✅ Paid</span>
                         ) : sp.paymentStatus === "PARTIAL" ? (
-                          <span className="badge-status partial">⚠️ Partial</span>
+                          <span className="badge-status partial">
+                            ⚠️ Partial
+                          </span>
                         ) : (
                           <span className="badge-status unpaid">🛑 Unpaid</span>
                         )}
@@ -1046,7 +1192,11 @@ const Suppliers = () => {
                           <button
                             type="button"
                             className="btn-quick-pay"
-                            style={{ background: "#f0fdfa", borderColor: "#99f6e4", color: "#0d9488" }}
+                            style={{
+                              background: "#f0fdfa",
+                              borderColor: "#99f6e4",
+                              color: "#0d9488",
+                            }}
                             onClick={() => setSelectedSupplyForInvoice(sp)}
                             title="View & Print Official Supplier Tax Invoice (Bill)"
                           >
@@ -1066,7 +1216,9 @@ const Suppliers = () => {
                           <button
                             type="button"
                             className="btn-icon-action delete"
-                            onClick={() => handleDeleteSupply(sp._id, sp.invoiceNumber)}
+                            onClick={() =>
+                              handleDeleteSupply(sp._id, sp.invoiceNumber)
+                            }
                             title="Delete supply record"
                           >
                             <Trash2 size={15} />
@@ -1090,7 +1242,10 @@ const Suppliers = () => {
               <div className="empty-suppliers-state">
                 <CreditCard className="empty-icon-lg" />
                 <h3>No payment transactions recorded yet</h3>
-                <p>When you record payments against inward stock invoices, they will show up here.</p>
+                <p>
+                  When you record payments against inward stock invoices, they
+                  will show up here.
+                </p>
               </div>
             ) : (
               <table className="suppliers-table">
@@ -1109,23 +1264,39 @@ const Suppliers = () => {
                   {allPayments.map((p, idx) => (
                     <tr key={idx}>
                       <td>
-                        <strong>{new Date(p.date).toLocaleDateString("en-IN")}</strong>
+                        <strong>
+                          {new Date(p.date).toLocaleDateString("en-IN")}
+                        </strong>
                         <br />
                         <small style={{ color: "#64748b" }}>
-                          {new Date(p.date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(p.date).toLocaleTimeString("en-IN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </small>
                       </td>
                       <td>
                         <strong>{p.supplierName}</strong>
                         <br />
-                        <span className="supplier-company-tag">🏢 {p.companyName}</span>
+                        <span className="supplier-company-tag">
+                          🏢 {p.companyName}
+                        </span>
                       </td>
                       <td>
                         <strong
-                          style={{ color: "#0d9488", cursor: "pointer", textDecoration: "underline" }}
+                          style={{
+                            color: "#0d9488",
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                          }}
                           onClick={() => {
-                            const foundSupply = supplies.find(s => s._id === p.supplyId || s.invoiceNumber === p.invoiceNumber);
-                            if (foundSupply) setSelectedSupplyForInvoice(foundSupply);
+                            const foundSupply = supplies.find(
+                              (s) =>
+                                s._id === p.supplyId ||
+                                s.invoiceNumber === p.invoiceNumber,
+                            );
+                            if (foundSupply)
+                              setSelectedSupplyForInvoice(foundSupply);
                           }}
                           title="Click to view full Invoice (Bill)"
                         >
@@ -1133,28 +1304,48 @@ const Suppliers = () => {
                         </strong>
                       </td>
                       <td>
-                        <span style={{ fontSize: "0.825rem", fontWeight: 700, color: "#0d9488" }}>
+                        <span
+                          style={{
+                            fontSize: "0.825rem",
+                            fontWeight: 700,
+                            color: "#0d9488",
+                          }}
+                        >
                           {p.method === "BANK_TRANSFER"
                             ? "🏦 Bank Transfer / NEFT"
                             : p.method === "UPI"
-                            ? "⚡ UPI / QR"
-                            : p.method === "CHEQUE"
-                            ? "📄 Cheque"
-                            : "💵 Cash"}
+                              ? "⚡ UPI / QR"
+                              : p.method === "CHEQUE"
+                                ? "📄 Cheque"
+                                : "💵 Cash"}
                         </span>
                       </td>
                       <td>
-                        <strong style={{ color: "#16a34a", fontSize: "1.05rem" }}>
-                          ₹{Number(p.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        <strong
+                          style={{ color: "#16a34a", fontSize: "1.05rem" }}
+                        >
+                          ₹
+                          {Number(p.amount || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
                         </strong>
                       </td>
                       <td>
-                        <code style={{ background: "#f1f5f9", padding: "3px 8px", borderRadius: "6px", fontSize: "0.8rem" }}>
+                        <code
+                          style={{
+                            background: "#f1f5f9",
+                            padding: "3px 8px",
+                            borderRadius: "6px",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           {p.refNumber || "N/A"}
                         </code>
                       </td>
                       <td>
-                        <span className="cell-subtext">{p.notes || "No notes"}</span>
+                        <span className="cell-subtext">
+                          {p.notes || "No notes"}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -1174,7 +1365,9 @@ const Suppliers = () => {
             <div className="modal-header">
               <h2>
                 <Building2 size={22} className="text-teal" />
-                {editingSupplier ? "Edit Supplier Details" : "Add New Medicine Supplier"}
+                {editingSupplier
+                  ? "Edit Supplier Details"
+                  : "Add New Medicine Supplier"}
               </h2>
               <button
                 type="button"
@@ -1195,7 +1388,12 @@ const Suppliers = () => {
                       required
                       placeholder="e.g. Cipla Healthcare Distribution"
                       value={supplierForm.name}
-                      onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })}
+                      onChange={(e) =>
+                        setSupplierForm({
+                          ...supplierForm,
+                          name: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -1207,7 +1405,10 @@ const Suppliers = () => {
                       placeholder="e.g. Cipla Ltd, Mankind, Sun Pharma..."
                       value={supplierForm.companyName}
                       onChange={(e) =>
-                        setSupplierForm({ ...supplierForm, companyName: e.target.value })
+                        setSupplierForm({
+                          ...supplierForm,
+                          companyName: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1221,7 +1422,10 @@ const Suppliers = () => {
                       placeholder="e.g. Rajesh Sharma (Area Manager)"
                       value={supplierForm.contactPerson}
                       onChange={(e) =>
-                        setSupplierForm({ ...supplierForm, contactPerson: e.target.value })
+                        setSupplierForm({
+                          ...supplierForm,
+                          contactPerson: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1233,7 +1437,12 @@ const Suppliers = () => {
                       required
                       placeholder="e.g. 9820112345"
                       value={supplierForm.phone}
-                      onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })}
+                      onChange={(e) =>
+                        setSupplierForm({
+                          ...supplierForm,
+                          phone: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -1245,7 +1454,12 @@ const Suppliers = () => {
                       type="email"
                       placeholder="e.g. supply@cipla.com"
                       value={supplierForm.email}
-                      onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })}
+                      onChange={(e) =>
+                        setSupplierForm({
+                          ...supplierForm,
+                          email: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -1254,10 +1468,15 @@ const Suppliers = () => {
                     <select
                       value={supplierForm.paymentTerms}
                       onChange={(e) =>
-                        setSupplierForm({ ...supplierForm, paymentTerms: e.target.value })
+                        setSupplierForm({
+                          ...supplierForm,
+                          paymentTerms: e.target.value,
+                        })
                       }
                     >
-                      <option value="Immediate / Advance">Immediate / Advance</option>
+                      <option value="Immediate / Advance">
+                        Immediate / Advance
+                      </option>
                       <option value="Net 15 Days">Net 15 Days</option>
                       <option value="Net 30 Days">Net 30 Days</option>
                       <option value="Net 45 Days">Net 45 Days</option>
@@ -1274,7 +1493,10 @@ const Suppliers = () => {
                       placeholder="e.g. 07AAACC1206D1ZM"
                       value={supplierForm.gstNumber}
                       onChange={(e) =>
-                        setSupplierForm({ ...supplierForm, gstNumber: e.target.value })
+                        setSupplierForm({
+                          ...supplierForm,
+                          gstNumber: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1286,7 +1508,10 @@ const Suppliers = () => {
                       placeholder="e.g. DL-ND-2024-8891"
                       value={supplierForm.drugLicenseNumber}
                       onChange={(e) =>
-                        setSupplierForm({ ...supplierForm, drugLicenseNumber: e.target.value })
+                        setSupplierForm({
+                          ...supplierForm,
+                          drugLicenseNumber: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1299,7 +1524,10 @@ const Suppliers = () => {
                     placeholder="e.g. Plot 42, Pharma Hub, Okhla Phase 3, New Delhi - 110020"
                     value={supplierForm.address}
                     onChange={(e) =>
-                      setSupplierForm({ ...supplierForm, address: e.target.value })
+                      setSupplierForm({
+                        ...supplierForm,
+                        address: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -1310,7 +1538,12 @@ const Suppliers = () => {
                     rows={2}
                     placeholder="e.g. Supplies Betnovate, Ciplox, Asthalin range with 10% volume discount."
                     value={supplierForm.notes}
-                    onChange={(e) => setSupplierForm({ ...supplierForm, notes: e.target.value })}
+                    onChange={(e) =>
+                      setSupplierForm({
+                        ...supplierForm,
+                        notes: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -1323,8 +1556,16 @@ const Suppliers = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="modal-btn-submit" disabled={formSubmitting}>
-                  {formSubmitting ? "Saving..." : editingSupplier ? "Update Supplier" : "Save Supplier"}
+                <button
+                  type="submit"
+                  className="modal-btn-submit"
+                  disabled={formSubmitting}
+                >
+                  {formSubmitting
+                    ? "Saving..."
+                    : editingSupplier
+                      ? "Update Supplier"
+                      : "Save Supplier"}
                 </button>
               </div>
             </form>
@@ -1340,7 +1581,8 @@ const Suppliers = () => {
           <div className="supplier-modal-box large">
             <div className="modal-header">
               <h2>
-                <Package size={22} className="text-teal" /> Record Inward Medicine Stock & Invoice
+                <Package size={22} className="text-teal" /> Record Inward
+                Medicine Stock & Invoice
               </h2>
               <button
                 type="button"
@@ -1360,7 +1602,10 @@ const Suppliers = () => {
                       required
                       value={supplyForm.supplierId}
                       onChange={(e) =>
-                        setSupplyForm({ ...supplyForm, supplierId: e.target.value })
+                        setSupplyForm({
+                          ...supplyForm,
+                          supplierId: e.target.value,
+                        })
                       }
                     >
                       <option value="">-- Choose Supplier --</option>
@@ -1380,7 +1625,10 @@ const Suppliers = () => {
                       placeholder="e.g. INV-CIPLA-2026-088"
                       value={supplyForm.invoiceNumber}
                       onChange={(e) =>
-                        setSupplyForm({ ...supplyForm, invoiceNumber: e.target.value })
+                        setSupplyForm({
+                          ...supplyForm,
+                          invoiceNumber: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1393,7 +1641,10 @@ const Suppliers = () => {
                       type="date"
                       value={supplyForm.purchaseDate}
                       onChange={(e) =>
-                        setSupplyForm({ ...supplyForm, purchaseDate: e.target.value })
+                        setSupplyForm({
+                          ...supplyForm,
+                          purchaseDate: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1407,7 +1658,10 @@ const Suppliers = () => {
                       placeholder="0.00"
                       value={supplyForm.initialPaidAmount}
                       onChange={(e) =>
-                        setSupplyForm({ ...supplyForm, initialPaidAmount: e.target.value })
+                        setSupplyForm({
+                          ...supplyForm,
+                          initialPaidAmount: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1430,69 +1684,107 @@ const Suppliers = () => {
                     <div key={index} className="dynamic-med-row">
                       <div className="dynamic-med-grid">
                         <div className="form-group" style={{ margin: 0 }}>
-                          <label style={{ fontSize: "0.75rem" }}>Medicine Name *</label>
+                          <label style={{ fontSize: "0.75rem" }}>
+                            Medicine Name *
+                          </label>
                           <input
                             type="text"
                             required
                             placeholder="e.g. Betnovate C 30g"
                             value={med.medicineName}
                             onChange={(e) =>
-                              handleMedicineChange(index, "medicineName", e.target.value)
+                              handleMedicineChange(
+                                index,
+                                "medicineName",
+                                e.target.value,
+                              )
                             }
                           />
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
-                          <label style={{ fontSize: "0.75rem" }}>Company Brand</label>
+                          <label style={{ fontSize: "0.75rem" }}>
+                            Company Brand
+                          </label>
                           <input
                             type="text"
                             placeholder="e.g. Cipla"
                             value={med.companyBrand}
                             onChange={(e) =>
-                              handleMedicineChange(index, "companyBrand", e.target.value)
+                              handleMedicineChange(
+                                index,
+                                "companyBrand",
+                                e.target.value,
+                              )
                             }
                           />
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
-                          <label style={{ fontSize: "0.75rem" }}>Batch Number</label>
+                          <label style={{ fontSize: "0.75rem" }}>
+                            Batch Number
+                          </label>
                           <input
                             type="text"
                             placeholder="BATCH-001"
                             value={med.batchNumber}
                             onChange={(e) =>
-                              handleMedicineChange(index, "batchNumber", e.target.value)
+                              handleMedicineChange(
+                                index,
+                                "batchNumber",
+                                e.target.value,
+                              )
                             }
                           />
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
-                          <label style={{ fontSize: "0.75rem" }}>Expiry Date *</label>
+                          <label style={{ fontSize: "0.75rem" }}>
+                            Expiry Date *
+                          </label>
                           <input
                             type="date"
                             required
                             value={med.expiryDate}
                             onChange={(e) =>
-                              handleMedicineChange(index, "expiryDate", e.target.value)
+                              handleMedicineChange(
+                                index,
+                                "expiryDate",
+                                e.target.value,
+                              )
                             }
                           />
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
-                          <label style={{ fontSize: "0.75rem" }}>Quantity</label>
+                          <label style={{ fontSize: "0.75rem" }}>
+                            Quantity
+                          </label>
                           <input
                             type="number"
                             min="1"
                             value={med.quantity}
                             onChange={(e) =>
-                              handleMedicineChange(index, "quantity", e.target.value)
+                              handleMedicineChange(
+                                index,
+                                "quantity",
+                                e.target.value,
+                              )
                             }
                           />
                         </div>
 
                         <div className="form-group" style={{ margin: 0 }}>
-                          <label style={{ fontSize: "0.75rem" }}>Unit Cost (₹)</label>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <label style={{ fontSize: "0.75rem" }}>
+                            Unit Cost (₹)
+                          </label>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
                             <input
                               type="number"
                               min="0"
@@ -1500,7 +1792,11 @@ const Suppliers = () => {
                               placeholder="0.00"
                               value={med.unitCost}
                               onChange={(e) =>
-                                handleMedicineChange(index, "unitCost", e.target.value)
+                                handleMedicineChange(
+                                  index,
+                                  "unitCost",
+                                  e.target.value,
+                                )
                               }
                             />
                             {supplyForm.medicines.length > 1 && (
@@ -1516,8 +1812,22 @@ const Suppliers = () => {
                           </div>
                         </div>
                       </div>
-                      <div style={{ marginTop: "6px", textAlign: "right", fontSize: "0.8rem", color: "#64748b" }}>
-                        Subtotal: <strong>₹{((Number(med.quantity) || 0) * (Number(med.unitCost) || 0)).toFixed(2)}</strong>
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          textAlign: "right",
+                          fontSize: "0.8rem",
+                          color: "#64748b",
+                        }}
+                      >
+                        Subtotal:{" "}
+                        <strong>
+                          ₹
+                          {(
+                            (Number(med.quantity) || 0) *
+                            (Number(med.unitCost) || 0)
+                          ).toFixed(2)}
+                        </strong>
                       </div>
                     </div>
                   ))}
@@ -1539,22 +1849,38 @@ const Suppliers = () => {
                 >
                   <div>
                     <span style={{ fontSize: "0.85rem", color: "#0f766e" }}>
-                      Medicines Total: <strong>₹{calculateSupplySubtotal().toFixed(2)}</strong>
+                      Medicines Total:{" "}
+                      <strong>₹{calculateSupplySubtotal().toFixed(2)}</strong>
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "20px",
+                    }}
+                  >
                     <div>
-                      <span style={{ fontSize: "0.85rem", color: "#0f766e" }}>Grand Total: </span>
+                      <span style={{ fontSize: "0.85rem", color: "#0f766e" }}>
+                        Grand Total:{" "}
+                      </span>
                       <strong style={{ fontSize: "1.2rem", color: "#042f2e" }}>
                         ₹{calculateSupplyGrandTotal().toFixed(2)}
                       </strong>
                     </div>
 
                     <div>
-                      <span style={{ fontSize: "0.85rem", color: "#dc2626" }}>Baki Due: </span>
+                      <span style={{ fontSize: "0.85rem", color: "#dc2626" }}>
+                        Baki Due:{" "}
+                      </span>
                       <strong style={{ fontSize: "1.2rem", color: "#dc2626" }}>
-                        ₹{Math.max(0, calculateSupplyGrandTotal() - (Number(supplyForm.initialPaidAmount) || 0)).toFixed(2)}
+                        ₹
+                        {Math.max(
+                          0,
+                          calculateSupplyGrandTotal() -
+                            (Number(supplyForm.initialPaidAmount) || 0),
+                        ).toFixed(2)}
                       </strong>
                     </div>
                   </div>
@@ -1566,7 +1892,9 @@ const Suppliers = () => {
                     type="text"
                     placeholder="e.g. Stock received in good condition at Aligarh central pharmacy."
                     value={supplyForm.notes}
-                    onChange={(e) => setSupplyForm({ ...supplyForm, notes: e.target.value })}
+                    onChange={(e) =>
+                      setSupplyForm({ ...supplyForm, notes: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -1579,8 +1907,14 @@ const Suppliers = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="modal-btn-submit" disabled={formSubmitting}>
-                  {formSubmitting ? "Recording..." : "Save Inward Stock Invoice"}
+                <button
+                  type="submit"
+                  className="modal-btn-submit"
+                  disabled={formSubmitting}
+                >
+                  {formSubmitting
+                    ? "Recording..."
+                    : "Save Inward Stock Invoice"}
                 </button>
               </div>
             </form>
@@ -1596,7 +1930,8 @@ const Suppliers = () => {
           <div className="supplier-modal-box">
             <div className="modal-header">
               <h2>
-                <CreditCard size={22} className="text-teal" /> Record Supplier Payment
+                <CreditCard size={22} className="text-teal" /> Record Supplier
+                Payment
               </h2>
               <button
                 type="button"
@@ -1618,14 +1953,39 @@ const Suppliers = () => {
                     marginBottom: "16px",
                   }}
                 >
-                  <p style={{ margin: "0 0 4px", fontWeight: 700, color: "#92400e" }}>
-                    Invoice #{selectedSupplyForPay.invoiceNumber} — {selectedSupplyForPay.supplierName}
+                  <p
+                    style={{
+                      margin: "0 0 4px",
+                      fontWeight: 700,
+                      color: "#92400e",
+                    }}
+                  >
+                    Invoice #{selectedSupplyForPay.invoiceNumber} —{" "}
+                    {selectedSupplyForPay.supplierName}
                   </p>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#b45309" }}>
-                    <span>Total Bill: ₹{Number(selectedSupplyForPay.grandTotal || selectedSupplyForPay.totalAmount || 0).toFixed(2)}</span>
-                    <span>Already Paid: ₹{Number(selectedSupplyForPay.paidAmount || 0).toFixed(2)}</span>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "0.85rem",
+                      color: "#b45309",
+                    }}
+                  >
+                    <span>
+                      Total Bill: ₹
+                      {Number(
+                        selectedSupplyForPay.grandTotal ||
+                          selectedSupplyForPay.totalAmount ||
+                          0,
+                      ).toFixed(2)}
+                    </span>
+                    <span>
+                      Already Paid: ₹
+                      {Number(selectedSupplyForPay.paidAmount || 0).toFixed(2)}
+                    </span>
                     <strong style={{ color: "#dc2626" }}>
-                      Remaining Baki Due: ₹{Number(selectedSupplyForPay.dueAmount || 0).toFixed(2)}
+                      Remaining Baki Due: ₹
+                      {Number(selectedSupplyForPay.dueAmount || 0).toFixed(2)}
                     </strong>
                   </div>
                 </div>
@@ -1638,11 +1998,17 @@ const Suppliers = () => {
                       required
                       min="0.01"
                       step="0.01"
-                      max={selectedSupplyForPay.dueAmount || selectedSupplyForPay.grandTotal}
+                      max={
+                        selectedSupplyForPay.dueAmount ||
+                        selectedSupplyForPay.grandTotal
+                      }
                       placeholder="0.00"
                       value={paymentForm.amount}
                       onChange={(e) =>
-                        setPaymentForm({ ...paymentForm, amount: e.target.value })
+                        setPaymentForm({
+                          ...paymentForm,
+                          amount: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1652,10 +2018,15 @@ const Suppliers = () => {
                     <select
                       value={paymentForm.method}
                       onChange={(e) =>
-                        setPaymentForm({ ...paymentForm, method: e.target.value })
+                        setPaymentForm({
+                          ...paymentForm,
+                          method: e.target.value,
+                        })
                       }
                     >
-                      <option value="BANK_TRANSFER">🏦 Bank Transfer / NEFT / RTGS</option>
+                      <option value="BANK_TRANSFER">
+                        🏦 Bank Transfer / NEFT / RTGS
+                      </option>
                       <option value="UPI">⚡ UPI / QR Payment</option>
                       <option value="CHEQUE">📄 Cheque</option>
                       <option value="CASH">💵 Cash</option>
@@ -1671,7 +2042,10 @@ const Suppliers = () => {
                       placeholder="e.g. UTR-HDFC-991823"
                       value={paymentForm.refNumber}
                       onChange={(e) =>
-                        setPaymentForm({ ...paymentForm, refNumber: e.target.value })
+                        setPaymentForm({
+                          ...paymentForm,
+                          refNumber: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1682,7 +2056,10 @@ const Suppliers = () => {
                       type="date"
                       value={paymentForm.paymentDate}
                       onChange={(e) =>
-                        setPaymentForm({ ...paymentForm, paymentDate: e.target.value })
+                        setPaymentForm({
+                          ...paymentForm,
+                          paymentDate: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1694,7 +2071,9 @@ const Suppliers = () => {
                     type="text"
                     placeholder="e.g. Part payment cleared via NEFT."
                     value={paymentForm.notes}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+                    onChange={(e) =>
+                      setPaymentForm({ ...paymentForm, notes: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -1707,8 +2086,14 @@ const Suppliers = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="modal-btn-submit" disabled={formSubmitting}>
-                  {formSubmitting ? "Recording..." : `Confirm Payment of ₹${Number(paymentForm.amount || 0).toFixed(2)}`}
+                <button
+                  type="submit"
+                  className="modal-btn-submit"
+                  disabled={formSubmitting}
+                >
+                  {formSubmitting
+                    ? "Recording..."
+                    : `Confirm Payment of ₹${Number(paymentForm.amount || 0).toFixed(2)}`}
                 </button>
               </div>
             </form>

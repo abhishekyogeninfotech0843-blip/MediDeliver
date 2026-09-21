@@ -200,7 +200,7 @@ const Login = () => {
           return;
         }
 
-        localStorage.setItem("user", JSON.stringify(user));
+        sessionStorage.setItem("user", JSON.stringify(user));
 
         if (isUserAdmin) {
           setShowAdminWelcome(true);

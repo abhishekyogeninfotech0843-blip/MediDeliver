@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Truck,
   ArrowRight,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react";
 import "./Cart.css";
 import logoSvg from "../assets/logo.svg";
@@ -30,7 +30,7 @@ const Cart = () => {
   } = useCart();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -218,11 +218,14 @@ const Cart = () => {
 
               {deliveryCharge > 0 ? (
                 <div className="free-delivery-note">
-                  <Truck className="truck-sm" /> Add ₹{(500 - cartTotal).toFixed(2)} more for <strong>FREE delivery</strong>
+                  <Truck className="truck-sm" /> Add ₹
+                  {(500 - cartTotal).toFixed(2)} more for{" "}
+                  <strong>FREE delivery</strong>
                 </div>
               ) : (
                 <div className="free-delivery-eligible">
-                  <ShieldCheck className="shield-sm" /> Eligible for FREE Express Delivery
+                  <ShieldCheck className="shield-sm" /> Eligible for FREE
+                  Express Delivery
                 </div>
               )}
 
