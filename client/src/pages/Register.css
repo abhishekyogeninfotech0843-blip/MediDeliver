@@ -576,3 +576,233 @@ input:-webkit-autofill:active {
     gap: 10px;
   }
 }
+
+/* ==================================================
+   ELECTRIC BOARD AUTH REDESIGN
+   ================================================== */
+
+.register-page {
+  --board-ink: #07151d;
+  --board-panel: rgba(12, 34, 42, 0.92);
+  --board-line: rgba(103, 232, 249, 0.18);
+  --board-cyan: #67e8f9;
+  --board-aqua: #2dd4bf;
+  --board-acid: #d9f99d;
+  --board-copy: #d5edf0;
+  --board-muted: #89aeb4;
+  color: var(--board-copy);
+  background-color: var(--board-ink);
+  background-image: linear-gradient(rgba(103, 232, 249, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(103, 232, 249, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 82% 10%, rgba(45, 212, 191, 0.19), transparent 28%),
+    linear-gradient(135deg, #061018 0%, #0a2028 54%, #07151d 100%);
+  background-size: 34px 34px, 34px 34px, auto, auto;
+}
+
+.register-page::before { opacity: 0.045; mix-blend-mode: screen; filter: grayscale(1) contrast(1.4); }
+.register-navbar { padding: 14px 0; border-bottom-color: rgba(103, 232, 249, 0.13); background: rgba(4, 18, 24, 0.76); box-shadow: 0 8px 30px rgba(0,0,0,0.16); }
+.register-nav-container { max-width: 1220px; }
+.register-logo { color: #f0feff; font-family: "Space Grotesk", var(--font-family); }
+.register-logo span { color: var(--board-cyan); }
+.register-live-clock { padding: 7px 12px; border: 1px solid var(--board-line); border-radius: 5px; color: var(--board-muted); background: rgba(6,22,28,0.62); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); font-family: "DM Mono", monospace; font-size: 11px; }
+.register-live-clock .clock-date, .register-live-clock .clock-time { color: var(--board-copy); }
+.register-live-clock .clock-day, .register-live-clock .clock-icon-svg { color: var(--board-aqua); }
+.register-secure-badge { border: 1px solid rgba(45,212,191,0.3); border-radius: 5px; color: var(--board-aqua); background: rgba(45,212,191,0.08); font-family: "DM Mono", monospace; font-size: 10px; text-transform: uppercase; }
+.register-main { padding: 42px 30px 70px; }
+.register-wrapper { max-width: 1220px; grid-template-columns: minmax(0, 0.85fr) minmax(480px, 1fr); gap: clamp(42px, 8vw, 116px); }
+.register-info::before { content: "ONBOARDING_NODE // 08"; display: block; margin-bottom: 22px; color: var(--board-aqua); font-family: "DM Mono", monospace; font-size: 10px; letter-spacing: 2px; }
+.register-logo + .register-live-clock { margin-top: 0; }
+.register-info .auth-badge-symbol-img { width: 64px; height: 64px; margin-bottom: 22px; border: 1px solid rgba(103,232,249,0.5); border-radius: 12px; box-shadow: inset 0 0 0 5px rgba(103,232,249,0.06), 0 0 28px rgba(45,212,191,0.28); }
+.register-label { color: var(--board-cyan); font-family: "DM Mono", monospace; font-size: 10px; letter-spacing: 2px; }
+.register-info h1 { color: #efffff; font-family: "Space Grotesk", var(--font-family); font-size: clamp(39px, 5vw, 65px); letter-spacing: -2.7px; line-height: 0.98; }
+.register-info p { max-width: 510px; color: var(--board-muted); font-size: 15px; }
+.register-benefits { gap: 14px; }
+.benefit-item { gap: 13px; }
+.register-card { position: relative; overflow: hidden; padding: clamp(24px, 4vw, 38px); border: 1px solid rgba(103,232,249,0.28); border-radius: 12px; background: linear-gradient(145deg, rgba(18,49,57,0.96), rgba(7,23,30,0.97)); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.05), inset -5px -6px 16px rgba(0,0,0,0.35), 0 24px 70px rgba(0,0,0,0.34), 0 0 32px rgba(45,212,191,0.09); }
+.register-card::before { content: "SECURE CHANNEL / NEW IDENTITY"; display: block; margin-bottom: 24px; color: var(--board-aqua); font-family: "DM Mono", monospace; font-size: 9px; letter-spacing: 1.7px; }
+.register-card-heading { margin-bottom: 22px; }
+.register-card-heading h2 { color: #f0ffff; font-family: "Space Grotesk", var(--font-family); font-size: 25px; letter-spacing: -0.8px; }
+.register-card-heading p { color: var(--board-muted); font-size: 13px; }
+.role-group-label, .register-form-group label { color: #b7d8dc; font-family: "DM Mono", monospace; font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase; }
+.role-cards-grid { gap: 8px; }
+.role-option-card { padding: 11px; border: 1px solid rgba(103,232,249,0.18); border-radius: 5px; background: rgba(3,16,22,0.56); }
+.role-card-inner strong { color: #dffbfc; font-size: 12px; }
+.role-card-inner small { color: #6f969c; font-size: 10px; }
+.role-ic { color: #5b8e95; }
+.role-option-card:hover, .role-option-card.active { border-color: var(--board-cyan); background: rgba(103,232,249,0.09); box-shadow: 0 0 18px rgba(103,232,249,0.1); }
+.role-option-card.active .role-ic { color: var(--board-cyan); }
+.register-form-group { gap: 7px; margin-bottom: 15px; }
+.register-input input { padding: 12px 42px 12px 14px; border: 1px solid rgba(103,232,249,0.2); border-radius: 5px; color: #ebffff; background: rgba(3,16,22,0.7); box-shadow: inset 2px 2px 6px rgba(0,0,0,0.24), inset -1px -1px 0 rgba(255,255,255,0.035); }
+.register-input input::placeholder { color: #52757c; }
+.register-input input:focus { border-color: var(--board-cyan); box-shadow: 0 0 0 2px rgba(103,232,249,0.12), inset 2px 2px 6px rgba(0,0,0,0.24); background: rgba(3,16,22,0.9); }
+.register-submit { margin-top: 7px; padding: 14px; border: 1px solid rgba(217,249,157,0.7); border-radius: 5px; color: #0a211e; background: var(--board-acid); box-shadow: 0 0 22px rgba(217,249,157,0.16), inset 0 1px 0 rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 0.7px; text-transform: uppercase; }
+.register-submit:hover { color: #07151d; background: #ecfccb; box-shadow: 0 0 30px rgba(217,249,157,0.3); }
+.register-error { border: 1px solid rgba(248,113,113,0.35); border-radius: 5px; color: #fecaca; background: rgba(127,29,29,0.28); font-size: 12px; }
+.register-login { color: #88aeb3; font-size: 12px; }
+.register-login a { color: var(--board-cyan); }
+.register-security { color: #5a8289; font-family: "DM Mono", monospace; font-size: 9px; }
+.register-footer { padding: 18px 24px; color: #55777d; border-top-color: rgba(103,232,249,0.13); background: rgba(4,15,21,0.7); font-family: "DM Mono", monospace; font-size: 10px; }
+.admin-secret-group { border-color: rgba(45,212,191,0.25); background: rgba(2,17,22,0.35); }
+.admin-secret-tip { color: #6d959b; }
+
+@media (max-width: 900px) {
+  .register-wrapper { grid-template-columns: 1fr; max-width: 620px; }
+  .register-info { text-align: center; }
+  .register-info::before { margin-bottom: 16px; }
+  .register-info p { margin-left: auto; margin-right: auto; }
+  .register-benefits { align-items: flex-start; width: min(100%, 430px); margin: 0 auto; text-align: left; }
+  .register-info .auth-badge-symbol-img { margin-left: auto; margin-right: auto; }
+}
+
+@media (max-width: 560px) {
+  .register-nav-container { padding: 0 16px; }
+  .register-live-clock { max-width: 210px; overflow: hidden; white-space: nowrap; }
+  .register-live-clock .clock-day, .register-live-clock .clock-sep:nth-of-type(2) { display: none; }
+  .register-secure-badge { display: none; }
+  .register-main { padding: 28px 16px 44px; }
+  .register-info h1 { font-size: 42px; }
+  .register-card { padding: 22px 17px; }
+  .role-cards-grid { grid-template-columns: 1fr; }
+}
+
+/* ==================================================
+   AUTH MOTION SYSTEM
+   ================================================== */
+
+.register-page .register-navbar,
+.register-page .register-footer {
+  animation: authFadeDown 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.register-page .register-info {
+  animation: authRevealLeft 0.8s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.register-page .register-card {
+  animation: authRevealRight 0.8s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.register-page .register-card::after {
+  content: "";
+  position: absolute;
+  top: -18%;
+  left: -30%;
+  width: 24%;
+  height: 136%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(103, 232, 249, 0.16), transparent);
+  transform: rotate(18deg);
+  animation: authScanBeam 6s 1.4s ease-in-out infinite;
+}
+
+.register-page .register-submit {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.register-page .register-submit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 28%, rgba(255,255,255,0.58) 47%, transparent 67%);
+  transform: translateX(-125%);
+  transition: transform 0.65s ease;
+}
+
+.register-page .register-submit:hover::before { transform: translateX(125%); }
+.register-page .register-submit:hover { transform: translateY(-3px) scale(1.01); }
+
+.register-page .register-input { transition: transform 0.25s ease; }
+.register-page .register-input:focus-within { transform: translateY(-2px); }
+
+@keyframes authFadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes authRevealLeft {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes authRevealRight {
+  from { opacity: 0; transform: translateX(28px) translateY(12px); }
+  to { opacity: 1; transform: translateX(0) translateY(0); }
+}
+
+@keyframes authScanBeam {
+  0%, 25% { left: -30%; opacity: 0; }
+  36% { opacity: 1; }
+  62% { left: 118%; opacity: 0.5; }
+  100% { left: 118%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .register-page *,
+  .register-page *::before,
+  .register-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================================================
+   WATCH VISIBILITY + LIGHTER BOARD FINISH
+   ================================================== */
+
+.register-page {
+  --board-ink: #102a32;
+  --board-deep: #153943;
+  background-color: var(--board-ink);
+  background-image: linear-gradient(rgba(145, 239, 248, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(145, 239, 248, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 82% 10%, rgba(45, 212, 191, 0.22), transparent 28%),
+    radial-gradient(circle at 10% 84%, rgba(103, 232, 249, 0.13), transparent 25%),
+    linear-gradient(135deg, #0d252e 0%, #153943 54%, #102a32 100%);
+}
+
+.register-live-clock {
+  gap: 7px;
+  min-height: 34px;
+  padding: 8px 13px;
+  border: 1px solid rgba(145, 239, 248, 0.58);
+  border-radius: 6px;
+  color: #d8fbfd;
+  background: rgba(4, 25, 32, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.13), 0 0 0 2px rgba(103,232,249,0.07), 0 0 24px rgba(45,212,191,0.18);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15px;
+}
+
+.register-live-clock .live-pulse-dot {
+  width: 9px;
+  height: 9px;
+  background: #a3ffb5;
+  box-shadow: 0 0 0 2px rgba(163,255,181,0.18), 0 0 12px rgba(163,255,181,0.9);
+}
+
+.register-live-clock .clock-date,
+.register-live-clock .clock-time {
+  color: #f1ffff;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(103,232,249,0.26);
+}
+
+.register-live-clock .clock-day,
+.register-live-clock .clock-icon-svg { color: #73f4dc; }
+.register-live-clock .clock-sep { color: #8fd4d2; }
+
+@media (max-width: 560px) {
+  .register-live-clock {
+    max-width: none;
+    width: max-content;
+    gap: 5px;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+}
