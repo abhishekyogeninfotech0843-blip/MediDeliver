@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 let isConnected = false;
+let connectionPromise = null;
 
 const seedInitialData = async () => {
   try {
@@ -126,25 +127,34 @@ const seedInitialData = async () => {
 };
 
 const connectDB = async () => {
-  if (isConnected) return;
+  if (isConnected && mongoose.connection.readyState === 1) return;
+  if (connectionPromise) return connectionPromise;
 
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
+  connectionPromise = mongoose
+    .connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
+    })
+    .then(async () => {
+      isConnected = true;
+      console.log("✅ MongoDB Connected Successfully");
+      await seedInitialData();
+    })
+    .catch((error) => {
+      isConnected = false;
+      console.warn("⚠️ MongoDB Connection Warning:", error.message);
+      console.warn(
+        "ℹ️ Server running in standby mode. Will auto-retry DB connection when network/whitelist is ready.",
+      );
+      setTimeout(() => {
+        connectionPromise = null;
+        connectDB();
+      }, 15000);
     });
 
-    isConnected = true;
-    console.log("✅ MongoDB Connected Successfully");
-
-    await seedInitialData();
-  } catch (error) {
-    console.warn("⚠️ MongoDB Connection Warning:", error.message);
-    console.warn("ℹ️ Server running in standby mode. Will auto-retry DB connection when network/whitelist is ready.");
-
-    // Retry connection periodically without exiting process
-    setTimeout(() => {
-      connectDB();
-    }, 15000);
+  try {
+    await connectionPromise;
+  } finally {
+    if (mongoose.connection.readyState !== 1) connectionPromise = null;
   }
 };
 

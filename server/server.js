@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
@@ -30,6 +31,18 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
+
+// Avoid waiting for Mongoose's query buffer when the database is unavailable.
+app.use("/api/auth/login", (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message:
+        "Authentication service is temporarily unavailable. Please try again in a moment.",
+    });
+  }
+  next();
+});
 
 // Request Logger
 app.use((req, res, next) => {

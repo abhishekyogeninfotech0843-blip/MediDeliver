@@ -155,29 +155,13 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const cleanInput = formData.email.trim();
-      let response;
-      try {
-        response = await api.post("/auth/login", {
-          email: cleanInput,
-          password: formData.password,
-          role: loginRole,
-          adminSecretKey:
-            loginRole === "admin" ? formData.adminSecretKey.trim() : undefined,
-        });
-      } catch (firstErr) {
-        // If first attempt failed and input is a 10-digit mobile number, try with fallback user identifier
-        const digits = cleanInput.replace(/\D/g, "");
-        if (loginRole === "user" && digits.length === 10) {
-          response = await api.post("/auth/login", {
-            email: `${digits}@medideliver.user`,
-            password: formData.password,
-            role: loginRole,
-          });
-        } else {
-          throw firstErr;
-        }
-      }
+      const response = await api.post("/auth/login", {
+        email: formData.email.trim(),
+        password: formData.password,
+        role: loginRole,
+        adminSecretKey:
+          loginRole === "admin" ? formData.adminSecretKey.trim() : undefined,
+      });
 
       if (response.data.success) {
         const user = response.data.user;
